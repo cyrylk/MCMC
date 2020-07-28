@@ -1,0 +1,984 @@
+\documentclass[a4paper]{article}
+
+\usepackage[polish]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{bbm}
+% \usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{hyperref}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+
+\newcommand\eqwithdef{\stackrel{\mathclap{\normalfont\mbox{def}}}{=}}
+
+\begin{document}
+
+\newpage
+\thispagestyle{empty}
+\begin{center}
+\textbf{\large Uniwersytet Wrocławski\\
+Wydział Matematyki i Informatyki\\
+Instytut Matematyczny}\\
+\textit{\large specjalność: zastosowania rachunku prawdopodobieństwa i statystyki}\\
+\vspace{4cm}
+\textbf{\textit{\large Cyryl Karpiński}\\
+\vspace{0.5cm}
+{\Large Zastosowanie metod MCMC do dekodowania zaszyfrowanego tekstu
+i problemu komiwojażera}}\\
+\end{center}
+\vspace{3cm}
+{\large \hspace*{6.5cm}Praca magisterska\\
+\hspace*{6.5cm}napisana pod kierunkiem\\
+\hspace*{6.5cm}dra Pawła Lorka}\\
+\vfill
+\begin{center}
+{\large Wrocław 2020}\\
+\end{center}
+
+\newpage
+\tableofcontents
+\newpage
+\section{Wstęp}
+W swojej pracy zaprezentuję stosunkowo nowe podejście do dekodowania zaszyfrowanych wiadomości tekstowych przy użyciu próbkowania Monte Carlo łańcuchami Markowa. Podejście opisane najpierw w  \cite{Connor}, następnie rozszerzone w \cite{Chen&Rosenthal} na większą rodzinę szyfrów. Postaram się wprowadzić ulepszenia do dotychczas zaproponowanych rozwiązań, zastosować podejście MCMC na jeszcze większej rodzinie szyfrów, ponadto oszacować istotne parametry algorytmu deszyfrującego – tempo zbieżności, złożoność pamięciową i czasową, jak bliski jest oczekiwany wynik od \textit{optymalnego} (w pewnym sensie), wpływ różnych modyfikacji algorytmu na jego działanie.
+
+W drugiej części użyję podobnego podejścia do rozwiązania symetrycznego problemu komiwojażera. Tak jak poprzednio, oszacuję wartości najważniejszych parametrów algorytmu: prędkość zbieżności, złożoność, a także o ile gorszego rozwiązania niż optymalne powinniśmy oczekiwać oraz za pomocą symulacji pokażę, jakie wyniki otrzymujemy w praktyce. Do symulacji użyję benchmarkowego zbioru danych wejściowych dla problemu komiwojażera z \cite{benchmark}.\\
+
+Pierwsze rozdziały pracy będą poświęcone wprowadzeniu do teorii łańcuchów Markowa i metod Monte Carlo wraz z dowodami najważniejszych dla tej pracy twierdzeń. Następnie zajmę się szczegółowym opisem algorytmu MCMC zastosowanego w celu rozszyfrowywania zaszyfrowanych wiadomości tekstowych. Zostaną podane własności algorytmu i oszacowane jego parametry. Kolejny rozdział będzie prezentacją wyników uzyskanych w symulacjach (rozszyfrowywanie zaszyfrowanych fragmentów rzeczywistego tekstu) wraz z ich podsumowaniem. \\
+W następnym rozdziale przejdę do szczegółowego opisu podejścia MCMC przyjętego do rozwiązania problemu komiwojażera. Tak jak przy okazji deszyfrowania tekstu oszacuję parametry algorytmu i podam jego własności. W kolejnym rozdziale zaprezentuję wyniki uzyskane przez algorytm na benchmarkowym zbiorze danych wejściowych.\\
+Ostatni rozdział będzie podsumowaniem pracy.\\
+
+Implementacja algorytmów i symulacji została napisana w języku Python3. Zastosowałem podejście \textit{test-driven development} (TDD) – działanie najważniejszych fragmentów kodu jest pokryte testami jednostkowymi. W tym celu użyłem biblioteki \textit{unittest} z tego języka.
+
+\newpage
+
+\section{Łańcuchy Markowa}
+Przypomnę w tym rozdziale podstawowe zagadnienia z teorii łańcuchów Markowa. Będę zajmował się tylko łańcuchami Markowa (czyli procesami Markowa w czasie dyskretnym) w skończonej przestrzeni stanów – właśnie takie bowiem łańcuchy będą modelowane w celu rozwiązania postawionych problemów. Zajmuję się tutaj przede wszystkim pokazaniem teorii łańcuchów Markowa w ogólności, ze szczególnym naciskiem na zachowanie łańcuchów w nieskończoności (zbieżności wg rozkładu, prawa wielkich liczb) – na razie przede wszystkim jednorodnych łańcuchów Markowa. Treści przedstawione w tym rozdziale będą następnie uzupełniane i rozwijane w następnych rozdziałach, zwłaszcza przy okazji opisu teoretycznej analizy i uzasadniania motywacji przedstawianych w tej pracy algorytmów. W szczególności teoria niejednorodnych łańcuchów Markowa będzie szerzej przedstawiona przy okazji prezentacji algorytmów stosujących mechanizm \textit{symulowanego wyżarzania}\\ 
+\subsection{Definicje i podstawowe własności}
+\textbf{Definicja 2.1.1}\\
+\textit{Łańcuchem Markowa} (ŁM) nazywamy ciąg zmiennych losowych $X = \{X_n\}_{n \in \{0,1,2...\}}$ określonych na wspólnej przestrzeni probabilistycznej $\{\Omega, \mathcal{F}, P\}$ przyjmujących wartości z przestrzeni stanów $S$ mający następującą własność (Markowa):\\
+Dla $n = 0, 1, 2...$ oraz $j, i_0, i_1, i_2 ... i_n \in S$ zachodzi: $$P(X_{n+1} = j | X_n = i_n, X_{n-1} = i_{n-1}, ... X_0 = i_0) = P(X_{n+1} = j| X_{n} = i_n)$$
+jeśli tylko powyższe prawdopodobieństwa warunkowe są dobrze zdefiniowane – to samo "jeśli"\, dotyczy wszystkich późniejszych definicji i twierdzeń, w których pojawia się prawdopodobieństwo warunkowe.
+\\Tak jak ustaliliśmy, przyjmujemy $|S| <\infty$. Wartość przyjętą przez $X_k$ będziemy nazywać stanem łańcucha $X_n$ w \textit{k}-tym kroku. Z powyższej definicji wynika, że stan w $(k+1)$-szym kroku zależy tylko od stanu w $k$-tym kroku i nie zależy od stanów we wcześniejszych krokach. Ponieważ przestrzeń stanów jest skończona, więc możemy o niej myśleć jako $S = \{1,2,3,4...|S|\}$.
+\\\\
+\textbf{Fakt 2.1.2}
+Niech $0 \geq t_0 < t_1 < ... < t_k < n$ oraz $i_0, i_1, ... i_k, i_n, j \in S$. Dla łańcucha Markowa $X_n$ zachodzi:
+$$P(X_{n+1} = j | X_n = i_n, X_{t_{k}} = i_k, ... X_{t_0} = i_0) = P(X_{n+1} = j| X_{n} = i_n)$$
+Dowód: Wystarczy skorzystać ze wzoru na prawdopodobieństwo całkowite: rozbić zbiór $\{X_n = i_n, X_{t_{k}} = i_k, ... X_{t_0} = i_0\}$ ze względu na wartości $X_t$, tych że $t \notin \{t_0, ... t_k\}$. Korzystając następnie z własności Markowa dla każdego elementu takiego rozbicia, dostajemy tezę. \qed
+\\\\
+\textbf{Lemat 2.1.2}\\
+Dla łańcucha Markowa $X_n$, dla $i_0, i_1, ... i_{n+k} \in S$ oraz dla $k > 0$ zachodzi:
+\begin{align*}
+&P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} | X_n = i_n, X_{n-1} = i_{n-1}, ... X_0 = i_0)=\\
+&P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} | X_n = i_n)
+\end{align*}
+Dowód: Indukcyjnie po $k$, dla $k = 1$ jest to po prostu własność Markowa. Załóżmy, że teza zachodzi dla $k$, wtedy dla $k+1$:
+\begin{align*}
+    &P(X_{n+k+1} = i_{n+k+1}, ...X_{n+1} = i_{n+1} | X_n = i_n, X_{n-1} = i_{n-1}, ... X_0 = i_0) = \\
+    &P(X_{n+k+1} = i_{n+k+1}|X_{n+k} = i_{n+k}, ..., X_0 = i_0) \cdot\\
+    &P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} | X_n = i_n, X_{n-1} = i_{n-1}, ... X_0 = i_0) = \\
+    & P(X_{n+k+1} = i_{n+k+1}|X_{n+k} = i_{n+k})P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} | X_n = i_n)
+\end{align*}
+\\\\
+\textbf{Twierdzenie 2.1.2}\\
+Dla łańcucha Markowa określonego na przestrzeni stanów $S$, dla dowolnych $A \subseteq \mathcal{S}^n$ oraz $A_{n+1}, A_{n+2}..., A_{n+3} \subseteq S,\, k>0, \,\, i_n \in S$ zachodzi:
+\\
+\begin{align*}
+&P(X_{n+k} \in A_{n+k}, X_{n+k-1} \in A_{n+k-1}...X_{n+1} \in A_{n+1}|X_n = i_n, (X_{0}, X_{1} ... X_{n-1}) \in A)\\
+&= P(X_{n+k} \in A_{n+k}, X_{n+k-1} \in A_{n+k-1}...X_{n+1} \in A_{n+1}|X_n = i_n)
+\end{align*}
+W szczególności, ponieważ $A_{n+t}$ może być równe $S$, co czyni zdarzenie $X_{n+t} \in A_{n+t}$ zdarzeniem pewnym:\\
+$$P(X_{n+k} \in A_{n+k}|X_n = i_n, (X_{0}, X_{1} ... X_{n-1}) \in A) = P(X_{n+k} \in A_{n+k}|X_n = i_n)$$
+
+Dowód: Jeśli któryś z $A_{n+1}, ... A_{n+k}$ jest pusty, to po obu stronach równości dostajemy zero, więc teza zachodzi. Jeśli żaden nie jest pusty, to z addytywności prawdopodobieństwa warunkowego wystarczy udowodnić, że dla dowolnych $i_{n+1}, ... i_{n+k} \in S$ zachodzi:
+\begin{align*}
+&P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} |X_n = i_n, (X_{0}, X_{1} ... X_{n-1}) \in A)\\
+&= X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} |X_n = i_n)
+\end{align*}
+Niech $|A| = m > 0$ i (większe od zera, gdyż zakładamy, że prawdopodobieństwo warunkowe ma sens). Niech teraz $A = \{(i_0^{(1)}, i_1^{(1)}..., i_{n-1}^{(1)}), ..., ((i_0^{(a)}, i_1^{(m)}..., i_{n-1}^{(m)})\}$. Oznaczmy kolejne elementy $A$ przez $a_1, a_2, ... a_m$.
+Zauważmy, że dla każdego z tych elementów $a_l$:
+\begin{align*}
+    &P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} |X_n = i_n, (X_{0}, X_{1} ... X_{n-1}) = a_l) \\
+    &= P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} |X_n = i_n, X_{n-1} = i_{n-1}^{(l)}, ... X_0 = i_{0}^{(l)})\\
+    &= P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} |X_n = i_n)
+\end{align*}
+Gdzie ostatnia równość jest na mocy lematu (2.1.2). Oznaczmy jeszcze:
+$$ q_l :=P(X_n = i_n, (X_{n-1}, X_{n-2} ... X_0) = a_l|X_n = i_n, (X_{n-1}, X_{n-2} ... X_0) \in A)$$
+Zauważmy, że ponieważ prawdopodobieństwo warunkowe jest miarą probabilistyczną, to:
+$$\sum\limits_{l = 1}^m q_l = 1$$
+Rozpisujemy na mocy twierdzenia o prawdopodobieństwie całkowitym:
+\begin{align*}
+    &P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} |X_n = i_n, (X_{n-1}, X_{n-2} ... X_0) \in A) \\
+    &= \sum\limits_{l = 1}^m  P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} |X_n = i_n, (X_{n-1}, X_{n-2} ... X_0) = a_l)\cdot q_l\\
+    &= \sum\limits_{l = 1}^m  P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} |X_n = i_n)\cdot q_l\\
+    &= P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} |X_n = i_n) \cdot \sum\limits_{l = 1}^m q_l \\
+    &= P(X_{n+k} = i_{n+k}, ...X_{n+1} = i_{n+1} |X_n = i_n)
+\end{align*}
+Co należało udowodnić. \qed
+\\\\
+\textbf{Wniosek 2.1.2}\\
+Dla $A$, $A_{n+t}$ i $i_n$ określonych jak poprzednio, tym razem jednak $t = 1,2,3...$ zachodzi:
+\begin{align*}
+P(...X_{n+2} \in A_{n+2}, X_{n+1} \in A_{n+1}|X_n = i_n, (X_{0}, X_{1} ... X_{n-1}) \in A) = P(...X_{n+2} \in A_{n+2}, X_{n+1} \in A_{n+1}|X_n = i_n)
+\end{align*}
+Dowód: Mamy z ciągłości prawdopodobieństwa z góry:
+\begin{align*}
+&P(...X_{n+2} \in A_{n+2}, X_{n+1} \in A_{n+1}|X_n = i_n, (X_{0}, X_{1} ... X_{n-1}) =\\ &\lim_{k \to \infty} P(X_{n+k} \in A_{n+k}, X_{n+k-1} \in A_{n+k-1}...X_{n+1} \in A_{n+1}|X_n = i_n, (X_{0}, X_{1} ... X_{n-1}) \in A) = \\
+&\lim_{k \to \infty} P(X_{n+k} \in A_{n+k}, X_{n+k-1} \in A_{n+k-1}...X_{n+1} \in A_{n+1}|X_n = i_n) = \\
+&P(...X_{n+2} \in A_{n+2}, X_{n+1} \in A_{n+1}|X_n = i_n)
+\end{align*}
+\qed
+\\\\
+Powyższe fakty pokazują, że jeśli w ŁM znamy konkretny stan w teraźniejszości, to tylko od niego zależą stany w przyszłości (przeszłość nie ma znaczenia). Musi to być konkretny stan tj. nie można zastąpić $i_n \in S$ przez $A_n \subseteq S$, zauważmy bowiem, że np. warunek $A_n = S$ nie niesie ze sobą żadnej informacji, stąd w tej sytuacji na ogół równość nie zajdzie.
+\\\\
+\textbf{Definicja 2.1.2}\\
+\textit{Rozkładem początkowym}  łańcucha Markowa $\{X_n\}_{n \in \{0,1,2...\}}$ nazywamy $\nu = (\nu_i)_{i \in S}: \nu^T \in \mathbb{R}^S$ nazywamy rozkład prawdopodobieństwa zmiennej losowej $X_0$, a więc stanu zerowego, czyli $\nu_i = P(X_0 = i)$. Oczywiście $\forall i \in S: \nu_i \geq 0$ i $\sum\limits_{i \in S}\nu_i = 1$. Myślimy o $\nu$ jako o wektorze poziomym, w którym na \textit{i}-tej współrzędnej przechowujemy prawdopodobieństwo wystartowania ze stanu $i$.
+\\\\\textbf{Definicja 2.1.3}\\
+Macierz kwadratową $M = (m_{ij})_{i,j \in S} \in \mathbb{R}^{S \times S}$, taką że $\forall i, j \in S: m_{ij} \geq 0$ oraz $\forall i \in S: \sum\limits_{j \in S} m_{ij} = 1$ nazywamy \textit{macierzą stochastyczną}. 
+\\\\
+\textbf{Lemat 2.1.4}\\
+Iloczyn macierzy stochastycznych jest macierzą stochastyczną.\\
+Dowód: Weźmy macierze stochastyczne $A=(a_{ij})$ i $B=(b_{ij})$ i oznaczmy ich iloczyn przez $AB = ((ab)_{ij})$. $AB$ ma wyrazy nieujemne, są one bowiem sumą iloczynów wyrazów $A$ i $B$. Ponadto z definicji mnożenia macierzy mamy $$\sum\limits_{j \in S} (ab)_{ij} = \sum\limits_{j, k \in S} a_{ik}b_{kj} = \sum\limits_{k \in S} (a_{ik} \cdot \sum\limits_{j \in S} b_{kj}) =  \sum\limits_{k \in S} (a_{ik} \cdot 1) = 1$$ co było do udowodnienia (w ostatnich dwóch równościach skorzystaliśmy ze stochastyczności $A$ i $B$) \qed
+\\\\\textbf{Definicja 2.1.5}
+\\\textit{Jednorodnym łańcuchem Markowa} (JŁM) o rozkładzie początkowym $\{\nu_i\}_{i \in S}$ i stochastycznej \textit{macierzy (prawdopodobieństw) przejścia (w jednym kroku)} $\mathbb{P} = \{p_{ij}\}_{i, j \in S}$ nazywamy łańcuch Markowa $\{X_n\}_{n \in \{0,1,2...\}}$, taki że:
+\\ dla $n = 0,1,2...$ oraz $\forall i,j \in S$ zachodzi $P(X_{n+1} = j|X_n = i) = p_{ij}$ (a więc wartość ta nie zależy od \textit{n}). $p_{ij}$ nazywamy \textit{prawdopodobieństwem przejścia (w jednym kroku)} ze stanu \textit{i} do stanu \textit{j}.\\
+\\\\
+\textbf{Twierdzenie 2.1.6}
+\\Niech $\{X_n\}_{n \in \{0,1,2...\}}$ będzie jednorodnym łańcuchem Markowa o rozkładzie początkowym $(\nu_i)_{i \in S}$ oraz macierzy przejścia $\mathbb{P} = (p_{ij})_{i,j \in S}$. Wtedy dla każdego $n = 1,2,3...$ i $j \in S$:\\
+$$P(X_n = j) = \sum\limits_{i_0, i_1,... i_{n-1} \in S} \nu_{i_0} p_{i_{0}i_{1}} p_{i_{1}i_{2}} ... p_{i_{n-2}i_{n-1}}p_{i_{n-1}j}$$
+\\
+Dowód: Przeprowadzimy dowód przez indukcję. Dla $n=1$ z twierdzenia o prawdopodobieństwie całkowitym mamy:\\
+$P(X_1 = j) = \sum\limits_{i_0 \in S} P(X_1 = j | X_0 = i_0)P(X_0 = i_0) = \sum\limits_{i_0 \in S} P(X_1 = j | X_0 = i_0) \cdot \nu_{i_0} = \sum\limits_{i_0 \in S} P(X_1 = j | X_0 = i_0) \cdot \nu_{i_0} = \sum\limits_{i_0 \in S}  \nu_{i_0} \cdot p_{i_0j}$.
+\\Zatem twierdzenie jest prawdziwe dla $n=1$. Dalej załóżmy, że twierdzenie jest prawdziwe dla pewnego $n \geq 1$, pokażemy, że jest wówczas prawdziwe dla $n+1$. Korzystając kolejno z twierdzenia o prawdopodobieństwie całkowitym i z założenia indukcyjnego:\\ $P(X_{n+1} = j) = \sum\limits_{i_{n} \in S} P(X_{n+1} = j|X_n = i_n)\cdot P(X_n = i_n) = \sum\limits_{i_n \in S}(p_{i_nj} \cdot \sum\limits_{i_0, i_1, ... i_{n-1} \in S} \nu_{i_0} p_{i_{0}i_{1}} p_{i_{1}i_{2}} ... p_{i_{n-1}n}) = \sum\limits_{i_0, i_1,... i_n \in S} \nu_{i_0} p_{i_{0}i_{1}} p_{i_{1}i_{2}} ... p_{i_{n-1}i_n}p_{i_{n}j}$\\ co kończy dowód indukcyjny.
+\qedsymbol
+\\\\\\
+\textbf{Twierdzenie 2.1.7}\\
+Oznaczmy przez $\nu^{(n)} = (\nu_i^{(n)})_{i \in S}: \nu^{(n)} \in \mathbb{R}^S$ rozkład prawdopodobieństwa JŁM $\{X_n\}_{n = 0,1,2...}$ w momencie $n$, czyli $\nu^{(n)}_i = P(X_n = i)$. Wówczas dla każdego $n= 0,1,2,...$ $\nu^{(n)} = \nu \mathbb{P}^n$.\\
+Dowód: Dla $n=0$ teza wynika z definicji rozkładu początkowego, gdyż $\mathbb{P}^0$ jest równe macierzy identycznościowej. Dla $n>0$ teza wynika z twierdzenia (2.1.5), gdyż z definicji mnożenia macierzy $\sum\limits_{i_0, i_1,... i_{n-1} \in S} \nu_{i_0} p_{i_{0}i_{1}} p_{i_{1}i_{2}} ... p_{i_{n-2}i_{n-1}}p_{i_{n-1}j}$ jest i-tym wyrazem poziomego wektora $\nu \mathbb{P}^n$.
+\\\\\\
+\textbf{Definicja 2.1.8}\\
+Oznaczmy $\mathbb{P}(n) := \mathbb{P}^n$ dla $n=0,1,2,3..$. Macierz $\mathbb{P}(n) = (p_{ij}(n))_{i, j \in S}$ będziemy nazywać \textit{macierzą (prawdopodobieństw) przejścia w n krokach}, a $p_{ij}(n)$ \textit{prawdopodobieństwem przejścia z $i$ do $j$ w n krokach}.
+\\\\
+\textbf{Twierdzenie 2.1.9}
+\\(1) Dla każdego $n=0,1,2,3...$ $\mathbb{P}(n)$ jest stochastyczna
+\\(2) Dla $m,n \in \{0,1,2,3...\}$ $\mathbb{P}(m+n) = \mathbb{P}(m)\mathbb{P}(n)$, czyli dla $i,j \in S$: $$p_{ij}(m+n) = \sum\limits_{k \in S} p_{ik}(m) \cdot p_{kj}(n)$$
+\\(3) Dla dowolnych $m,n \in \{0,1,2...\}$ oraz $i,j,k \in S$ zachodzi $p(m+n)_{ij} \geq p(m)_{ik}\cdot p(n)_{kj}$.
+\\(4) Dla JŁM $\{X_n\}$, $i,j \in S$ $n,m \in {0,1,2...}$ zachodzi $P(X_{n+m} = j|X_n = i) = p_{ij}(m)$
+\\\\
+Dowód: Własność (1) wynika z tego, $\mathbb{P}(n)$ jest stochastyczna dla $n= 0,1$ (macierz identycznościowa jest stochastyczna, mamy $p_{ii}(0) = 1$ oraz $p_{ij} = 0$ dla $i\neq j$), lematu (2.1.4) i prostej indukcji. (2) wynika z łączności mnożenia macierzy (równania z tego punktu noszą miano równań Chapmana-Kołmogorowa). (3) wynika z (2) prawdopodobieństwa przejść są nieujemne. Przeprowadzimy dowód (4), po raz kolejny będzie to dowód indukcyjny – ze względu na $m$:
+\\Dla $m=0$ równość jest oczywista zarówno lewa, jak i prawa strona jest równa 1 wtedy i tylko wtedy, gdy $i = j$ oraz 0 w przeciwnym przypadku. Załóżmy, że teza jest spełniona dla pewnego $m \geq 0$, wtedy dla $m+1$ ze wzoru na prawdopodobieństwo całkowite i zał. indukcyjnego mamy: $$P(X_{n+m+1}=j|X_n = i) = \sum\limits_{s \in S} P(X_{n+m+1}=j \land X_{n+m+1}=j |X_n = i) =$$  $$\sum\limits_{s \in S} P(X_{n+m+1}=j | X_{n+m}=s)P(X_{n+m}=s|X_n = i) = \sum\limits_{s \in S} p_{is}(m)p_{sj} = p_{ij}(m+1)$$
+gdzie ostatnia równość wynika z definicji mnożenia macierzy.\qed
+\\\\
+(4) pokazuje, że stosowane nazewnictwo jest zgodne z intuicją. $p_{ij}(k)$ w istocie zadaje prawdopodobieństwo trafienia z $i$ do $j$ po $k$ krokach.
+\\Zdefiniujmy teraz pewne istotne własności łańcuchów Markowa, które powinny mieć łańcuchy zamodelowane do rozwiązania postawionych w tej pracy problemów.
+\\\\
+\textbf{Wniosek 2.1.10}\\
+Z powyższych rozważań oraz z twierdzenia (2.1.2). Jeśli $X_n$ jest JŁM o macierzy przejścia $\mathbb{P}$, to dla $t \in \mathbb{N}$ ciąg $X_{tn}$ także jest JŁM o macierzy $\mathbb{P}(t)$. Podobnie $X_{k}, X_{k+1}, X_{k+2}...$ jest JŁM o tej samej macierzy przejścia.
+\\\\
+\textbf{Definicja 2.1.10}\\
+Dla JŁM $\{X_n\}$ stany $i,j \in S$ nazwiemy \textit{komunikującymi się ze sobą} jeśli dla pewnych $m,n \geq 0$: $p_{ij}(m) > 0$ i $p_{ji}(n) > 0$. 
+Oznacza to, że będąc w dowolnym $i$ z niezerowym prawdopodobieństwem trafimy kiedyś do $j$ i na odwrót.
+\\\\
+\textbf{Definicja 2.1.11}\\
+Jednorodny łańcuch Markowa nazwiemy nieredukowalnym, jeśli wszystkie stany komunikują się ze sobą.
+\\\\
+\textbf{Definicja 2.1.12}\\
+Jednorodny łańcuch Markowa nazwiemy nieokresowym, jeśli dla każdego $i \in S$: $$NWD(\{n \in \{0, 1, 2...\}:  p_{ii}(n) > 0\}) = 1$$.
+\\\\
+\textbf{Fakt 2.1.13}\\
+Jeśli dla $n_1, n_2, ... n_k > 0$ $p_{ii}(n_i) > 0$ dla $i=1,2...k$ , to również $p_{ii}(a_1n_1 + a_2n_2 + ... a_kn_k) > 0$ dla nieujemnych całkowitych $a_i$. W szczególności jeśli $p_{ii}(n) > 0$, to również $p_{ii}(an) > 0$ dla dowolnego całkowitego $a \geq 0$.\\
+\\ Fakt dowodzimy z punktu (3) twierdzenia 2.1.9 i prostej indukcji. Innymi słowy jeśli łańcuch może powrócić po pewnych czasach, to może też do niego powrócić po sumie i wielokrotności tych czasów.
+\\\\Intuicyjnie można rozumieć nieokresowy łańcuch jako łańcuch, w którym stany nie mają okresu większego niż 1 – tj. nie zachodzi sytuacja, że powroty następują tylko po upływie całkowitych wielokrotności $m$ dla pewnego $m>1$. Nieredukowalność jest natomiast wyrażeniem faktu, że z każdego stanu możemy dojść do każdego innego z niezerowym prawdopodobieństwem. Warto zwrócić uwagę, że w własności nieredukowalności, nieokresowości, a więc i ergodyczności zależą tylko od macierzy prawdopodobieństw przejścia i nie zależą od rozkładu początkowego, tak więc powyższe określenia będę stosował wymiennie do JŁM i jego macierzy prawdopodobieństw przejścia. Z nieredukowalnością i nieokresowością wiąże się pewien lemat, który przyda się w późniejszym czasie.
+\\\\
+\textbf{Lemat 2.1.14}\\
+Jeśli JŁM jest nieredukowalny i nieokresowy, to dla dowolnych $i,j \in S$ istnieje takie $n > 0$, że $p_{ij}(n) > 0$ i $p_{jj}(n) > 0$.\\
+Dowód: Z nieredukowalności łańcucha istnieje takie $m > 0$, że $p_{ij}(m) > 0$.  Niech $A = \{n \in \{0, 1, 2...\}:  p_{jj}(n) > 0\} = \{0, n_1, n_2, n_3 ... \}$. Wtedy z nieokresowości istnieje takie $k > 1$, że $n_1, n_2... n_k$ są względnie pierwsze. Skoro tak, to ze znanego z algebry faktu istnieją takie $x_1, x_2, ... x_k \in \mathbb{Z}$, że $x_1n_1 + x_2n_2 + ... + x_k n_k = 1$.  Zatem będą istniały także takie całkowite nieujemne $S := y_1, ... y_k$, że $y_1n_1 + y_2n_2 + ... + y_k n_k \cong -m \mod n_1$ - wystarczy wziąć $y_l = -m \cdot x_l + t \cdot n_1$, gdzie $t$ jest dobrane tak, żeby wszystkie $y_l$ były nieujemne. Mamy więc $S = an_1 - m > 0$ dla pewnego $a \in \mathbb{Z}_+$. Korzystając z faktu 2.1.13 $p_{jj}(S) > 0$, a zatem z twierdzenia 2.1.9 (3) $p_ij(an_1) = p_{ij}(m + S) \geq p_{ij}(m)\cdot p_{ii}(S) > 0$. Ale z faktu 2.1.13 również $p_{jj}(an_1) > 0$, a więc biorąc $n = an_1$ dostajemy tezę. \qed
+\\\\
+\textbf{Wniosek 2.1.15}\\
+Jeśli JŁM jest nieredukowalny i nieokresowy to dla dowolnych $i,j,k \in S$ istnieje takie $n$, że $p_{ik}(n) > 0$ i $p_{jk}(n) > 0$.
+\\\\ Dowód: Korzystamy z lematu i bierzemy $m$, że $p_{ij}(m) > 0$ i $p_{jj}(m) > 0$, z nieredukowalności istnieje takie $a$, że $p_{jk}(a) > 0$, wystarczy zatem wziąć $n = m + a$. \qed
+\\\\
+\subsection{Rozkład stacjonarny i twierdzenie ergodyczne}
+\textbf{Definicja 2.2.1}
+Dla JŁM $X = \{X_n\}_{n = 0,1,2...}$ \textit{rozkładem stacjonarnym} nazwiemy rozkład prawdopodobieństwa na $S$: $\pi = (\pi_i)_{i \in S}$ spełniający warunek: \\
+$$\pi_i = \sum\limits_{j \in S} \pi_j \cdot p_{ji}$$
+Co w zapisie macierzowym jest równoważne:
+$$\pi = \pi \mathbb{P}$$
+Oczywiście jako że $\pi$ jest rozkładem, to $\pi_i \geq 0$ oraz $\sum\limits_{i \in S} = 1$. Równanie powyżej nazywamy \textit{równaniem balansu}.\\
+\\\\
+\textbf{Fakt 2.2.2}\\
+Jeśli $\pi$ jest rozkładem stacjonarnym i jednocześnie rozkładem początkowym, to rozkłady łańcucha w każdym momencie $n$ są takie same, i.e. $\pi^{(n)} = \pi$ dla każdego $n = 0,1,2..$.
+\\
+Dowód: Przez indukcję względem $n$. Dla $n = 0$ fakt wynika z tego, że $\pi$ jest rozkładem początkowym. Dla $n+1>0$ przy założeniu, że fakt zachodzi dla $n$, dostajemy:
+$$\pi^{(n)} = \pi^{(n-1)} \mathbb{P} = \pi \mathbb{P} = \pi$$ \qed\\
+JŁM, który w każdym kroku ma ten sam rozkład (czyli startuje z rozkładu stacjonarnego), nazywamy \textit{stacjonarnym} - zwróćmy uwagę, że wtedy także rozkłady łączne $(X_0, X_1 ..., X_n)$ i $(X_h, X_{h+1}, ..., X_{h+n})$ $\forall h \in \mathbb{N}$ są takie same - ogólnie właśnie taką własność nazywamy \textit{stacjonarnością}.
+\\\\
+\textbf{Twierdzenie 2.2.3 (ergodyczne)}
+\\ Załóżmy, że JŁM $X_n$ jest nieredukowalny i nieokresowy. Wówczas
+\\ (1) $X_n$ ma dokładnie jeden rozkład stacjonarny $\pi$, ponadto $\forall j \in S$ $\pi_j > 0$.
+\\ (2) Dla $i,j \in S$: $$\lim\limits_{n \to \infty} p_{ij}(n) = \pi_j$$ oraz dla dowolnego rozkładu początkowego $\nu$ przyjmując wcześniejsze oznaczenia mamy $$\lim\limits_{n \to \infty} \nu_j(n) = \pi_j$$ (łańcuch, w którym zachodzi opisana zbieżność do rozkładu stacjonarnego, nazywamy ergodycznym).
+\\
+(3) Dla stanu $j \in S$ zdefiniujmy zmienną losową $$W_{j,n}: \Omega \rightarrow S: W_{j,n} :=  \frac{1}{n} \sum\limits_{i = 0}^{n-1} \mathbbm{1}_{\{X_i = j\}}$$ 
+Wówczas niezależnie od rozkładu początkowego $\forall j \in S: W_{j,n} \xrightarrow{{n \rightarrow \infty}} \pi_j$ prawie na pewno.
+\\\\Do dowodu (1) i (2) użyjemy techniki \textit{couplingu}. Pozwoli nam ona nie tylko na udowodnienie twierdzenia, ale także da wstępne wyobrażenie na temat tempa zbieżności algorytmów bazujących na JŁM. Do dowodu (3) będziemy musieli udowodnić i użyć własności tzw. \textit{czasów $n$-tej wizyty w stanie $s$}. Da się pokazać, że zachodzenie (2) implikuje nieokresowość i nieredukowalność JŁM (dla tej pracy nie jest to istotne, więc nie będziemy tego robić). Tak więc można przyjąć: ergodyczność=nieredukowalność+nieokresowość – nieredukowalną i nieokresową macierz stochastyczną będziemy więc nazywać ergodyczną.
+\\
+
+\subsection{Konstrukcja i istnienie JŁM o zadanych rozkładzie początkowym i macierzy przejścia}
+W symulacjach i zastosowaniach algorytmicznych przyjmujemy, że mamy do dyspozycji generator niezależnych zmiennych losowych z rozkładu jednostajnego $U[0,1]$ (w praktyce mamy dostęp tylko do generatora liczb \textit{pseudolosowych}, ale przy odpowiednio zaimplementowanym generatorze rozkład jednostajny jest przybliżany wystarczająco dobrze dla celów algorytmicznych). \\
+Oznaczmy przez $U_n : n = 0,1,2,3... \sim U[0,1]$ $n$-tą niezależną próbę z rozkładu jednostajnego (w zastosowaniach algorytmicznych wylosowaną przez generator). Dla przestrzeni stanów $S = \{s_0, s_1, ... s_k\}$, rozkładu początkowy $\nu$ i macierzy przejścia $\mathbb{P} = (p_{ij})$. zdefiniujmy ciąg zmiennych losowych $Y_n$  o wartościach w $S$:
+    $$Y_0 = \varphi_{\nu}(U_0) =
+    \begin{cases}
+      s_0, & \text{jeśli } U_0 \in [0, \nu_{s_0}) \\
+      s_1, & \text{jeśli } U_0 \in [\nu_{s_0}, \nu_{s_0}+\nu_{s_1}) \\
+      \vdots \\
+      s_k, & \text{jeśli } U_0 \in [\sum\limits_{i=0}^{k-1} \nu_{s_i}, 1]
+    \end{cases}$$\\
+    \\oraz dla $n > 0$: $$Y_n= \varphi_{\mathbb{P}}(U_n, Y_{n-1)} =
+    \begin{cases}
+      s_0, & \text{jeśli } U_n \in [0, p_{Y_{n-1} s_0}) \\
+      s_1, & \text{jeśli } U_n \in [p_{Y_{n-1} s_0}, p_{Y_{n-1} s_0}) \\
+      \vdots \\
+      s_k, & \text{jeśli } U_n \in [\sum\limits_{i=0}^{k-1} p_{Y_{n-1} s_i}, 1]
+    \end{cases}$$
+\\
+Łatwo sprawdzić, że $Y_n$ zadaje jednorodny łańcuch Markowa o rozkładzie początkowym $\nu$ i macierzy przejścia $\mathbb{P}$. Funkcję $\varphi_{\mathbb{P}}$ nazywamy funkcją update'u. Zauważmy, że w ten sposób otrzymujemy również dowód istnienia ciągu zmiennych losowych będącego łańcuchem Markowa o zadanym rozkładzie początkowym i macierzy przejścia.
+Podobnie, zmieniając w czasie funkcję update'u (bo zmienia się w czasie wtedy również macierz przejścia), możemy skonstruować również dany niejednorodny łańcuch Markowa. W praktyce funkcja update'u może przyjmować różne postaci – najważniejsze, by rozkład przejść uzyskany w ten sposób był zgodny z macierzą przejścia i by opierał się na ciągu niezależnych zmiennych losowych (co daje gwarancję na spełnianie własności Markowa).
+\subsection{Zbieżność do rozkładu stacjonarnego. Coupling}
+Zacznijmy od zdefiniowania odległości między rozkładami na $S$.\\\\
+\textbf{Definicja 2.3.1}
+Odległością $TV$ między rozkładami prawdopodobieństwa $\nu$ i $\mu$ na $S$ (\textit{total variation distance}) nazwiemy $$\|\nu - \mu\|_{TV} := \max\limits_{A \subseteq S} |\nu(A) - \mu(A)|$$\\
+\\
+\textbf{Definicja 2.3.2}
+Odległością w normie $L_1$ między rozkładami prawdopodobieństwa $\nu$ i $\mu$ na $S$ nazwiemy:
+$$\|\nu - \mu\|_{L_1} = \sum\limits_{\substack{j \in S}} |\mu_j - \nu_j|$$
+\\
+Jest znanym faktem, że metryka $L_1$ na $\mathbb{R}^S$ zadaje metrykę równoważną z metryką euklidesową – dla dowodu twierdzenia ergodycznego możemy zatem skupić się na badaniu zbieżności w $L_1$. Jako równoważna z euklidesową przestrzeń indukowana przez tę metrykę jest zupełna. Ponadto zbiór rozkładów tj. 
+$$\{\nu \in \mathbb{R}^S:\, \nu_i \geq 0, \, \sum\limits_{i \in S} \nu_i = 1\}$$ 
+jest zbiorem domkniętym tej przestrzeni, a więc również jest przestrzenią zupełną w tej metryce. Poniższy lemat pokazuje równoważność metryk $L_1$ i $TV$.
+\\\\
+\textbf{Lemat 2.3.2}
+Zachodzi: 
+$$\|\nu - \mu\|_{TV} = \frac{1}{2}\|\nu - \mu\|_{L_1} = \sum\limits_{\substack{j \in S:\\ \nu_j > \mu_j}} (\nu_j - \mu_j) = \sum\limits_{\substack{j \in S:\\ \mu_j > \nu_j}} (\mu_j - \nu_j)$$
+\\
+Dowód: Oznaczmy kolejno: \begin{align*}
+&A = \{j \in S: \nu_j > \mu_j\}\\
+&B = \{j \in S: \mu_j > \nu_j\}\\
+&C = \{j \in S: \mu_j = \nu_j\}\\
+\end{align*}
+Najpierw zauważmy, że dla dowolnego $D \subseteq S$ $$|\nu(D) - \mu(D)| =  \left\| \sum\limits_{\substack{j \in D}} (\nu_j - \mu_j) \right\| =  \left\lvert \sum\limits_{\substack{j \in D:\\ \nu_j > \mu_j}} (\nu_j - \mu_j) - \sum\limits_{\substack{j \in D:\\ \mu_j > \nu_j}} (\mu_j - \nu_j) \right\rvert$$
+Ponieważ w ostatniej różnicy odjemna i odjemnik są nieujemne, moduł będzie największy, gdy jedno z nich będzie równe zero. Zatem zbiór, dla którego $|\nu(D) - \mu(D)|$ przyjmuje maksymalną wartość albo jest zawarty w $A \cup C$ albo w $B \cup C$. Ponieważ jednak stany z $C$ nie wpływają z definicji na wartość modułu ($\nu_j - \mu_j = 0$ dla tych stanów), możemy przyjąć, że zbiór maksymalizujący wartość modułu jest w całości zawarty w $A$ albo w całości zawarty w $B$. Ponadto, jeśli $D \subseteq A$, to $$|\nu(D) - \mu(D)| = \sum\limits_{j \in D} (\nu_j - \mu_j) \leq \sum\limits_{j \in D} (\nu_j - \mu_j) \leq \sum\limits_{j \in D} (\nu_j - \mu_j) + \sum\limits_{j \in S \setminus D} (\nu_j - \mu_j) = |\nu(A) - \mu(A)|$$\\
+Analogiczne rozumowanie przeprowadzamy dla $B$. Stąd widać, że maksimum definiujące odległość jest przyjmowane dla $A$ lub dla $B$ (*). Mamy $S = A \cup B \cup C$ oraz $A, B, C$ są parami rozłączne. Z definicji $C$: $\nu(C) = \mu(C)$, zatem $\nu(A) + \nu(B) = \mu(A) + \mu(B)$, a więc $|\nu(A) - \mu(A)| = |\mu(B) - \nu(B)|$, a więc w połączeniu z (*) $$\|\nu - \mu\|_{TV} = \sum\limits_{\substack{j \in S:\\ \nu_j > \mu_j}} (\nu_j - \mu_j) = \sum\limits_{\substack{j \in S:\\ \mu_j > \nu_j}} (\mu_j - \nu_j)$$
+Ostatecznie z definicji normy $L_1$:
+$$\|\nu - \mu\|_{L_1} = \sum\limits_{\substack{j \in S:\\ \nu_j > \mu_j}} (\nu_j - \mu_j) + \sum\limits_{\substack{j \in S:\\ \mu_j > \nu_j}} (\mu_j - \nu_j) = 2\|\nu - \mu\|_{TV}$$
+co po podzieleniu stronami przez 2 kończy dowód lematu. \qed
+\\\\
+\textbf{Lemat 2.3.3}
+Weźmy zmienne losowe $X$, $Y$ o wartościach z $S$ o rozkładach $\nu$ i $\mu$ odpowiednio i niech $(X, Y) \sim \rho$. Wówczas
+\begin{center}
+$P(X \neq Y) \geq \|\nu - \mu\|_{TV}$
+\end{center}
+Dowód:\\
+Jako że $\rho$ jest rozkładem $(X,Y)$ to $\nu$ i $\mu$ są jego rozkładami brzegowymi:
+\begin{align*}
+&\forall i \in S: \sum\limits_{j \in S} \rho_{i, j} = \nu_i\\
+&\forall j \in S: \sum\limits_{i \in S} \rho_{i, j} = \mu_j\\
+\end{align*}
+Zatem:\\
+$\rho_{i, i} \leq \nu_i$ oraz $\rho_{i, i} \leq \mu_i$, więc $\rho_{i,i} \leq min(\nu_i, \mu_i)$ (*). Dalej mamy
+\begin{align*}
+P(X \neq Y) &= 1 - P(X = Y) = 1 - \sum\limits_{i \in S} \rho_{i, i} \\
+&= \sum\limits_{i \in S} \nu_i - \sum\limits_{i \in S} \rho_{i, i}  && \text{korzystamy z (*)}\\
+&\geq \sum\limits_{i \in S} \nu_i - \sum\limits_{\substack{i \in S\\ \nu_i \leq \mu_i}} \nu_i - \sum\limits_{\substack{i \in S\\ \nu_i > \mu_i}} \mu_i \\
+&= \sum\limits_{\substack{i \in S\\ \nu_i > \mu_i}} (\nu_i - \mu_i) \\
+&= \|\nu - \mu\|_{TV} && \text{z 2.3.2}
+\end{align*}
+\qed
+\\
+Teraz przejdziemy do dowodu punktów (1) i (2) twierdzenia ergodycznego przy pomocy \textit{couplingu}.
+\\\\
+Skonstruujmy dwa jednorodne łańcuchy Markowa $X_n$ i $Y_n$ o tej samej macierzy przejścia $\mathbb{P}$ (nieredukowalnej i nieokresowej) o rozkładach początkowych $\delta_i$ i $\delta_j$ odpowiednio, takich że każdy z nich jest skupiony w jednym stanie, i.e. $(\delta_i)_i = 1, (\delta_i)_k = 0 \, \forall k \neq i$ oraz $(\delta_j)_j = 1, (\delta_j)_k = 0 \, \forall k \neq j$ (może być $i=j$ lub $i\neq j$). Używamy konstrukcji z podrozdziału 2.3. Dopóki $X_n \neq Y_n$, do generowania kolejnych stanów używamy niezależnych wzajemnie ciągów i.i.d. $U_n^{(X)}, U_n^{(Y)} \sim U[0,1]$, od pierwszego $N$ zaś, przy którym $X_N = Y_N$, kolejne stany generujemy obu łańcuchów na podstawie tego samego ciągu i.i.d. zm. losowych $U_{N+1}, U_{N+2} ... \sim U[0,1]$. Dla każdej zmiennej używamy tej samej funkcji update'u $\varphi_{\mathbb{P}}$. Różne są funkcje generujące $X_0$ i $Y_0$, mianowicie $X_0 = \varphi_{\delta_i}(U_0^{(X)}) = i$ oraz $Y_0 = \varphi_{\delta_j}(U_0^{(Y)}) = j$.\\
+Konstrukcja taka jest dla obu łańcuchów zgodna z założeniami konstrukcji z podrozdziału (2.3), zatem oba ciągi $X_n$ i $Y_n$ są łańcuchami Markowa, $X_n$ o rozkładzie początkowym $\delta_i$, $Y_n$ – $\delta_j$. Zatem w dowolnym momencie $n$ ich rozkłady to $\delta_i\mathbb{P}^n$ i $\delta_j\mathbb{P}^n$ odpowiednio. Zwróćmy teraz uwagę, że łańcuchy są skonstruowane tak, że jeśli $N$ będzie najmniejszym takim $N$, że $X_N = Y_N$, to dla $n \leq N$ $X_n$ i $Y_n$ są niezależne, natomiast $\forall n \geq N \, X_n = Y_n$. Dlatego też taką konstrukcję nazywamy \textit{couplingiem}.\\
+Ogólnie \textit{coupling} to dwa łańcuchy (dwie 'kopie') o tej samej macierzy przejścia startujące z pewnych rozkładów początkowych, do momentu spotkania biegnące niezależnie, a po pierwszym spotkaniu biegnące już razem. Stąd nazwa – od pewnego momentu bowiem łańcuchy są ''sparowane'' ze sobą. 
+\\
+\\
+\textbf{Lemat 2.3.4}\\
+Dla powyżej zdefiniowanych łańcuchów $X_n$, $Y_n$: $\lim\limits_{n \to \infty} P(X_n \neq Y_n) = 0$\\
+Dowód: Jeśli $i = j$, to ciąg $q_n = P(X_n \neq Y_n)$ jest stale równy zero, więc lemat zachodzi. Załóżmy więc, że $i \neq j$. Ponieważ łańcuch jest nieredukowalny i nieokresowy, a przestrzeń stanów skończona, z (2.1.15) istnieje takie $N$, $k \in S$, że $p_{sk}(N) > 0$ dla każdego $s \in S$.\\\\
+Oznaczmy $\varepsilon := \sqrt{min(s \in S: p_{sk}(N))} > 0$ Wtedy: 
+\begin{align*}
+P(X_N \neq Y_N) &\leq 1 - P(X_N = k, Y_N = k) \\
+&= 1 - P(X_n = k)P(Y_n = k) && \text{z niezależności, dopóki $X_n \neq Y_n$} \\
+&= 1 - P(X_n = k|X_0 = i) \cdot P(Y_n = k|Y_0 = j) \\
+&= 1 - p_{ik}p_{jk} \leq 1 - \sqrt{\varepsilon^2} = 1 - \varepsilon < 1
+\end{align*}
+\\
+Pokażemy teraz, że $P(X_{tN} \neq Y_{tN}) \leq (1-\varepsilon)^t$ dla $t=1,2,3...$ (*). Przeprowadzimy argument indukcyjny. Dla $t = 1$ jak pokazaliśmy, jest to prawda. Przy założeniu, że twierdzenie jest prawdziwe dla wszystkich $t \geq T \geq 0$, dla $T+1$ mamy 
+\begin{align*}
+    &P(X_{(T+1)N} \neq Y_{(T+1)N}) = P(X_{(T+1)N} \neq Y_{(T+1)N} \land X_{TN} \neq Y_{TN})
+    &\text{z konstrukcji łańcuchów:}\\\\
+    &= P(X_{(T+1)N} \neq Y_{(T+1)N} | X_{TN} \neq Y_{TN})P(X_{TN} \neq Y_{TN})\\
+    &\leq (1 - (P(X_{(N+1)T)} = k, P(Y_{(N+1)T)} = k  |  X_{TN} \neq Y_{TN})) \cdot P(X_{TN} \neq Y_{TN}) \\\\
+    &\text{z  założenia indukcyjnego i twierdzenia o prawdopodobieństwie całkowitym}
+    \end{align*}
+    \begin{align*}
+    & = \left(1 - \sum\limits_{\substack{i,j \in S\\i\neq j}} P(X_{(N+1)T)} = k, P(Y_{(N+1)T} = k | X_{NT} = i, Y_{NT} = j)P(X_{NT} = i, Y_{NT} = j | X_{NT} \neq Y_{NT})\right)\\\\
+    &\cdot (1 - \varepsilon)^T
+    \end{align*}
+    \begin{align*}
+    &\text{z definicji $\varepsilon$, niezależności, dopóki $X_n \neq Y_n$ i jednorodności}\\
+    &\leq \left( 1 - \varepsilon \left(\sum_{\substack{i,j \in S\\i\neq j}} P(X_{NT} = i, Y_{NT} = j | X_{NT} \neq Y_{NT})\right)\right)\cdot (1- \varepsilon)^T\\\\
+    &\text{w sumie dostajemy całe zdarzenie, po którym warunkujemy, więc}
+    \\\\
+    &= (1-\varepsilon)(1-\varepsilon)^T = (1- \varepsilon)^{T+1}
+\end{align*}
+Teraz zauważmy jeszcze, że ciąg $q_n = P(X_n \neq Y_n)$ jest nierosnący ponieważ $\{X_{n+1} \neq Y_{n+1}) \subseteq \{X_{n} \neq Y_{n})$, ze względu na to jak zdefiniowane są oba łańcuchy Markowa. Stąd dla dowolnego $N > 0$ od pewnego miejsca wszystkie $q_n \leq (1-\varepsilon)^N$, a więc $q_n \xrightarrow{n \to \infty} 0$. \qed
+\\\\
+\textbf{Twierdzenie 2.3.5}\\
+Dla nieredukowalnej i nieokresowej macierzy $\mathbb{P}$ oraz dowolnych $i, j \in S$ zachodzi $$\|\delta_i\mathbb{P}^n - \delta_j\mathbb{P}^n\|_{TV} \xrightarrow{n \to \infty} 0$$ $$\|\delta_i\mathbb{P}^n - \delta_j\mathbb{P}^n\|_{L_1} \xrightarrow{n \to \infty} 0$$
+\\Dowód: Korzystamy z (2.3.3) i dostajemy w ten sposób, że $$0 \leq \|\delta_i\mathbb{P}^n - \delta_j\mathbb{P}^n\|_{TV} \leq q_n = P(X_n \neq Y_n)$$
+z (2.3.4) $q_n \to 0$, więc korzystamy z twierdzenia o trzech ciągach i dostajemy pierwszą część lematu. Do części drugiej wystarczy przypomnieć sobie, że z (2.3.2) $$\|\delta_i\mathbb{P}^n - \delta_j\mathbb{P}^n\|_{L_1} = 2\|\delta_i\mathbb{P}^n - \delta_j\mathbb{P}^n\|_{TV} \to 0$$\qed \\
+\\
+Widać więc kandydata na rozkład stacjonarny $$\pi := \lim\limits_{n \to \infty} \delta_i\mathbb{P}^n$$ gdzie wybór $i \in S$ jest dowolny, z (2.3.5) bowiem można zauważyć, jeśli granica istnieje, to nie zależy od $i$. Żeby udowodnić punkty (1), (2) twierdzenia ergodycznego pozostaje pokazać, że:
+\begin{enumerate}
+	\item[(a)] granica istnieje i nie zależy od rozkładu początkowego
+	\item[(b)] zadaje rozkład stacjonarny 
+	\item[(c)] $\pi_i > 0$ dla każdego $i \in S$ 
+	\item[(d)] zachodzi $p_{ij}(n) \to \pi_j$
+\end{enumerate}
+Dowód (a): Pokażemy, że ciąg $\delta_i\mathbb{P}^n$ spełnia warunek Cauchy'ego. Istotne jest, że wcześniejsze rozważania były niezależne od stanów początkowych $i, j$, zatem (2.3.5) zachodzi dla dowolnej pary stanów. Ustalmy $\varepsilon > 0$ oraz takie $K$, że dla każdej pary stanów $s_1, s_2 \in S$ i $n > K$  zachodzi $\|\delta_{s_1}\mathbb{P}^n - \delta_{s_2}\mathbb{P}^n\|_{L1} < \varepsilon$. Takie $K$ istnieje, bo jest skończenie wiele par stanów i dla każdej pary $\|\delta_{s_1}\mathbb{P}^n - \delta_{s_2}\mathbb{P}^n\|_{L1} \to 0$ z lematu (2.3.5). Weźmy sobie dowolne $N > M > K$. Zauważmy tedy, że $\delta_i\mathbb{P}^{N-M}$ zadaje pewien rozkład $\mu$. Zauważmy też, że taki rozkład $\mu$ (i dowolny inny) na $S$ da się zapisać jako $\mu = \sum\limits_{k \in S} \mu_k\delta_k$. Zatem:\\\\
+\begin{align*}
+\|\delta_i\mathbb{P}^N - \delta_i\mathbb{P}^M\|_{L_1} &= \|(\delta_i\mathbb{P}^{N-M})\mathbb{P}^{M} - \delta_i\mathbb{P}^M\|_{L_1}\\  
+&= \|(\mu\mathbb{P}^{M} - \delta_i\mathbb{P}^M\|_{L_1} \\ 
+&= \|(\mu\mathbb{P}^{M} - \delta_i\mathbb{P}^M\|_{L_1} \\
+&= \|(\sum\limits_{k \in S} \mu_k\delta_k)\mathbb{P}^{M} - \delta_i\mathbb{P}^M\|_{L_1} \\
+&= \|(\sum\limits_{k \in S} \mu_k\delta_k)\mathbb{P}^{M} - (\sum\limits_{k \in S} \mu_k)\delta_i\mathbb{P}^M\|_{L_1} \\
+&= \|(\sum\limits_{k \in S} \mu_k(\delta_k - \delta_i))\mathbb{P}^{M}\|_{L_1}  \\
+&\leq  \sum\limits_{k \in S} \mu_k\|\delta_k\mathbb{P}^M - \delta_i\mathbb{P}^M\|_{L1} < \sum\limits_{k \in S} \mu_k\varepsilon = \varepsilon
+\end{align*}
+\\
+Gdzie ostatnia nierówność wynika z nierówności trójkąta i tego, że $M > K$. Zatem warunek Cauchy'ego jest spełniony, przestrzeń rozkładów jest zupełna, a więc granica istnieje. Przeprowadzając rozumowanie jak powyżej dla dowolnego rozkładu początkowego $\nu = \sum\limits_{k \in S} \nu_k\delta_k$ (czyli wstawiając $\nu$ w miejsce $\mu$) pokazujemy, że $$\nu^{(n)} \xrightarrow{n \to \infty} \pi$$ Zatem granica nie zależy od rozkładu początkowego.\qed \\\\
+Dowód (b): Zauważmy, że $$\pi\mathbb{P} = (\lim\limits_{n \to \infty} \delta_i\mathbb{P}^n)\mathbb{P} = \lim\limits_{n \to \infty} \delta_i\mathbb{P}^{n+1} = \pi$$ zatem $\pi$ jest rozkładem stacjonarnym.
+Jest też jedynym rozkładem stacjonarnym, bo pokazaliśmy wcześniej, że granica $$\lim\limits_{n \to \infty} \nu\mathbb{P}^n = \pi$$ nie zależy od rozkładu początkowego. Jeśli istniałby inny rozkład stacjonarny $\pi' \neq \pi$, to z równania balansu byłoby $\pi'\mathbb{P} = \pi'$, a więc $\pi'\mathbb{P}^n \to \pi'$, ale skoro granica nie zależy od rozkładu początkowego, to $\pi'\mathbb{P}^n \to \pi$, a więc mamy sprzeczność, zatem rozkład $\pi$ jest jedynym rozkładem stacjonarnym. \qed\\\\
+Dowód (c): Ustalmy $i,j \in S$. Mamy $$\pi_j = (\lim\limits_{n \to \infty} \delta_i\mathbb{P}^n)_j = (\delta_i \lim\limits_{n \to \infty} \mathbb{P}^n)_j = (\delta_i)_i \lim\limits_{n \to \infty} p_{ij}(n) = \lim\limits_{n \to \infty} p_{ij}(n)$$ co należało udowodnić. \qed\\\\
+Dowód (d): Weźmy dowolne $k \in S$. Jak w lemacie (2.3.4) istnieje $N$, że $\forall s \in S:\, p_{sk}(N) > 0$, ustalmy $\varepsilon = \min_{s \in S}(p_{sk}(N)) > 0$. Z definicji $\varepsilon$ i własności Markowa 
+\begin{align*}
+P(X_N = k) &= \sum\limits_{s \in S} P(X_N = k|X_0 = s)P(X_0 = s) \\
+&= \sum\limits_{s \in S} p_{sk}(N)P(X_0 = s) \\
+&\geq \varepsilon \sum\limits_{s \in S} P(X_0 = s) = \varepsilon
+\end{align*}
+Stosując prostą indukcję pokazujemy, że także dla każdego $t = 1,2,3...$, $P(X_{tN} = k), \geq \varepsilon$, bo 
+$$P(X_{(t+1)N} = k) = \sum\limits_{s \in S} p_{sk}(N)P(X_{tN} = s) \geq \varepsilon \sum\limits_{s \in S} P(X_{tN} = s) = \varepsilon$$
+\qed
+\\ Udowodnione zostały zatem pierwsze dwa punkty twierdzenia ergodycznego. Widzimy również, że dowód lematu (2.3.4), przedstawienie dowolnego rozkładu jako sumy ważonej $\delta_k$ (oraz nierówność z (2.3.3)) wskazują w pewien sposób tempo zbieżności do rozkładu stacjonarnego, tj. odległość od rozkładu stacjonarnego w $n$-tym kroku jest mniejsza od $c \cdot (\sqrt[N]{(1-\varepsilon)})^n = c\alpha^n$ dla $N, \varepsilon$ zdefiniowanych w dowodzie (2.3.4) i pewnej stałej $c$. Tak więc tempo zbieżności wg rozkładu jest w pewien sposób wykładnicze, jednak na razie nie mówi to nam za dużo. Dokładniej tempem zbieżności zajmę się przy okazji analizy algorytmów (pojawią się pojęcia \textit{mixing time} itd.).
+\\\\
+\subsection{Czasy $n$-tej wizyty i zbieżność prawie na pewno}
+Przyjmujemy te same założenia na temat JŁM, co w poprzednim rozdziale (czyli nieredukowalność i nieokresowość, skończona przestrzeń stanów S). Wiemy już, że \\
+\\
+\textbf{Definicja 2.5.1} 
+Czasem $n$-tej wizyty:  $\tau_n^{(s)}$  w stanie $s \in S$ jednorodnego łańcucha Markowa $X_n$. nazywamy:\\
+\begin{align*}
+&\tau_1^{(s)} = \inf_{m = 0,1,2...} \{m: X_m = s\}\\
+&\tau_n^{(s)} = \inf_{m > \tau_{n-1}^{(s)}} \,\,\,\,\{m: X_m = s\} \,\,\, \text{dla $n$ > 1}
+\end{align*}
+Ponadto wprowadźmy:
+\begin{align*}
+    &\gamma_1^{(s)} = \tau_1^{(s)}\\
+    &\gamma_n^{(s)} = \tau_n^{(s)} - \tau_{n-1}^{(s)}\,\,\,\text{dla $n > 1$}
+\end{align*}
+\\
+Intuicja jest jasna: $\tau_n^{(s)}$ to moment, w którym łańcuch odwiedził stan $s$ po raz $n$-ty, $\gamma_1^{(s)}$ to czas, jaki upłynął do pierwszego pobytu łańcucha w stanie $s$, $\gamma_2^{(s)}$ to czas, który upłynął między pierwszym a drugim pobytem, kolejne $\gamma$ to czasy między kolejnymi powrotami.\\
+By móc wykorzystać te struktury, zaczniemy od udowodnienia, że można je traktować jak zmienne losowe, czyli że są skończone prawie na pewno. Zaczniemy od lematu. \\
+\textbf{Lemat 2.5.2}
+\\ Istnieją $1 \geq \varepsilon > 0$ i $N \in \mathbb{N}$ takie że $\forall s \in S: \,\, Q_t = P(X_{tN} \neq s, X_{(t-1)N} \neq s ... X_N \neq s) \leq (1-e)^t$.\\
+Dowód: W zasadzie dowód powyższego lematu zawiera się w dowodzie lematu (2.3.4). Jak poprzednio istnieje takie $N > 0$, że dla dowolnego $j \in S$ mamy $p_{js}(N) > 0$, a więc bierzemy $1 \geq \varepsilon = \min_{j \in S} p_{js}(N) > 0$ i przeprowadzamy dowód indukcyjny.\\
+dla t = 1 mamy ($\nu$ – rozkład początkowy).\\
+\begin{align*}
+Q_1 = 1 - P(X_N = s) = 1 - \sum _{j \in S} \nu_jp_{js}(N) \leq 1 - \varepsilon \sum _{j \in S} \nu_j = 1 - \varepsilon
+\end{align*}
+\\
+Dla $t > 1$ przy założeniu, że lemat zachodzi dla $t-1$:
+\begin{align*}
+Q_{t} &= P(X_{tN} \neq s, X_{(t-1)N} \neq s, ... X_N \neq s) \\
+&= P(X_{tN} \neq s | X_{(t-1)N} \neq s, ... X_N \neq s) \cdot P(X_{(t-1)N} \neq s, ... X_N \neq s) \\
+&= P(X_{tN} \neq s | X_{(t-1)N}) \cdot Q_{t-1}\\
+&\leq (1- \varepsilon)^{t-1} P(X_N \neq s|X_0 \neq s) \\
+&= (1- \varepsilon)^{t-1} \cdot (1 - P(X_N = s|X_0 \neq s)) \\
+&= (1- \varepsilon)^{t-1} \left(1 - \frac{\sum_{\substack{j \in S\\j \neq s}} p_{js}\nu_j}{\sum_{\substack{j \in S\\j \neq s}} \nu_j}\right) \\
+&\geq (1-\varepsilon)^{t-1} (1-\varepsilon) = (1-\varepsilon)^t
+\end{align*}
+\\
+gdzie prócz założenia indukcyjnego skorzystaliśmy z własności Markowa.
+\\\\
+\textbf{Wniosek 2.5.3}\\
+Dla każdego $s \in S: \,\, P(X_0 \neq s, X_{1} \neq s, X_2 \neq s ...) = 0$.\\
+Dowód: weźmy takie $N$ i $\varepsilon$ jak w lemacie (2.5.2). Wtedy z zawierania zdarzeń dla każdego $t = 1,2,3,...$:
+\begin{align*}
+0 \leq P(X_0 \neq s, X_{1} \neq s, X_2 \neq s ...) \leq P(X_N \neq s, X_{2N} \neq s, ..., X_{tN} \neq s) = Q_t \leq (1-\varepsilon)^t
+\end{align*}
+$t$ jest dowolnie duże, a prawa strona dąży do zera przy $t$ dążącym do nieskończoności, bo $$0 \leq 1 - \varepsilon < 1$$ więc dostajemy tezę.
+\\
+\textbf{Twierdzenie 2.5.3}
+Dla każdego $s\in S$ $\tau_1^{(s)}, \tau_2^{(s)}...$ są skończone prawie na pewno.\\
+Dowód: Niech $\nu$ będzie rozkładem początkowym. Przeprowadzimy dowód indukcyjny. Użyjmy $N$, $\varepsilon$ i $Q_t$ z (2.5.2). Mamy:
+\begin{align*}
+P(\tau_1^{(s)}< \infty) &= P(\exists n \in \{0,1,2,3...\}: X_n = s) \\
+&= 1 - P(X_0 \neq s, X_{1} \neq s, X_2 \neq s ...) \\
+&= 1 & \text{z wniosku (2.5.3)}
+\end{align*}
+\\
+Zauważmy prosty fakt (*):
+$$\{\tau_t^{(s)} = n\} = \{X_n = s \,\,\text{oraz}\,\, X_k = n \,\, \text{dla dokładnie}\,\, t-1\,\, \text{spośród}\,\, k = 0,1,2,...n-1\}$$
+\\
+Teraz przy założeniu prawdziwości twierdzenia dla $\tau_{t}^{(s)}$ dla $\tau_{t+1}^{(s)}$ dostajemy: \\
+\begin{align*}
+1 \geq P(\tau_{t+1}^{(s)} < \infty) &= \sum_{n = 0}^{\infty} P(\tau_{t+1}^{(s)} < \infty| \tau_{t}^{(s)} = n)P(\tau_{t}^{(s)} = n)\\
+&= \sum_{n: P(\tau_{t}^{(s)} = n) > 0} P(X_{n+1} \neq s, X_{n+2} \neq s ...| \tau_{t}^{(s)} = n) P(\tau_{t}^{(s)} = n) \\
+&\text{z własności Markowa (*) i wniosku 2.1.2}\\
+&\geq \sum_{n: P(\tau_{t}^{(s)} = n) > 0} P(X_{n+1} \neq s, X_{n+2} \neq s ... |X_n = s) P(\tau_{t}^{(s)} = n) \\\\
+& \text{z jednorodności i wniosku 2.1.10 oraz zastosowaniu lematu dla JŁM}\\
+&\text{$\{X_n, X_{n+1}, ...\}$ o rozkładzie początkowym ($X_n$) skupionym w $s$}\\\\
+&= 1\sum_{n: P(\tau_{t}^{(s)} = n) > 0} P(\tau_{t}^{(s)} = n)\\
+& \text{z zał. indukcyjnego}\\
+&= \sum_{n: P(\tau_{t}^{(s)} = n) > 0} P(\tau_{t}^{(s)} = n) = 1
+\end{align*}
+Stąd:
+$$P(\tau_{t+1}^{(s)} < \infty) = 1$$
+Co należało udowodnić. W szczególności zauważmy, że z twierdzenia w prosty sposób wynika, że $\gamma$ również są skończone prawie na pewno. \qed
+\\\\
+Następnie pokażemy, że dla każdego momentu $n$-tej wizyty istnieje wartość oczekiwana. Przyda się jeszcze klasyczny lemat na temat wartości oczekiwanej.
+\\\\
+\textbf{Lemat 2.5.4}\\
+Niech $Z$ będzie zmienną losową przyjmującą tylko wartości ze zbioru $0,1,2...$. Wówczas:
+$$\mathbb{E}|Z| = \mathbb{E}Z = \sum\limits_{n = 0}^{\infty} P(Z > n)$$
+Dowód: pierwsza równość jest oczywista, bo zmienna przyjmuje tylko wartości nieujemne. Dalej:
+\begin{align*}
+    \mathbb{E}Z &= 0 \cdot P(Z = 0) + 1 \cdot P(Z = 1) + 2 \cdot P(Z = 2) + 3 \cdot P(Z = 3)... \\
+    &= (P(Z = 1) + P(Z = 2) + ...) + (P(Z = 2) + P(Z = 3) + ...) + (P(Z = 3) + ...) + ...\\
+    &= P(Z > 0) + P(Z > 1) + ... = \sum\limits_{n = 0}^{\infty} P(Z > n)
+\end{align*}
+Można było zmieniać kolejność sumowania, wszystkie wyrazy bowiem są nieujemne, stąd nie ma to wpływu na wartość sumy. \qed\\
+\\
+\textbf{Twierdzenie 2.5.3}
+Dla każdego $s\in S$ $\gamma_1^{(s)}, \gamma_2^{(s)}...$ istnieje wartość oczekiwana.\\
+Dowód: zwróćmy uwagę, że wszystkie $\gamma$ przyjmują wartości ze zbioru $0,1,2...$, można więc użyć lematu (2.5.4), zacznijmy od $\gamma_1^{(s)}$
+\begin{align*}
+    \mathbb{E}(|\gamma_1^{(s)}|) = \mathbb{E}(\gamma_1^{(s)}) &= \mathbb{E}(\tau_1^{(s)})\\
+    &= \sum\limits_{n = 0}^{\infty} P(\tau_1^{(s)} > n) \\
+    &= \sum\limits_{n = 0}^{\infty} P(X_0 \neq s,..., X_n \neq s) \\
+    &= \sum\limits_{n = 0}^{N-1} P(X_0 \neq s,..., X_n \neq s) + \sum\limits_{n = N}^{2N - 1} P(X_0 \neq s,..., X_n \neq s) ...\\
+    &\leq \sum\limits_{n = 0}^{N-1} 1 + \sum\limits_{n = N}^{2N - 1} P(X_0 \neq s,..., X_N \neq s) + \sum\limits_{n = 2N}^{3N - 1} P(X_0 \neq s,..., X_{2N} \neq s)+...\\
+    &\text{z lematu (2.5.2)}\\
+    &\leq N(1 + (1-\varepsilon) + (1 - \varepsilon)^2 ...) = N/\varepsilon < \infty
+\end{align*}
+Weźmy teraz $n>1$ i obliczmy $\mathbb{E}(\gamma^{(s)}_n|\tau^{(s)}_{n-1} = t)$ (nie wprowadzam w tej pracy pojęcia warunkowej wartości oczekiwanej czy warunkowego prawdopodobieństwa jako zmiennych losowych, a korzystam z ich klasycznych definicji, tak że przyjmujemy $P(\tau^{(s)}_{n-1} = t) > 0$):
+\begin{align*}
+    &\mathbb{E}(\gamma^{(s)}_n|\tau^{(s)}_{n-1} = t) = \mathbb{E}(\tau^{(s)}_{n}-\tau^{(s)}_{n-1}|\tau^{(s)}_{n-1} = t) = \\
+    &\text{oczywiście z definicji $\tau^{(s)}_{n}-\tau^{(s)}_{n-1} > 0$}\\
+    &\sum\limits_{k = 1}^{\infty} k\cdot P(\tau^{(s)}_{n}-\tau^{(s)}_{n-1} = k|\tau^{(s)}_{n-1} = t)=\\
+    &\text{z definicji $\tau$}\\
+    &\sum\limits_{k = 1}^{\infty} k\cdot P(\tau^{(s)}_{n}-\tau^{(s)}_{n-1} = k|\tau^{(s)}_{n-1} = t) = \\
+    &\text{z twierdzenia (2.1.2)}\\
+    &\sum\limits_{k = 1}^{\infty} k\cdot P(X_{t+k} = s, ..., X_{t+2} \neq s, X_{t+1} \neq s| X_t = s) = \\
+    &\text{ponownie korzystamy z wcześniej zdefiniowanych N i $\varepsilon$}\\
+    &\sum\limits_{k = 1}^{N} k \cdot P(X_{t+k} = s, ..., X_{t+2} \neq s, X_{t+1} \neq s| X_t = s) + \sum\limits_{k = N+1}^{2N} k\cdot P(X_{t+k} = s, ..., X_{t+2} \neq s, X_{t+1} \neq s| X_t = s)...\leq\\
+    &N\sum\limits_{k = 1}^{N} P(X_{t+1} \neq s| X_t = s) + 2N\sum\limits_{k = N+1}^{2N} P(X_{t+N} = s, ..., X_{t+2} \neq s, X_{t+1} \neq s| X_t = s)...\leq\\
+    &\text{z lematu zastosowanego dla JŁM $X_{t+1}, X_{t+2} ...$ z rozkładem początkowym $\nu = (p_{sj})_{j \in S}$}\\
+    &N + 2N(1-\varepsilon) + 3N(1-\varepsilon)^2 ... = N(1 + 2(1-\varepsilon) + ...) ...\\
+    &= \frac{N}{(1-\varepsilon)^2} < \infty
+\end{align*}
+Końcowa równość to znany wzór na sumę szeregu $np^{n-1}$ dla $|p| < 1$. Widać, że dla wszystkich warunków $\tau^{(s)}_{n-1} = t)$ warunkowe wartości $\gamma$ są wspólnie ograniczone, a ponieważ wg wcześniejszego twierdzenia wszystkie takie warunki dają w sumie prawdopodobieństwo jeden, to także cała wartość oczekiwana jest ograniczona przez tę samą wartość. Skoro więc jest ograniczona i skupiona tylko w liczbach naturalnych dodatnich, to wartość oczekiwana istnieje i jest skończona dla wszystkich $\gamma_n^{(s)}$, co należało udowodnić. Łatwo zauważyć, że stąd również wynika istnienie skończonej wartości oczekiwanej dla wszystkich $\tau$. \qed
+\\
+Przeprowadzając podobne rozumowanie, można udowodnić, że także dowolny moment zmiennych $\gamma_1^{(s)}, \gamma_2^{(s)},...$ istnieje i jest skończony. Istotnie:\\
+\textbf{Fakt 2.5.4}\\
+Dla $k=1,2,3...$, $n = 1,2,3...$  $\mathbb{E}(|\gamma_1^{(s)}|^k) < \infty$.\\\\
+Dowód: Powtarzając kroki z poprzedniego dowodu $\gamma_1^{(s)}$:
+\begin{align*}
+    \mathbb{E}\left(\left|\gamma_1^{(s)}\right|^k\right) = \mathbb{E}\left(\left(\gamma_1^{(s)}\right)^k\right) &= \mathbb{E}\left(\left(\tau_1^{(s)}\right)^k\right)\\
+    &\leq \sum\limits_{n = 0}^{N^k-1} 1 + \sum\limits_{n = N}^{(2N)^k - 1} P(X_0 \neq s,..., X_N \neq s) + \sum\limits_{n = (2N)^k}^{(3N)^k - 1} P(X_0 \neq s,..., X_{2N} \neq s)+...\\
+    &\text{z lematu (2.5.2)}\\
+    &\leq N^k(1 + 2^k(1-\varepsilon) + 3^k(1 - \varepsilon)^2 ...) < \infty
+\end{align*}
+gdzie ostatnia suma jest skończona na mocy kryterium Cauchy'ego zbieżności szeregów, bo 
+$$\sqrt[n]{(n+1)^k(1-\varepsilon)^n} \xrightarrow{n \to \infty} (1-\varepsilon) < 1$$
+Podobnie postępujemy dla $n=2,3,4...$, powtarzając kroki z poprzedniego dowodu dla każdego warunku $\tau^{(s)}_{n-1} = t$, takiego że $P(\tau^{(s)}_{n-1} = t) > 0$ dostajemy:
+\begin{align*}
+    &\mathbb{E}\left(\left\gamma^{(s)}_n\right)^k|\tau^{(s)}_{n-1} = t\right) \leq\\
+    &N^k \sum\limits_{l = 1}^{N^k} P(X_{t+1} \neq s| X_t = s) + (2N)^k\sum\limits_{l = N^k+1}^{(2N)^k} P(X_{t+N} = s, ..., X_{t+2} \neq s, X_{t+1} \neq s| X_t = s)...\leq\\
+    &N^{2k} + (2N)^{2k}(1-\varepsilon) + (3N)^{2k}(1-\varepsilon)^2 ... = N^{2k}(1 + 2^{2k}(1-\varepsilon) + 3^{2k}(1 - \varepsilon)^2 ...) < \infty
+\end{align*}
+gdzie skończoność sumy tak jak poprzednio wynika z kryterium Cauchy'ego. Korzystając ze skończoności prawie na pewno $\tau$ i sumując po wszystkich warunkach dostajemy tezę. Podobnie jak poprzednio, łatwo zauważyć, że w takim razie istnieją skończone momenty dla wszystkich $\tau_1^{(s)}, \tau_2^{(s})...$. \qed
+\\\\
+Teraz formalnie pokażemy intuicyjny fakt, że czasy, które upływają między kolejnymi wizytami w $s$ są niezależne i mają ten sam rozkład.
+\\\\
+\textbf{Twierdzenie 2.5.4}
+$\gamma_2^{(s)}, \gamma_3^{(s)}...$ mają ten sam rozkład.\\
+Dowód: Niech $n\geq 2$, $k = 1,2,3...$, rozbijamy prawdopodobieństwo względem $\tau_{n-1}^{(s)}$ podobnie jak w dowodzie poprzedniego twierdzenia (korzystając z twierdzenia (2.1.2):\\
+\begin{align*}
+    P(\gamma_n^{(s)} = k) = \sum\limits_{P(\tau_{n-1}^{(s)} = t) > 0} P(X_{t+k} = s, ..., X_{t+2} \neq s, X_{t+1} \neq s| X_t = s)P(\tau_{k-1}^{(s)} = t) 
+\end{align*}
+Z jednorodności łańcucha dla każdego $t$:
+\begin{align*}
+    &P(X_{t+k} = s, ..., X_{t+2} \neq s, X_{t+1} \neq s| X_t = s) =\\ &\sum\limits_{\substack{i_1, i_2 ... i_{k-1} \in S\\ i_1,...,i_k \neq s}} P(X_{t+k} = s, X_{t+k-1} = i_{k-1}, ..., X_{t+1} = i_1 | X_t = s)=\\
+    &\sum\limits_{\substack{i_1, i_2 ... i_{k-1} \in S\setminus \{s\}}} p_{si_1}p_{i_1 i_2}...p_{i_{k-2}i_{k-1}} p_{i_{k-1} s} = C(\mathbb{P}, k, s)
+\end{align*}
+Gdzie $C$ jest pewną funkcją macierzy $\mathbb{P}$, liczby kroków $k$ i stanu $s$. Ostatecznie:
+\begin{align*}
+    P(\gamma_n^{(s)} = k) &= \sum\limits_{P(\tau_{n-1}^{(s)} = t) > 0} C(\mathbb{P}, k, s)P(\tau_{k-1}^{(s)} = t) \\
+    &= C(\mathbb{P}, k, s)\sum\limits_{P(\tau_{n-1}^{(s)} = t) > 0}P(\tau_{k-1}^{(s)} = t) \\
+    &= C(\mathbb{P}, k, s)
+\end{align*}
+Gdzie na końcu korzystamy z faktu, że $\tau$ są skończone prawie na pewno. Widać zatem, że rozkład nie zależy w żaden sposób od $n$ dla $n = 2, 3,...$, co należało udowodnić. W szczególności $\gamma_2^{(s)}, \gamma_3^{(s)}, ...$ mają tę samą wartość oczekiwaną. \qed
+\\\\
+Przyjmujemy odtąd, że $C(\mathbb{P}, k, s) := P(\gamma_n^{(s)} = k)$\\
+\\
+\textbf{Twierdzenie 2.5.5}
+$\gamma_2^{(s)}, \gamma_3^{(s)}...$ to ciąg niezależnych zmiennych losowych.\\
+Zauważmy, że dla każdego $k \geq 2$ i $0 < t_2,...t_k \in \mathbb{N}$:
+\begin{align*}
+    &P(\gamma_k^{(s)} = t_k, \gamma_{k-1}^{(s)} = t_{k-1} ..., \gamma_2^{(s)} = t_2) =\\
+    &\sum\limits_{t: P(\tau_1^{(s)} = t) > 0} P(\gamma_k^{(s)} =t_k, \gamma_{k-1}^{(s)} = t_{k-1} ..., \gamma_2^{(s)} = t_2 | \tau_1^{(s)} = t))P(\tau_1^{(s)} = t) =\\
+    &\sum\limits_{t: P(\tau_1^{(s)} = t) > 0} P(X_{t+t_2+...t_k} = s, X_{t+t_2+...t_k - 1} \neq s ... X_{t+t_2+...t_{k-1} + 1} \neq s ... X_{t+t_2+...t_{k-1}} = s, ...\\
+    &\quad\quad\quad\quad\quad\quad\,\,\, X_{t+t_2} = s, X_{t+t_2 - 1} \neq s ... X_{t+1} \neq s|X_t = s)P(\tau_1^{(s)} = t) = \\\\
+    &\sum\limits_{t: P(\tau_1^{(s)} = t)} C(\mathbb{P}, t_2, s)C(\mathbb{P}, t_3, s)...C(\mathbb{P}, t_k, s)P(\tau_1^{(s)} = t) =\\
+    &\quad\quad\quad\quad\,\,\, C(\mathbb{P}, t_2, s)C(\mathbb{P}, t_3, s)...C(\mathbb{P}, t_k, s) = P(\gamma_k^{(s)} = t_k) P(\gamma_{k-1}^{(s)} = t_{k-1}) ...P(\gamma_2^{(s)} = t_2)
+\end{align*}
+W przedostatniej nierówności skorzystaliśmy z (2.5.4), znanej tożsamości 
+$$P(A_n, ... A_1|A_0) = P(A_n|A_{n-1}, ...A_0)P(A_{n-1}|A_{n-2}...A_0)...P(A_1|A_0)$$
+oraz własności Markowa/twierdzenia (2.1.2). Udowodnioną własność możemy łatwo uogólnić z $t_2, ... t_k \in \mathbb{N}$ na $A_2, ... A_k \subseteq \mathbb{N}$, rozbijając każdy $A_n$ na pojedyncze elementy i sumując, zatem mamy:
+$$P(\gamma_k^{(s)} \in A_k, \gamma_{k-1}^{(s)} \in A_{k-1} ..., \gamma_2^{(s)} \in A_2) = P(\gamma_k^{(s)} \in A_k) P(\gamma_{k-1}^{(s)} \in A_{k-1}) ...P(\gamma_2^{(s)} \in A_{2})$$
+Co dla \textbf{ciągu} zmiennych losowych jest równoważne niezależności. \qed
+\\\\
+Zbliżamy się do końca dowodu (3) z twierdzenia ergodycznego. Potrzebujemy jeszcze wersji mocnego prawa wielkich liczb. Podaję ją bez dowodu, dowód można znaleźć w [4: https://www.math.ust.hk/~makchen/MATH5411/Chap1Sec7.pdf] (Theorem 1.7):\\\\
+\textbf{Twierdzenie 2.5.6 (mocne prawo wielkich liczb Kołmogorowa, MPWL)}\\
+Dany jest ciąg i.i.d. zmiennych losowych $X_1, X_2, ... $, taki że $\mathbb{E}(X_1)$ istnieje i jest skończona, wtedy:
+$$ \lim\limits_{n \to \infty} \frac{1}{n}\sum\limits_{i=1}^n X_i = \mathbb{E}(X_1)$$
+prawie na pewno.
+\\\\
+Oznaczmy teraz przez $\lambda_j := \mathbb{E}\gamma_2^{(j)}$.\\\\
+\textbf{Lemat 2.5.7}
+$$\lim\limits_{n \to \infty} \frac{1}{n} \sum\limits_{i = 1}^n \gamma_i^{(j)} = \lambda_j$$
+prawie na pewno.\\
+Dowód: 
+\begin{align*}
+    \lim\limits_{n \to \infty} \frac{1}{n} \sum\limits_{i = 1}^n \gamma_i^{(j)} = 
+    \lim\limits_{n \to \infty} \left(\frac{\gamma_1^{(j)}}{n} + \frac{n-1}{n}\cdot\frac{1}{n-1} \sum\limits_{i = 2}^n \gamma_i^{(j)}\right)\\
+    = \lim\limits_{n \to \infty} \frac{1}{n-1} \sum\limits_{i = 2}^n \gamma_i^{(j)} = \lambda_j
+\end{align*}
+Gdzie skorzystaliśmy z tego, że $\gamma_1^{(j)}$ jest skończona prawie na pewno i MPWL.\\
+\\
+\textbf{Lemat 2.5.8}
+Przypomnijmy: $W_{j, n} = \frac{1}{n}\sum\limits_{i = 0}^{n-1} \mathbbm{1}_{\{X_i = j\}}$. Niech teraz $m_n = \min \{k: \sum\limits_{i=1}^k \gamma_i^{(j)} > n\}$. Wtedy
+$$ \frac{m_n - 1}{\sum\limits_{i=1}^{m_n} \gamma_i^{(j)}} \leq W_{j, n}  \leq \frac{m_n}{\sum\limits_{i=1}^{m_n-1} \gamma_i^{(j)}}$$\\
+prawie na pewno.
+Dowód: Z definicji $m_n$ i $\gamma$ wiemy, że jeśli $\sum\limits_{i=1}^k \gamma_i^{(j)} \leq M$, to $\sum\limits_{i = 0}^{M-1} \mathbbm{1}_{\{X_i = j\}} \geq k$. Podobnie jeśli jeśli $\sum\limits_{i=1}^k \gamma_i^{(j)} \geq M$, to $\sum\limits_{i = 0}^{M-1} \mathbbm{1}_{\{X_i = j\}} \leq k$, zatem z definicji $m_n$:
+\begin{align}
+m_n - 1 \leq \sum\limits_{i = 0}^{n-1} \mathbbm{1}_{\{X_i = j\}} \leq m_n
+\end{align}
+Podobnie z definicji $m_n$:
+$$\sum\limits_{i=1}^{m_n} \gamma_i^{(j)} \geq n \geq \sum\limits_{i=1}^{m_n - 1} \gamma_i^{(j)}$$
+A więc:
+\begin{align}
+     \frac{1}{\sum\limits_{i=1}^{m_n} \gamma_i^{(j)}} \leq \frac{1}{n} \leq \frac{1}{\sum\limits_{i=1}^{m_n - 1} \gamma_i^{(j)}}
+\end{align}
+Mnożąc (1) i (2) stronami dostajemy tezę.
+\\\\
+Ponieważ $\gamma$ są skończone prawie na pewno, więc $m_n$ są również skończone prawie na pewno, ponadto prawie na pewno $m_n \to \infty$ przy $n \to \infty$. W takim razie elementy ciągu 
+$$\frac{\sum\limits_{i=1}^{m_n} \gamma_i^{(j)}}{m_n}$$
+prawie na pewno pokrywają się z elementami ciągu:
+$$\frac{\sum\limits_{i=1}^{n} \gamma_i^{(j)}}{n}$$
+a skoro jak już powiedziano $m_n \to \infty$, to prawie na pewno są równe w granicy.
+Stąd, z oczywistej własności $\frac{m_n}{m_n-1} \overset{p.n.}{\to} \infty$ i z własności granicy prawie na pewno ($ X_n \to X \implies \frac{1}{X_n} \to \frac{1}{X}$, jeśli tylko $X_n \neq 0$ prawie na pewno), widzimy, że skrajne strony nierówności z lematu dążą do $\frac{1}{\lambda_j}$ prawie na pewno. A więc z twierdzenia o trzech ciągach, również $W_{j,n} \to \frac{1}{\lambda_j}$ prawie na pewno.\\
+\\
+Pozostaje dowieść, że $\pi_j = \frac{1}{\lambda_j}$. W tym celu wystarczy pokazać, że:
+$$ \lim\limits_{n \to \infty} \mathbb{E}(W_{j,n}) = \pi_j$$ Dalej bowiem korzystamy z twierdzenia Lebesgue'a o zbieżności zmajoryzowanej – ponieważ $W_{j,n}$ są wspólnie ograniczone przez funkcję całkowalną $f \equiv 1$, zatem:
+$$\lim\limits_{n \to \infty} \mathbb{E}(W_{j,n}) = \mathbb{E}\left( \lim\limits_{n \to \infty} W_{j,n}\right) = \mathbb{E}\left(\frac{1}{\lambda_j}\right) = \frac{1}{\lambda_j}$$
+Kończymy zatem nasz dowód twierdzenia ergodycznego:\\\\
+\textbf{Twierdzenie 2.5.9}\\
+$$\lim\limits_{n \to \infty} \mathbb{E}(W_{j,n}) = \pi_j$$
+Zauważmy najpierw, że z już udowodnionego punktu (2) twierdzenia ergodycznego ($\nu^{(n)}$ rozkład JŁM w momencie $n$):
+$$\lim\limits_{n \to \infty} \mathbb{E}(\mathbbm{1}_{\{X_n = j\}}) = \nu^{(n)}_j = \pi_j$$
+Ze znanego twierdzenia analizy, jeśli ciąg $a_n \xrightarrow{n \to \infty} a$, to także ciąg jego średnich arytmetycznych $$\frac{1}{n}\sum_{i=0}^{n-1} a_i \xrightarrow{n \to \infty} a$$
+co po zastosowaniu do ciągu $a_n := \mathbb{E}(\mathbbm{1}_{\{X_n = j\}})$ i tożsamości (z liniowości wartości oczekiwanej)
+$$\mathbb{E}(W_{j,n}) = \frac{1}{n} \sum\limits_{i=0}^{n-1} \mathbb{E}(\mathbbm{1}_{\{X_i = j\}}) = \frac{1}{n} \sum\limits_{i=0}^{n-1} a_i$$
+daje tezę i ostatecznie dowodzi punktu (3) twierdzenia ergodycznego. \qed
+\\
+Zauważmy, że przy okazji dostajemy też ciekawą informację na temat rozkładu stacjonarnego, mianowicie $\pi_j = \frac{1}{\lambda_j}$, gdzie $\lambda_j$ jest średnim czasem powrotu do $j$ (i.e. ile średnio czekamy na ponowną wizytę w $j$ po jego odwiedzinach). 
+\\\\
+Punkt (3) twierdzenia ergodycznego pokazuje nam, że zbieżność do rozkładu jest \textit{mocna} (co można było w jakiś sposób "wyczuć" \, już na podstawie wykładniczego tempa zbieżności do rozkładu stacjonarnego omówionego w poprzednim podrozdziale). Gdybyśmy mieli tylko punkty (1) i (2) (czyli zbieżność według rozkładu), nie byłoby gwarancji na to, że zmienna losowa $W_{j,n}$ (średni czas przebywania w stanie $j$) nie \textit{odchyla się} (mimo że coraz rzadziej, ale jednak nieskończenie wiele razy i dowolnie daleko) od $\pi_j$. \textit{Mocna} zbieżność daje tę gwarancję – zapewnia nam, że od pewnego momentu średni czas przebywania w $j$ jest niezmiennie bardzo bliski $\pi_j$ (z pr. 1).\\
+Nie ma to aż tak wielkiego znaczenia dla naszych problemów, jednak pokazuje, że JŁM swój cel (przybliżanie zmiennych losowych i.i.d. o rozkładzie $\pi$ – będzie o tym mowa później) realizuje naprawdę dokładnie. Z tego punktu wynika jeszcze jeden prosty wniosek
+\\
+\\
+\textbf{Wniosek 2.5.10}\\
+Niech $f: S \to \mathbb{R}$. Wtedy
+$$ \frac{1}{n} \sum\limits_{i=0}^{n-1} f(X_i) \overset{\text{p.n.}}{\to} \sum\limits_{j \in S} \pi_j f(j)$$
+Dowód: Wystarczy zauważyć, że:
+$$ f(X_i) = \sum\limits_{j \in S} f(j)\mathbbm{1}_{\{X_i = j\}}$$
+Teza wynika z liniowości granicy prawie na pewno i punktu (3) twierdzenia ergodycznego.\qed\\\\\\
+Warto na koniec zauważyć, że w istocie do punktów (1) i (3) twierdzenia ergodycznego wystarczyła nieredukowalność $X_n$. \\
+Ponieważ w rozwiązaniach będziemy operować na łańcuchach nieokresowych, przedstawię tylko szkic rozumowania. Zwróćmy uwagę, że w dowodzie, że $\gamma_n^{(s)},\,\, n = 2,3...$ są i.i.d. nie korzystaliśmy z nieokresowości, natomiast w dowodzie tego, że $\gamma_n^{(s)},\,\, n = 1,2,3...$ są skończone prawie na pewno nie trzeba z niej korzystać – wystarczy badać łańcuch 'ograniczony', do tych kroków, w których prawdopodobieństwo znalezienia się w danym stanie $j$ nie jest zerowe, podobnie dowodzi się istnienia momentów (jest jednak trochę szczegółów technicznych, które pomijam). Następnie dowód kontynuujemy jak dla przypadku nieokresowego. W efekcie dostajemy niezależną od rozkładu początkowego zbieżność $W_{n,j}$ do $\nu_j = \frac{1}{\lambda_j}$, takiego że $0 < \frac{1}{\lambda_j} < 1$. $\nu_j$ ze względu na definicję $W_{n,j}$ zadają rozkład. Jeśli JŁM jest nieokresowy, to rozkład ten jest jedynym stacjonarnym z udowodnionego twierdzenia. Jeśli łańcuch natomiast jest okresowy, to o ile ma rozkład stacjonarny, to – jak łatwo dowieść – jest on właśnie równy $\nu$. Pozostaje pokazać, że nieredukowalny, okresowy JŁM ma rozkład stacjonarny. Wystarczy zastosować prosty trick, żeby się o tym przekonać. Jeśli nieredukowalny JŁM o macierzy przejść $\mathbb{P} = (p_{ij})_{i,j \in S}$jest okresowy, to znaczy, że w szczególności $p_{ii} = 0$ dla każdego $i \in S$. Skonstruujmy nowy łańcuch z macierzą przejść $\mathbb{Q} = (q_{ij})_{i,j \in S}$, taki, że dla $i$: $0 < q_{ii} = \varepsilon < 1$ oraz dla różnych $i,j$ $q_{ij} = (1-\varepsilon)p_{ij}$, dla $i \neq s$. Łańcuch oczywiście nadal jest nieredukowalny (wszystkie prawdopodobieństwa przejść, które były dodatnie, są nadal dodatnie), ale nie jest już okresowy. Posiada zatem jedyny rozkład stacjonarny $\pi$ – jedyny spełniający dla każdego $j$ równanie balansu:
+\begin{align*}
+    \pi_j = \sum\limits_{i \in S, i \neq j} \pi_i (1-\varepsilon) p_{ij}  + \varepsilon \pi_j 
+\end{align*}
+Przekształcamy równoważnie: po odjęciu stronami $\varepsilon \pi_j$ i podzieleniu przez $(1-\varepsilon)$ dostajemy równanie balansu oryginalnego łańcucha $X_n$. Zatem istnieje jedyny rozkład stacjonarny okresowego łańcucha $X_n$ i jest to $\pi$.
+\\
+Podobnie można pokazać, że omawiane w następnym podrozdziale centralne twierdzenie graniczne zachodzi także dla okresowych nieredukowalnych JŁM.
+
+\subsection{Centralne twierdzenie graniczne. Asymptotyczna wariancja}
+W poprzednich podrozdziałach udowodniliśmy twierdzenie ergodyczne, którego ostatni punkt był wersją mocnego prawa wielkich liczb dla jednorodnych łańcuchów Markowa. Jak się okazuje, dla jednorodnych łańcuchów Markowa zachodzi również wersja centralnego twierdzenia granicznego. Zostanie ono wyprowadzone i udowodnione w tym rozdziale. Zacznijmy od przypomnienia klasycznej wersji centralnego twierdzenia granicznego.\\
+\\
+\textbf{Twierdzenie 2.6.1 (CTG)}\\
+Niech $Z_n$ będzie ciągiem niezależnych zmiennych losowych o tym samym rozkładzie, skończonej wartości oczekiwanej $\mu$ i skończonej wariancji $\sigma^2$. Wtedy:
+$$\frac{\sum\limits_{i=1}^n Z_i - n\mu}{\sqrt{n}} \overset{d}{\to} N(0, \sigma^2)$$
+\\
+\\
+Naszym celem będzie udowodnienie podobnego twierdzenia dla jednorodnego łańcucha Markowa $\{X_n\}$ i funkcji stanu $f: S \to \mathbb{R}$, tzn. powinna zachodzić zbieżność typu:
+$$ \frac{\sum\limits_{i=0}^{n-1} f(X_i) - n\mu}{\sqrt{n}} \overset{d}{\to} N(0, \sigma^2)$$
+dla pewnego $\sigma$ i jak w (2.5.10) $\mu = \sum\limits_{j \in S} \pi_j f(j)$. \\
+Przyjmiemy podobną strategię jak w dowodzie wersji MPWL dla JŁM. To znaczy, będziemy próbować rozdzielić łańcuch na pewne niezależne części – taką rolę w dowodzie MPWL pełniły $\gamma_n^{(s)}$, tutaj użyjemy ich znowu. Dla wygody ustalmy $s$ i na potrzeby tego rozumowania przyjmijmy $\gamma_n := \gamma_n^{(s)}$ i podobnie $\tau_n := \tau_n^{(s)}$. 
+Oznaczmy następnie:
+\begin{align*}
+    F_1 &= \,\,\,\sum\limits_{i = 0}^{\tau_1} \,\,\,\,f(X_i)\\
+    F_n &= \sum\limits_{i = \tau_{n-1}+1}^{\tau_n} f(X_i) \quad \text{dla $n > 1$}
+\end{align*}
+Oraz 
+\begin{align*}
+    G_{n, k} = \sum\limits_{i = \tau_n+1}^{\tau_n+k} f(X_i) \quad \text{dla $1 \leq k < \tau_{n+1}$, $n > 0$}
+\end{align*}
+przyjmujemy $\tau_0 = 0$.\\\\
+\textbf{Twierdzenie 2.6.2}\\
+Dla wszystkich $n,k$: $F_n$ i $G_{n,k}$ są skończone prawie na pewno, ponadto wszystkie $F_n$ mają skończoną wartość oczekiwaną i wariancję.\\
+Dowód: Zauważmy, że zachodzą nierówności:
+\begin{align*}
+    |F_n| \leq \gamma_n \cdot \max_{j \in S} |f(j)|\\
+    |G_{n,k}| \leq \gamma_{n+1} \cdot \max_{j \in S} |f(j)|
+\end{align*}
+co dowodzi skończoności prawie na pewno, bo funkcja $f$ jest ograniczona jako określona na skończonym zbiorze, natomiast $\gamma_n$ są skończone prawie na pewno na mocy twierdzenia z poprzedniego podrozdziału. Podobnie z pierwszej nierówności wynika istnienie skończonej wartości oczekiwanej, jako że $\gamma_n$ ma skończoną wartość oczekiwaną ($\max_{j \in S} |f(j)|$ jest stałą). Podobnie jest:
+$$|F_n|^2 \leq \gamma_n \cdot \max_{j \in S} |f(j)|^2$$
+Z faktu z poprzedniego podrozdziału $\gamma$ mają skończony drugi moment, a więc z powyższej nierówności również drugi moment $F_n$ musi być skończony, a więc $F_n$ ma skończoną wariancję. \qed
+\\\\
+\textbf{Twierdzenie 2.6.3}\\
+$F_2, F_3,...$ jest ciągiem i.i.d. zmiennych losowych.\\
+Dowód: Pokażemy najpierw, że rozkład $F_n$ dla $n=2,3...$ nie zależy od $n$. Zwróćmy uwagę, że z dowodu twierdzenia o tym, że $\gamma_2, \gamma_3...$ mają ten sam rozkład można wywnioskować, że $\gamma_n$ i $\tau_{n-1}$ są niezależne, bowiem warunkowy rozkład $\gamma_n$ z warunkiem $\tau_{n-1} = t$ ewidentnie nie zależy od $t$. Weźmy zatem dowolny $A \in Bor(\mathbb{R})$, wtedy, korzystając z twierdzenia (2.1.2):
+\begin{align*}
+ P(F_n \in A) &= \sum\limits_{\substack{P(\tau_{n-1} = k, \gamma_{n} = l) > 0}} P(F_n \in A |\tau_{n-1} = k, \gamma_{n} = l)P(\tau_{n-1} = k, \gamma_{n} = l)\\\\
+ &=\sum\limits_{\substack{P(\tau_{n-1} = k, \gamma_{n} = l) > 0}} \frac{1}{P(\gamma_{n} = l)} P(F_n \in A, \gamma_{n} = l |\tau_{n-1} = k)P(\tau_{n-1} = k) P(\gamma_{n} = l)\\\\
+ &=\sum\limits_{\substack{P(\tau_{n-1} = k, \gamma_{n} = l) > 0\\i_1, ... i_{l-1} \in S\setminus \{s\}}} P(X_{k+l} = s, X_{k+l-1} = i_{l-1} ..., X_{k+1} = i_1|X_{k} = s)P(\tau_{n-1} = k)\\\\
+ &= \sum\limits_{\substack{P(\tau_{n-1} = k, \gamma_{n} = l) > 0\\i_1, ... i_{l-1} \in S\setminus \{s\}}} p_{i_1 i_2} ... p_{i_{l-1}i_l}P(\tau_{n-1} = k) \\\\
+ &=\sum\limits_{\substack{P(\gamma_{n} = l) > 0\\i_1, ... i_{l-1} \in S\setminus \{s\}}} p_{i_1 i_2} ... p_{i_{l-1}s}P(\gamma_n = l) \sum\limits_{P(\tau_{n-1} = k) > 0} P(\tau_{n-1} = k)\\
+ &= \sum\limits_{\substack{l: P(\gamma_{n} = l) > 0\\i_1, ... i_{l-1} \in S\setminus \{s\}}} p_{i_1 i_2} ... p_{i_{l-1}s}
+\end{align*}
+ale ponieważ $i_1 ... i_{l-1}$ to po prostu takie ciągi stanów, że $$f(s) + \sum\limits_{m = 1}^{l-1} f(i_m) \in A$$
+a więc nie zależą w żaden sposób od $n$, a $\gamma_n$ mają ten sam rozkład dla $n=2,3,4...$, to widać, że rozkład $F_n$ nie zależy od $n$ – zatem zmienne mają ten sam rozkład. Widać także z powyższych równości, że $$P(F_n \in A|\gamma_n = l) = \frac{1}{P(\gamma_{n} = l)} \sum\limits_{\substack{i_1, ... i_{l} \in S \setminus \{s\} }} p_{i_1 i_2} ... p_{i_{l-1}s}\,\,\,(*)$$
+gdzie sumujemy po ciągach jak poprzednio
+Pozostaje pokazać niezależność zmiennych losowych w tym ciągu. Rozpiszmy więc:
+\begin{align*}
+    P(F_n \in A_n, ..., F_2 \in A_2) &= \sum\limits_{\substack{l_1, l_2, ... l_n:\\P(\tau_1 = l_1, \gamma_2 = l_2, ... \gamma_n = l_n) > 0}}(P(F_n \in A_n, ..., F_2 \in A_2|\gamma_n = l_n ... \gamma_2 = l_2, \tau_1 = l_1)\,\, \cdot \\
+    &\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad P(\gamma_n = l_n, ... \gamma_2 = l_2, \tau_1 = l_1))
+\end{align*}
+Skupmy się na pojedynczym składniku sumy, a konkretnie na części:
+$$P(F_n \in A_n, ..., F_2 \in A_2|\gamma_n = l_n ... \gamma_2 = l_2, \tau_1 = l_1)$$
+Mamy:
+\begin{align*}
+    &P(F_n \in A_n, ..., F_2 \in A_2|\gamma_n = l_n ... \gamma_2 = l_2, \tau_1 = l_1) =\\
+    &P(F_n \in A_n|F_{n-1} \in A_{n-1},  ..., F_2 \in A_2, \gamma_n = l_n ... \gamma_2 = l_2, \tau_1 = l_1)P(F_{n-1} \in A_{n-1},  ..., F_2 \in A_2|\gamma_n = l_n ... \gamma_2 = l_2, \tau_1 = l_1)
+\end{align*}
+Dalej z definicji $F$ i $\gamma$, niech $B \subseteq S^{(l_1 + l_2 + l_3 ... l_{n-1})}$ będzie zbiorem, że $$(X_0, ..., X_{l_1}, X_{l_1+1} ... X_{l_2 + l_3 ... + l_{n-1} - 1}) \in B$$
+odpowiada zdarzeniu 
+$$E = \{F_{n-1} \in A_{n-1},  ..., F_2 \in A_2, \gamma_n = l_n ... \gamma_2 = l_2, \tau_1 = l_1\}$$
+Dla elementów $E$ z definicji $\gamma$ wynika, że $X_{l_1 + l_2 + l_3 ... + l_{n-1}} = s$, oznaczmy dla wygody $l = l_1 + l_2 + l_3 ... + l_{n-1}$, korzystamy z twierdzenia (2.1.2) i definicji $\gamma$, jak poprzednio przyjmujemy, że $i_1 ... i_{l_n-1}$ to takie ciągi stanów, że $$f(s) + \sum\limits_{m = 1}^{l_n-1} f(i_m) \in A$$
+otrzymując :
+\begin{align*}
+    &P(F_n \in A_n|F_{n-1} \in A_{n-1},  ..., F_2 \in A_2, \gamma_n = l_n ... \gamma_2 = l_2, \tau_1 = l_1) = P(F_n \in A_n|\gamma_n = l_n, X_l = s, E)\\
+    &= \frac{P(F_n \in A_n, \gamma_n = l_n | X_l = s, E)}{P(\gamma_n = l_n)}\\
+    &= \frac{P(F_n \in A_n, \gamma_n = l_n | X_l = s)}{P(\gamma_n = l_n)}\\
+    &= \frac{1}{P(\gamma_n = l_n)} \sum\limits_{\substack{i_1, ... i_{l_n - 1} \in S\setminus \{s\}}} P(X_{l+l_n} = s, X_{l+l_{n}-1} = i_{l_{n}-1}, ..., X_{l+1} = i_1 | X_l = s)\\
+    &= P(F_n \in A_n | \gamma_n = l_n)
+\end{align*}
+Przeprowadzając podobne rozumowanie dostajemy również:
+\begin{align*}
+&P(F_{n-1} \in A_n|F_{n-2} \in A_{n-2},  ..., F_2 \in A_2, \gamma_n = l_n ... \gamma_2 = l_2) =\\ & P(F_{n-1} \in A_{n-1} | \gamma_{n-1} = l_{n-1})
+\end{align*}
+i ogólnie:
+\begin{align*}
+&P(F_{k} \in A_k|F_{k-1} \in A_{k-1},  ..., F_2 \in A_2, \gamma_n = l_n ... \gamma_2 = l_2) =\\ & P(F_{k} \in A_{k} | \gamma_{k} = l_{k})
+\end{align*}
+A więc z tożsamości:
+$$P(A_n, ... A_1|A_0) = P(A_n|A_{n-1}, ...A_0)P(A_{n-1}|A_{n-2}...A_0)...P(A_1|A_0)$$
+z wcześniejszych obliczeń i niezależności $\gamma$ dostajemy:
+\begin{align*}
+    P(F_n \in A_n, ..., F_2 \in A_2) &= \sum\limits_{\substack{l_2, ... l_n:\\P(\tau_1 = l_1, \gamma_2 = l_2, ... \gamma_n = l_n) > 0}} P(F_n \in A_2|\gamma_n = l_n) ... P(F_2 \in A_2|\gamma_2 = l_2)\\\\
+    &\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad P(\gamma_n = l_n) ... P(\gamma_2 = l_2)P(\tau_1 = l_1)\\\\
+    &= P(F_n \in A_n)P(F_{n-1} \in A_{n-1}) ... P(F_2 \in A_2)
+\end{align*}
+gdzie ostatnia równość wynika ze wzoru na prawdopodobieństwo całkowite i jest równoważna niezależności rozważanego ciągu zmiennych losowych. \qed
+\\\\
+Choć dowód wydaje się skomplikowany, to technika jest w zasadzie taka sama, jak użyta do dowodu własności i.i.d. dla $\gamma_2, \gamma_3 ...$. Sama własność też jest intuicyjna – skoro czasy powrotu są i.i.d. to także to, co się dzieje pomiędzy kolejnymi z nich powinno być i.i.d.\\
+Przed ostatecznym dowodem CTG dla JŁM zostaje nam jeszcze jeden lemat.\\
+\\
+\textbf{Lemat 2.6.4}\\
+Dla $F_i$, $i=2,3,4...$ jest
+$$\mathbb{E}(F_i) = \mu = \sum\limits_{j \in S)} \pi_j f(j)$$
+Dowód: z liniowości wartości oczekiwanej i skończoności $S$ wystarczy udowodnić twierdzenie dla $f \equiv f_j \equiv \mathbbm{1}_{\{j\}}$ dla $j \in S$ (dowolną funkcję $f$ można przedstawić jako kombinację liniową $f_j$ jak w poprzednim podrozdziale. Ale zauważmy, że przy $f \equiv f_j$ oraz $m_n$, $W_{n, j}$ zdefiniowanych jak wcześniej $$W_{n, j} = \frac{1}{m_n -1}\sum\limits_{i = 1}^{m_n -1} F_i = \frac{F_1}{m_n - 1} + \frac{1}{m_n - 1} \sum\limits_{i = 2}^{m_n - 1} F_i$$
+Ponieważ $F_1$ jest skończona prawie na pewno a $m_n$ dąży do nieskończoności przy $n \to \infty$ prawie na pewno, pierwszy składnik prawie na pewno dąży do zera, lewa strona natomiast prawie na pewno dąży do $\pi_j$ – prawa zatem również musi. Dostajemy więc
+$$\frac{1}{m_n - 1} \sum\limits_{i = 2}^{m_n - 1} F_i \overset{p.n.}{\to} \pi_j$$
+W szczególności
+$$\mathbb{E}\left[\frac{1}{m_n - 1} \sum\limits_{i = 2}^{m_n - 1} F_i\right] \to \pi_j$$
+Powtarzając rozumowanie z MPWL elementy ciągu 
+$$\frac{1}{m_n - 1} \sum\limits_{i = 2}^{m_n - 1} F_i$$
+pokrywają się z elementami ciągu:
+$$\frac{1}{n - 1} \sum\limits_{i = 2}^{n - 1} F_i$$
+prawie na pewno, zatem również ciągi ich wartości oczekiwanych się pokrywają. Teraz:
+$$\mathbb{E}\left[\frac{1}{n - 1} \sum\limits_{i = 2}^{n - 1} F_i\right] = \frac{n-2}{n - 1}\cdot \mathbb{E}F_2 \to \pi_j$$
+Stąd i z tego, że $F$ mają ten sam rozkład, dostajemy:
+$$\mathbb{E}F_i = \pi_j$$
+dla każdego $i = 2,3...$ \qed
+\\\\
+Możemy zatem teraz dowieść CTG dla łańcuchów Markowa.\\
+\\
+\textbf{Twierdzenie 2.6.5 (CTG dla JŁM)}\\
+Niech $X_n$ będzie JŁM, wtedy
+$$ \frac{\sum\limits_{i=0}^{n-1} f(X_i) - n\mu}{\sqrt{n}} \overset{d}{\to} N(0, \sigma^2)$$
+dla pewnego $\sigma$ oraz $\mu = \sum\limits_{j \in S} \pi_j f(j)$. \\
+Dowód: Jak wcześniej, bez straty ogólności przyjmijmy $\mu = 0$. Ustalmy $m_n$ jak przy dowodzie MPWL:
+$m_n = \min \{k: \sum\limits_{i=0}^k \gamma_i^{(j)} > n\}$. Dostajemy wtedy:
+\begin{align*}
+    \frac{\sum\limits_{i=0}^{n-1} f(X_i) - n\mu}{\sqrt{n}} &= \frac{\sum\limits_{i=0}^{n-1} f(X_i)}{\sqrt{n}} = \frac{\sum\limits_{i=1}^{m_n-1} F_i + G_{m_n-1, n}}{\sqrt{n}}\\
+    &= \frac{F_1 + \sum\limits_{i=2}^{m_n-1} F_i + G_{m_n-1, n}}{\sqrt{n}}\\\\
+    &= \frac{F_1 + G_{m_n-1, n}}{\sqrt{n}} + \sqrt{\frac{m_n -2}{n}} \cdot \frac{\sum\limits_{i=2}^{m_n-1} F_i }{\sqrt{m_n-2}}
+\end{align*}
+Podobnie jak poprzednio, elementy $$\frac{\sum\limits_{i=2}^{m_n-1} F_i }{\sqrt{m_n-2}}$$
+pokrywają się z elementami: 
+$$\frac{\sum\limits_{i=2}^{n-1} F_i }{\sqrt{n-2}}$$
+prawie na pewno. Ze względu na lemat (2.6.4) oraz udowodnioną wcześniej skończoność wariancji $F_i$ dla drugiego przypadku zachodzi klasyczne CTG, a więc skoro elementy ciągów się pokrywają i $m_n \to \infty$, to CTG zachodzi również dla pierwszego przypadku. Ponadto $F$ i $G$ są skończone prawie na pewno, więc pierwszy składnik dąży do 0 prawie na pewno (a więc również wg rozkładu). Ponadto, na mocy faktów udowodnionych przy okazji MPWL: 
+$$ \lim\limits_{n \to \infty} \frac{m_n -2}{n} = \pi_j \quad\quad p.n.$$
+Zatem ostatecznie na mocy klasycznego CTG:
+$$\frac{\sum\limits_{i=0}^{n-1} f(X_i) - n\mu}{\sqrt{n}} \overset{d}{\to} N(0, \pi_s Var[F_2])$$
+(jeśli $\mu \neq 0$ to przyjęcie $g = f - \mu$ doprowadza nas do tego samego pożądanego wyniku). \qed
+\\\\
+Zwróćmy uwagę, że skoro zachodzi zbieżność wg rozkładu, to również zbiega ciąg wariancji:
+$$Var_f^{(n)} = \frac{1}{n} Var\left(\sum\limits_{i=0}^{n-1} f(X_i)\right) \to \pi_s Var[F_2])$$
+stąd możemy wprowadzić pojęcie asymptotycznej wariancji.\\\\
+\textbf{Definicja 2.6.6}\\
+Asymptotyczną wariancją funkcji $f$ dla JŁM $\{X_n\}$ o macierzy przejścia $\mathbb{P}$ nazwiemy:
+$$Var_{f}(\mathbb{P}) = \lim\limits_{n \to \infty} \frac{1}{n} Var\left(\sum\limits_{i=0}^{n-1} f(X_i)\right)$$
+\\\\
+Zauważmy, że rozkład $F_2$ nie zależał od rozkładu początkowego (a jedynie od macierzy przejścia i stanu $s$). Zatem skoro $$Var_f = \pi_s Var[F_2]$$
+to wariancja asymptotyczna nie zależy od rozkładu początkowego. Ponadto
+$$\pi_s Var[F_2]$$
+nie zależy od $s$.\\\\
+Centralne twierdzenie graniczne jest kolejnym argumentem na to, że jednorodny łańcuch Markowa jest pod wieloma względami bardzo podobny do ciągu niezależnych zmiennych losowych o rozkładzie $\pi$. To podobieństwo, w połączeniu z efektywnymi metodami symulacji, jest głównym powodem, dla którego MCMC (Monte Carlo Markov Chains) są tak przydatne i mogą nam posłużyć do rozwiązania postawionych w tej pracy problemów.\\
+Ponadto widać, że zachodzi asymptotyczna zbieżność, więc ma sens analiza asymptotycznych własności (np. wariancji).
+\subsection{Podsumowanie}
+Głównym wynikiem tego rozdziału jest twierdzenie ergodyczne, które daje nam intuicję, jak znaleźć stan, dla którego pewna funkcja (oddająca jakoś rzeczywistość) $f: S \rightarrow \mathbb{R}$ przyjmuje maksymalną wartość. Centralne twierdzenie graniczne ponadto daje uzasadnienie dla badania pewnych asymptotycznych własności.\\\\
+Jak widać z twierdzenia ergodycznego $\pi_j$ zadaje średni czas przebywania w stanie $j$ w długim okresie. Powinniśmy zatem skonstruować (zasymulować) ergodyczny JŁM, taki że jego rozkład stacjonarny jest proporcjonalny do $f$ (czyli $\pi_j = c \cdot f(j)$ dla pewnej stałej $c$). Wówczas dla odpowiednio dużego $n$ stan maksymalizujący $f$ zostanie odwiedzony z dużym prawdopodobieństwem – generalnie stany z dużą wartością funkcji $f$ będą odwiedzane często, a pozostałe rzadko, co jest nam oczywiście na rękę.
+\\\\
+\\Taką strategię przyjmiemy dla dekodowania zaszyfrowanego tekstu i podobną (choć będą pewne różnice) do rozwiązania problemu komiwojażera.
+Potrzebujemy więc dwóch rzeczy: konstrukcji JŁM o proporcjonalnym do zadanej funkcji stanu rozkładzie stacjonarnym i odpowiedniej funkcji stanu. Zaczniemy od opisania w następnym rozdziale, jak skonstruować pożądany JŁM przy pomocy metod Monte Carlo, dobieraniem odpowiedniej funkcji stanu zajmiemy się w rozdziałach dotyczących konkretnych problemów. Na potem przyda się jeszcze jeden lemat:
+\\\\
+\textbf{Lemat 2.7.1}\\
+Jeśli dla jednorodnego łańcucha Markowa o macierzy przejść $\mathbb{P} = (p_{ij})_{i, j \in S}$ rozkład $\pi$ spełnia $$\pi_j p_{ji} = \pi_i p_{ij},  \forall i,j \in S$$ to $\pi$ jest rozkładem stacjonarnym.\\
+Dowód: dodając stronami  tożsamości dla wszystkich $i \in S$ dostajemy: 
+$$\pi_j \sum\limits_{i \in S} p_{ji} = \pi_j \cdot 1 = \pi_j = \sum\limits_{i \in S} \pi_i p_{ij}$$ \qed\\
+Równości z lematu noszą nazwę \textit{detailed balance equations} (szczegółowych równań balansu?) i jak się okazuje są warunkiem koniecznym i wystarczającym na tzw. \textit{odwracalność} stacjonarnego JŁM $\{X_n\}$, tzn. dla każdego $n = 0,1,2,...$ i stacjonarnego JŁM $\{X_n\}$ równość rozkładów:
+$$(X_0, X_1, ..., X_n) \overset{d}{=} (X_n, X_{n-1}, ..., X_0)$$
+(co jest definicją odwracalności) zachodzi wtedy i tylko wtedy, gdy \textit{detailed balance equations} są spełnione.
+Przeprowadzimy krótki dowód tego twierdzenia.
+Najpierw załóżmy, że łańcuch jest odwracalny. Wtedy dla dowolnych $i,j \in S$. Wtedy $P(X_0 = i, X_1 = j) = \pi_i p_{ij} = P(X_1 = i, X_0 = j) = \pi_j p_{ji}$, zatem zachodzą \textit{detailed balance equations}. Następnie załóżmy, że zachodzą \textit{detailed balance equations}. Wtedy dla $i_0, ..., i_n \in S$:
+\begin{align*}
+P(X_0 = i_0, X_1 = i_1, ... X_n = i_n) &= \pi_{i_0} p_{i_0 i_1} ... p_{i_{n-1} i_n} =
+p_{i_1 i_0} \pi_{i_1}  p_{i_1 i_2} ... p_{i_{n-1} i_n} = ... \\ &=p_{i_1 i_0} p_{i_2 i_1} ... p_{i_{n-2} i_{n-1}} \pi_{n-1} p_{i_{n-1} i_n} = p_{i_1 i_0} p_{i_2 i_1} ... p_{i_{n} i_{n-1}} \pi_{i_n} \\
+&=P(X_n = i_0, X_{n-1} = i_1, ... X_0 = i_n)
+\end{align*}
+co oznacza, że łańcuch jest odwracalny. \qed
+\\\\
+\section{Metody Monte Carlo}
+W rozdziale tym zajmę się metodami generowania łańcuchów Markowa o zadanych własnościach, a także spróbuję przybliżyć własności w ten sposób wygenerowanych łańcuchów.
+\\
+\subsection{Wprowadzenie}
+Czym są klasyczne metody Monte Carlo? W uproszczeniu jest to szukanie rozwiązania (być może przybliżonego) danego problemu przy użyciu ciągu niezależnych zmiennych losowych (pseudolosowych).\\
+Oryginalną motywacją dla metod Monte Carlo było obliczanie pewnych wartości, tudzież symulowania modeli, które są zbyt skomplikowane (niemożliwe) do obliczenia za pomocą metod analitycznych czy klasycznych metod numerycznych. Wyobraźmy sobie płaską figurę geometryczną $\mathcal{F}$ położoną wewnątrz kwadratu jednostkowego opisaną skomplikowanym wzorem.\\
+Niech teraz wzór będzie na tyle skomplikowany, że użycie metod analitycznych jest niemożliwe, a użycie metod numerycznych jest zbyt obciążające obliczeniowo, jednak dla dowolnego punktu z kwadratu sprawdzenie, czy należy do figury jest proste (jest to jakaś wersja P vs NP). Losujmy kolejno jednostajnie punkty $P_n$ z kwadratu. Zgodnie z klasycznym prawdopodobieństwem geometrycznym: $$P(P_n \in \mathcal{F}) = \mathbb{E}\mathbf{1}_{\mathcal{F}}(P_n) = Pole(\mathcal{F})$$
+Widać więc, że generujemy w ten sposób ciąg i.i.d. zmiennych losowych $\mathbf{1}_{\mathcal{F}}(P_n)$ o rozkładzie dwupunktowym $$P(\mathbf{1}_{\mathcal{F}} = 1) = Pole(\mathcal{F}), P(\mathbf{1}_{\mathcal{F}} = 0) = 1 - Pole(\mathcal{F})$$
+Zatem z prawa wielkich liczb:
+$$\frac{1}{n} \sum\limits_{i=1}^n \mathbf{1}_{\mathcal{F}}(P_n) \overset{p.n.}{\to} Pole(\mathcal{F})$$
+Stąd mamy algorytm (Monte Carlo) na przybliżenie tego pola, wystarczy losować kolejno punkty z kwadratu i liczyć proporcję tych z wnętrza figury do wszystkich wylosowanych punktów. Oczywiście tempo zbieżności takiego algorytmu wymaga analizy (ponadto trzeba wziąć pod uwagę jakość generatora liczb pseudolosowych) – widać jednak, że wielką jego zaletą jest prostota – zarówno idei, jak i implementacji.
+\\
+Na tym przykładzie widać dwa najczęstsze zastosowania metod Monte Carlo:\\
+(1) symulacja ciągu zmiennych losowych o pewnym, nieznanym \textit{wprost}, rozkładzie – tu naszą zmienną było $\mathcal{F}(P)$ o nieznanym rozkładzie $(Pole(\mathcal{F}), 1 - Pole(\mathcal{F}))$ a $\Omega$ tworzyły punkty $P$ z kwadratu.\\
+(2) Przybliżenie wartości oczekiwanej pewnej zmiennej losowej za pomocą symulacji.\\\\
+Co do idei podejście do rozwiązania problemów w tej pracy jest podobne, jednak jak zostanie opisane w kolejnym podrozdziale – rozkłady, a także przestrzenie probabilistyczne, które się tu pojawiają, są dużo bardziej skomplikowane niż kwadrat jednostkowy i $\mathbf{1}_{\mathcal{F}}$, stąd użycie klasycznych metod Monte Carlo (z niezależnym losowaniem zmiennych z rozkładu) nie jest możliwe ze względów pamięciowych i obliczeniowych. Z pomocą przychodzą nam Monte Carlo Markov Chains (MCMC, próbkowanie łańcuchów Markowa metodami Monte Carlo).
+\\\\
+\subsection{Metody MCMC. Dlaczego ich potrzebujemy?}
+Z pewnych powodów do problemów dekodowania i komiwojażera (dziwna przestrzeń rozwiązań, szersze uzasadnienie wkrótce) nie możemy użyć metod analitycznych, gradientowych ani numerycznych. Pozostaje nam więc podejście probabilistyczne (może ono przyjąć różne formy), ze względu na specyfikę zwłaszcza problemu dekodowania obieramy podejście Monte Carlo, tj. chcemy losować kolejne propozycje rozwiązań wg rozkładu takiego, że im rozwiązanie (stan w $S$) lepsze, tym większe powinno mieć prawdopodobieństwo wystąpienia.
+Chcemy więc wprowadzić pewną funkcję stanu (oddającą rzeczywistość, czyli np. częstość występowania danej sekwencji znaków w języku angielskim), taką że im większa jej wartość, tym stan jest \textit{lepszy}. Chcemy znaleźć stan, przy którym ta funkcja przyjmuje maksimum. Toteż im większa wartość funkcji stanu, tym większe ma być prawdopodobieństwo wylosowania. Idea jest zatem taka, że losujemy kolejno zmienne wg rozkładu, którego nie znamy, jednak wiemy, że jest proporcjonalny do wartości funkcji, którą umiemy obliczać. Problem jest taki, że w przeciwieństwie do przykładu z figurą rozkład ten jest dużo bardziej skomplikowany, moc przestrzeni stanów jest bardzo duża – – wykładniczego rzędu – $O(n!)$ lub $O(k^n)$ ($k, n$ rzędu kilkudziesięciu do kilkuset) Ideą jest losować kolejno z tego rozkładu i jeśli wartość funkcji dla \textit{poprawnego} rozwiązania jest duża – powinniśmy w pewnym rozsądnym czasie to rozwiązanie uzyskać (albo rozwiązanie w jakiś sposób \textit{zbliżone} do poprawnego). 
+Gdybyśmy jednak to chcieli zrobić podobnie jak z figurą, musielibyśmy przechowywać pełną informację o rozkładzie (w przypadku figury, tą informacją jest jej równanie), w naszych przypadkach, jak kuż powiedzieliśmy, rozkłady są skomplikowane i skupione na dużej przestrzeni stanów. Tak że samo przechowywanie informacji o rozkładzie  wymagałoby przynajmniej wykładniczej pamięci (i wykładniczego czasu obliczeń). Stąd próby losowania zmiennej losowej o \textit{dokładnie} tym rozkładzie są skazane na niepowodzenie, ze względu na ograniczenia komputera.\\
+W dowolnym rozwiązaniu opierającym się na podejściu probabilistycznym należy zatem w jakiś sposób zredukować problem do niższego wymiaru. Będziemy to robić, używając metod MCMC. Dzięki tym metodom jesteśmy w stanie świetnie przybliżać dany rozkład, mając jedynie pewien stan początkowy i informację o tym, jak obliczać pewną funkcję (w wielomianowym, ew. pseudowielomianowym czasie) miarę prawdopodobieństwa, nie mając pełnej informacji o rozkładzie (chociażby nie znając stałej normalizującej).
+
+
+\subsection{Algorytm Metropolisa i algorytm Metropolisa-Hastingsa}
+Z pewnych powodów, które następnie opiszę, najlepszymi algorytmami Monte Carlo do generacji łańcucha Markowa o pożądanym rozkładzie stacjonarnym są algorytm Metropolisa i jego uogólnienie - algorytm Metropolisa-Hastingsa. Zacznijmy od algorytmu Metropolisa.\\\\
+Załóżmy, że chcemy zasymulować jednorodny łańcuch Markowa na przestrzeni stanów $S$, tak żeby jego rozkład stacjonarny wynosił $\pi$, gdzie $\pi_i > 0$ dla każdego $i \in S$. Załóżmy najpierw, że mamy do dyspozycji pewną macierz przejścia na $S$, nieredukowalną i niekresową macierz stochastyczną $\mathbb{Q}$ - zwaną \textit{macierzą generującą kandydatów} (nazwa bierze się stąd, że na jej podstawie losujemy \textit{kandydata}, który następnie jest akceptowany jako następny stan albo łańcuch zostaje w swoim aktualnym stanie). Macierz $\mathbb{Q}$ nie musi (i najprawdopodobniej tego nie robi) zadawać łańcucha z rozkładem stacjonarnym $\pi$. Na początek, co w wielu przypadkach jest założeniem dość naturalnym, załóżmy, że $\mathbb{Q} = (q_{ij})_{i,j \in S}$ jest symetryczna, czyli $q_{ij} = q_{ji}$ dla $i,j \in S$. Rozważmy macierz $\mathbb{P} = (p_{ij})_{i,j \in S}$ zależną od $\mathbb{Q}$ i $\pi$ w następujący sposób:
+$$
+    p_{ij} = \begin{cases} q_{ij} \min(1, \frac{\pi_j}{\pi_i}) \,\,\,&\text{dla $i \neq j$}\\
+                    1 - \sum\limits_{j \in S \setminus \{i\}} p_{ij}\,\,\, &\text{dla $i = j$}
+            \end{cases}
+$$
+\\\\
+\textbf{Twierdzenie 3.3.1}\\
+Tak zdefiniowana $\mathbb{P}$ jest stochastyczna, nieredukowalna i nieokresowa i zadaje łańcuch o rozkładzie stacjonarnym $\pi$.\\
+Dowód: Że wyrazy $\mathbb{P}$ sumują się do 1 wynika wprost z definicji. Ponadto dla każdego $i \neq j$: $p_{ij} \geq 0$ jako iloczyn liczb nieujemnych. Pozostaje pokazać, że dla każdego $i \in S$ $p_{ii} \geq 0$, ale:
+\begin{align*}
+    p_{ii} = 1 - \sum\limits_{j \in S\setminus \{i\}} p_{ij} = 1 - \sum\limits_{j \in S\setminus \{i\}} q_{ij}\min(1, \frac{\pi_j}{\pi_i}) \geq 1 - \sum\limits_{j \in S\setminus \{i\}} q_{ij} = q_{ii} \geq 0
+\end{align*}
+jako że $\mathbb{Q}$ jest macierzą stochastyczną. Zatem $\mathbb{P}$ jest stochastyczna. Ponadto z założenia o $\pi$ mamy $0 < \min(1, \frac{\pi_j}{\pi_i})$, stąd i z poprzedniej nierówności widać, że $p_{ij} > 0$, jeśli tylko $q_{ij} > 0$, zatem własności nieokresowości i nieredukowalności są zachowane.  Pokażemy następnie, że $\pi$ spełnia równanie balansu dla tej macierzy. Istotnie, zauważmy, że dla dowolnych $i,j \in S$, $i \neq j$:
+\begin{align*}
+    \pi_j p_{ji} = \pi_j q_{ji} \min(1, \frac{\pi_i}{\pi_j}) =  q_{ji} \min(\pi_j, \pi_i) = q_{ji} \pi_i \min(\frac{\pi_j}{\pi_i}, 1) =  \pi_i q_{ij} \min(\frac{\pi_j}{\pi_i}, 1) = \pi_i p_{ij}
+\end{align*}
+gdzie przedostatnia równość wynika z symetrii macierzy $\mathbb{Q}$. Ponadto w oczywisty sposób równość $\pi_i p_{ij} = \pi_j p_{ji}$ zachodzi dla $i = j$ Zatem z (2.7.1) równanie balansu jest spełnione, stąd $\mathbb{P}$ tak zdefiniowana zadaje JŁM o rozkładzie stacjonarnym $\pi$ \qed
+\\
+\\
+Z powyższej konstrukcji wynika algorytm Metropolisa generacji JŁM $\{X_n\}$ o rozkładzie stacjonarnym $\pi$, gdy mamy daną macierz kandydatów $\mathbb{Q}$, informację jak obliczać $\frac{\pi_i}{\pi_j}$ i generator  i.i.d. prób z $U[0,1]$:\\\\
+\textbf{Algorytm Metropolisa}
+\begin{algorithm}
+\SetKwInput{For}{dla}
+\SetKwInput{If}{jeśli}
+\SetKwInput{Else}{w przeciwnym razie}
+Zacznij w dowolnie wybranym stanie $X_0 := i \in S$\\
+\For{$n=0,1,2,3...$}{
+\quad wylosuj Z – kandydata na nowy stan zgodnie z rozkładem $q_{X_i  \cdot}$ (np. może być $Z := \varphi_{\mathbb{Q}}(U, X_i)$ dla $U \sim U[0,1]$)\;
+\quad wylosuj $V \sim U[0,1]$\;
+\quad \If{$V \leq \min(1, \frac{\pi_{Z}}{\pi_{X_i}})$}{
+\quad\quad $X_{n+1} := Z$\;}
+\quad \Else{}{
+\quad\quad $X_{n+1} := X_n$\;}}
+\end{algorithm}
+\\
+Łatwo sprawdzić, że taki algorytm generuje łańcuch o macierzy przejścia $\mathbb{P}$ opisanej wcześniej.\\
+Teraz możemy pozbyć się założenia o symetryczności macierzy $Q$ – będzie to algorytm Metropolisa-Hastingsa.\\
+\\
+Tym razem dysponujemy stochastyczną macierzą generującą kandydatów $\mathbb{Q}$, która niekoniecznie jest symetryczna, natomiast nadal jest nieredukowalna i nieokresowa, ponadto $q_{ij} > 0 \iff q_{ji} > 0$. Rozważmy macierz przejścia $\mathbb{P} = (p_{ij})_{i,j \in S}$ o bardzo podobnym wzorze jak w przypadku algorytmu Metropolisa:
+$$
+    p_{ij} = \begin{cases} q_{ij} \min(1, \frac{\pi_j q_{ji}}{\pi_i q_{ij}}) \,\,\,&\text{dla $i \neq j$ i $q_{ij} \neq 0$}\\
+                    0 \,\,\, &\text{dla $i \neq j$ i $q_{ij} = 0$}\\
+                    1 - \sum\limits_{j \in S \setminus \{i\}} p_{ij}\,\,\, &\text{dla $i = j$}
+            \end{cases}
+$$
+Zachodzi analogiczne twierdzenie jak w poprzednim przypadku.
+\\\\
+\textbf{Twierdzenie 3.3.1}\\
+Tak zdefiniowana $\mathbb{P}$ jest stochastyczna, nieredukowalna i nieokresowa i zadaje łańcuch o rozkładzie stacjonarnym $\pi$.\\
+Dowód: Stochastyczności dowodzimy tak jak poprzednio: wyrazy w wierszu sumują się do jeden, ponadto dla $i \neq j$ jest $0 \leq p_{ij} \leq q_{ij}$, zatem wszystkie wyrazy są nieujemne. Nieredukowalność i nieokresowość wynikają podobnie jak poprzednio, z tego, że $p_{ij} > 0 \iff q_{ij} > 0$. Dalej wystarczy sprawdzić, że są spełnione założenia lematu (2.7.1). Dla $i=j$ oraz gdy $q_{ij} = q_{ji} =  0$ jest to oczywiste, w przeciwnym razie:
+\begin{align*}
+    \pi_j p_{ji} = \pi_j q_{ji} \min(1, \frac{\pi_i q_{ij}}{\pi_j q_{ji}}) =  \min(\pi_j q_{ji}, \pi_i q_{ij}) = \pi_i q_{ij} \min(\frac{\pi_j q_{ji}}{\pi_i q_{ij}}, 1) = \pi_i p_{ij}
+\end{align*}
+Zatem równanie balansu jest spełnione, więc $\pi$ jest rozkładem stacjonarnym. \qed
+\\\\
+W takim razie możemy zapisać algorytm:\\\\
+\textbf{Algorytm Metropolisa-Hastingsa}
+\begin{algorithm}
+\SetKwInput{For}{dla}
+\SetKwInput{If}{jeśli}
+\SetKwInput{Else}{w przeciwnym razie}
+Zacznij w dowolnie wybranym stanie $X_0 := i \in S$\;
+\For{$n=0,1,2,3...$}{
+\quad wylosuj Z – kandydata na nowy stan zgodnie z rozkładem $q_{X_i  \cdot}$ (np. może być $Z := \varphi_{\mathbb{Q}}(U, X_i)$ dla $U \sim U[0,1]$)\;
+\quad wylosuj $V \sim U[0,1]$\;
+\quad \If{$V \leq \min(1, \frac{\pi_{Z} q_{X_n Z}}{\pi_{X_i} q_{Z X_n}})$}{
+\quad\quad $X_{n+1} := Z$\;}
+\quad \Else{}{
+\quad\quad $X_{n+1} := X_n$\;}}
+\end{algorithm}
+\\
+Również łatwo sprawdzamy, że otrzymujemy w ten sposób łańcuch zadany macierzą $\mathbb{P}$ z równania.\\
+Zwróćmy uwagę, że proces przejścia naturalnie rozdziela się na wybór kandydata (przy pomocy \textit{macierzy generującej}), a następnie akceptację lub odrzucenie i pozostanie przy aktualnym stanie. Można zatem zdefiniować \textit{prawdopodobieństwo akceptacji} $\alpha_{ij}$, czyli prawdopodobieństwo przejścia z $i$ do $j$ ($i \neq j$) pod warunkiem, że $j$ został wylosowany jako kandydat. Dla algorytmu Metropolisa mamy:
+$$\alpha_{ij} = \min(1, \frac{\pi_j}{\pi_i})$$
+Natomiast dla uogólnienia Metropolisa-Hastingsa (tam, gdzie $q_{ij} \neq 0$, w przeciwnym razie przyjmujemy $\alpha_{ij} = 1$):
+$$\alpha_{ij} = \min(1, \frac{\pi_j q_{ji}}{\pi_i q_{ij}})$$
+\\
+I prawdopodobieństwo przejścia $p_{ij} = q_{ij}\alpha_{ij}$ gdy $i \neq j$ oraz $p_{ii} = 1 - \sum\limits_{j \in S, j \neq i} p_{ij}$\\\\
+Ogólnie za [Hastings-Peskun] możemy wprowadzić pewną rodzinę algorytmów, czyli równoważnie stochastycznych, nieredukowalnych i nieokresowych macierzy przejść $\mathbb{P}$ o stacjonarnym rozkładzie $\pi$ wyprowadzonych na podstawie $\mathbb{Q}$ o założeniach jak w algorytmie Metropolisa-Hastingsa. Sprowadza się to do ustalenia warunków na $(\alpha_{ij})_{i,j \in S, i \neq j}$, gdzie $0 < \alpha_{ij} \leq 1$ (chcemy, żeby każdy wylosowany \textit{kandydat} miał niezerowe szanse na zostanie stanem w następnym kroku). Mamy więc  $$p_{ij} = q_{ij}\alpha_{ij}$$
+I ustalamy:
+$$ 0 \leq \alpha_{ij} = \frac{s_{ij}}{1+t_{ij}} \leq 1$$
+gdzie  $s_{ij}$ są zadane pewną symetryczną funkcją ($s_{ij} = s_{ji}$) $S \times S \to \mathbb{R}_{\geq 0}$, natomiast $$t_{ij} = \frac{\pi_i q_{ij}}{\pi_j q_{ji}}$$
+Tam gdzie $q_{ij} \neq 0$ oraz $t_{ij} = 0$ w przeciwnym razie.\\
+Ostatecznie więc jest to rodzina symetrycznych nieujemnych funkcji $s_{ij}$, takich, że wynikowa $0 < \alpha_{ij} \leq 1$.\\
+Po pierwsze zauważmy, że $\alpha$ w wersji z algorytmu Metropolisa-Hastingsa należy do tej rodziny. Rzeczywiście, przyjmując dla $i,j \in S,\,\, i \neq j$, że $q_{ij} \neq 0$:
+$$s_{ij} = 1 + \min(t_{ij}, t_{ji}) = 1 + \min\left(\frac{\pi_i q_{ij}}{\pi_j q_{ji}}, \frac{\pi_j q_{ji}}{\pi_i q_{ij}}\right)$$
+i $s_{ij} = 1$, tam gdzie $q_{ij} = 0$ 
+Mamy:
+$$\alpha_{ij} = 1$$
+jeśli $q_{ij} = 0$. Dla $i \neq j \in S$, że $q_{ij} \neq 0$ przyjmijmy natomiast bez straty ogólności:
+$$\min\left(\frac{\pi_i q_{ij}}{\pi_j q_{ji}}, \frac{\pi_j q_{ji}}{\pi_i q_{ij}}\right) = \frac{\pi_i q_{ij}}{\pi_j q_{ji}}$$
+Wtedy:
+$$0 < \frac{\pi_i q_{ij}}{\pi_j q_{ji}} \leq 1 \leq \frac{\pi_j q_{ji}}{\pi_i q_{ij}}$$
+Zatem:
+$$\alpha_{ij} = \frac{1 + \frac{\pi_i q_{ij}}{\pi_j q_{ji}}}{1 + \frac{\pi_i q_{ij}}{\pi_j q_{ji}}} = 1 = \min(1, \frac{\pi_j q_{ji}}{\pi_i q_{ij}})$$
+oraz 
+$$\alpha_{ji} = \frac{1 + \frac{\pi_i q_{ij}}{\pi_j q_{ji}}}{1 + \frac{\pi_j q_{ji}}{\pi_i q_{ij}}} = \frac{\frac{\pi_i q_{ij} + \pi_j q_{ji}}{\pi_j q_{ji}}}{\frac{\pi_i q_{ij} + \pi_j q_{ji}}{\pi_i q_{ij}}} = \frac{\pi_i q_{ij}}{\pi_j q_{ji}} = \min(1, \frac{\pi_i q_{ij}}{\pi_j q_{ji}}) $$
+\\
+Oczywiście tak zdefiniowana $s_{ij}$, o, zatem algorytm Metropolisa-Hastingsa (i Metropolisa) należy do tej rodziny. Ponadto można pokazać, że do jeśli tylko $0 < \alpha_{ij} \leq 1$, to wynikowa macierz $\mathbb{P}$ jest nieredukowalna, nieokresowa i ma rozkład stacjonarny $\pi$. Istotnie, ponieważ $p_{ij} = \alpha_{ij}q_{ij}$ są dodatnie, jeśli tylko $q_{ij}$ są dodatnie nieredukowalność i nieokresowość są zachowane. Natomiast dzięki definicji $\alpha$ jest spełnione \textit{detailed balance equation} (lemat 2.7.1): dla $i = j$, jest to oczywiste, jeśli $q_{ij} = 0$, po obu stronach równości dostajemy $0$, pozostaje więc przypadek, gdy $q_{ij} > 0$:
+\begin{align*}
+\pi_j p_{ji} = \pi_j q_{ji} \frac{s_{ji}}{1 + \frac{\pi_j q_{ji}}{\pi_i q_{ij}}} = \frac{s_{ji}}{\frac{1}{\pi_j q_{ji}} + \frac{1}{\pi_i q_{ij}}} = \frac{s_{ij}}{\frac{1}{\pi_j q_{ji}} + \frac{1}{\pi_i q_{ij}}} = \pi_i q_{ij} \frac{s_{ij}}{1 + \frac{\pi_i q_{ij}}{\pi_j q_{ji}}} = \pi_i p_{ij}
+\end{align*}
+korzystamy z symetrii $s_{ij}$. Zatem rodzina macierzy ergodycznych wyznaczona z rodziny $(\alpha_{ij})_{i,j \in S, i \neq j}$ (czyli w zasadzie funkcji $s_{ij}$) spełniających opisane warunki jest rodziną macierzy o rozkładzie stacjonarnym $\pi$, spełniającą ponadto dla tego rozkładu \textit{detailed balance equations}. Oznaczmy tę rodzinę przez $\mathcal{R}$.
+Z takiej rodziny chcemy wybrać algorytm (macierz), która posłuży nam do rozwiązania postawionych problemów. Chcemy wybrać \textit{najlepszy} z nich – o tym, co to znaczy \textit{najlepszy} i dlaczego jest to właśnie algorytm Metropolisa (Metropolisa-Hastingsa) opowiem w następnym podrozdziale.
+\subsection{Optymalność algorytmów Metropolisa i Metropolisa-Hastingsa}
+Opowiedzmy jeszcze raz, co chcemy robić – chcemy symulować pewien nieznany wprost rozkład prawdopodobieństwa. Symulacja jest tym lepsza, im wartości $\frac{1}{n}\sum\limits_{i = 0}^{n-1} f(X_i)$ są bliższe oczekiwanych, a więc im mniejsza jest wariancja tych wartości. Okazuje się, że algorytm Metropolisa-Hastingsa jest optymalny ze względu na asymptotyczną wariancję w rodzinie $\mathcal{R}$.\\\\
+Zanim to udowodnimy, zauważmy najpierw, że dla $s_{ij}$ odpowiadających macierzom z rodziny $\mathcal{R}$ zachodzi:
+$$s_{ij} \leq 1 + \min(t_{ij}, t_{ji}) = 1 + \min\left(\frac{\pi_i q_{ij}}{\pi_j q_{ji}}, \frac{\pi_j q_{ji}}{\pi_i q_{ij}}\right)$$
+W przeciwnym razie zachodziłoby albo $\alpha_{ij} > 1$, albo $\alpha_{ji} > 1$, co nie może mieć miejsca, jako że każde z nich jest prawdopodobieństwem. W takim razie widać, że algorytm Metropolisa-Hastingsa maksymalizuje $s_{ij}$, co jest równoważne z maksymalizacją wyrazów $p_{ij}$ leżących poza diagonalą $\mathbb{P}$\\\\
+Teraz podamy bez dowodu twierdzenie [dowód w: Peskun, Optimum Monte-Carlo sampling using Markov chains]\\
+\\
+\textbf{Twierdzenie 3.4.1}
+Niech $\mathbb{P}^{(1)} = (p_{ij}^{(1)})_{i,j \in S}$, $\mathbb{P}^{(2)}= (p_{ij}^{(2)})_{i,j \in S}$ będą dwiema ergodycznymi macierzami o stacjonarnym rozkładzie $\pi$ spełniającymi ponadto \textit{detailed balance equations}. Jeśli dla wszystkich wyrazów leżących poza diagonalą zachodzi $p_{ij}^{(1)} \geq p_{ij}^{(2)}$, to dla dowolnej $f: S \to \mathbb{R}$,  $\mathbb{P}^{(1)}$ ma mniejszą wariancję asymptotyczną, czyli:
+$$Var_f(\mathbb{P}^{(1)}) \leq Var_f(\mathbb{P}^{(2)})$$
+\\\\
+Z wcześniejszego rodziału wiemy, że mówienie o wariancji asymptotycznej ma sens. Z wcześniejszych rozważań wiemy, że dla dowolnych $i \neq j \in S$ macierz z algorytmu Metropolisa-Hastingsa maksymalizuje $p_{ij}$ w obrębie rodziny $\mathcal{R}$, a więc również minimalizuje asymptotyczną wariancję w tej rodzinie. Zatem w odpowiednio długim przedziale czasowym, najlepiej symuluje docelowy rozkład, z tego powodu ten algorytm jest wyborem do rozwiązania postawionych w tej pracy problemów.\\\\
+ Z teorii zostają jeszcze: na pewno mixing time przy okazji analizy zbieżności, wtedy może też się pojawić odwracalność łańcucha i CFTP, doopisać uzasadnienie użycia MCMC - o metodach gradientowych, teoria niejednorodnych ŁM i symulowane wyżarzanie. Ponadto jeśli chodzi o background - dodać historyjkę o więźniach - nazwisko Diaconis powinno się tam pojawić, przy okazji problemu komiwojażera opowiedzieć o P/NP, pokazać równoważność komiwojażera i dekodowania w wersji z szyfrem podstawieniowym, element nt. Markowa, który badał odstępy między samogłoskami w wojnie i pokoju. Dodać bibliografię -> źródła którymi się inspirowałem w dowodach teorii Markowa.
+
+\section{Dekodowanie zaszyfrowanego tekstu}
+Częstości wzięte z http://practicalcryptography.com/cryptanalysis/letter-frequencies-various-languages/english-letter-frequencies/ \\
+Diaconis: The Markov Chain Monte Carlo Revolution\\
+Książki: gutenberg project
+\subsection{Wprowadzenie do problemu}
+\subsection{Przedstawienie analizowanych szyfrów}
+\subsection{Przedstawienie zastosowanych algorytmów}
+\subsection{Zbieżność, mixing time. Analiza teoretyczna algorytmów}
+\subsection{Uwagi implementacyjne}
+\subsection{Symulacje i wyniki}
+\subsection{Inne możliwe podejścia}
+\subsection{Dodatkowe rozważania i uwagi}
+\section{Problem komiwojażera}
+\subsection{Wprowadzenie, opis problemu}
+\subsection{Niejednorodne łańcuchy Markowa. Symulowane wyżarzanie} 
+\subsection{Przedstawienie zastosowanych algorytmów}
+\subsection{Analiza teoretyczna}
+\subsection{Symulacje i wyniki}
+\subsection{Uwagi implementacyjne}
+\subsection{Inne możliwe podejścia}
+\subsection{Dodatkowe rozważania i uwagi}
+\section{Podsumowanie}
+
+
+\newpage
+\begin{thebibliography}{9}
+
+\bibitem{Connor}
+  Stephen Connor,
+  \emph{Simulation and Solving Substitution Codes}.
+ \bibitem{Chen&Rosenthal}
+ Jian Chen and Jeffrey S. Rosenthal,
+  \emph{Decrypting Classical Cipher Text Using Markov Chain Monte Carlo}
+Department of Statistics, University of Toronto
+May, 2010
+
+\bibitem{benchmark}
+http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/
+\end{thebibliography}
+\end{document}
+
