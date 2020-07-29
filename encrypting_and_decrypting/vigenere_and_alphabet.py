@@ -6,6 +6,7 @@
 import unittest
 import random
 import mock
+from timeit import default_timer as timer
 
 MIN_FREQUENCY_FACTOR = 1e-50
 
@@ -59,9 +60,9 @@ def encrypt_decrypt_single(letter, shift, alphabet):
 def encrypt_decrypt_text(text, shift_key, alphabet):
     key_length = len(shift_key)
     current_key_ptr = 0
-    encrypted_decrypted = ""
+    encrypted_decrypted = []
     for index in range(len(text)):
-        encrypted_decrypted += encrypt_decrypt_single(text[index], shift_key[current_key_ptr], alphabet)
+        encrypted_decrypted.append(encrypt_decrypt_single(text[index], shift_key[current_key_ptr], alphabet))
         current_key_ptr = (current_key_ptr + 1) % key_length
 
     return encrypted_decrypted
@@ -171,6 +172,18 @@ def calculate_frequencies(text, gram_length, alphabet):
 
     return frequencies_dict
 
+def calculate_function(text, gram_length, distribution):
+    prob = 1
+    current_gram = ""
+    for i in range(len(text)):
+        current_gram += text[i]
+        if len(current_gram) > gram_length:
+            current_gram = current_gram[1:]
+        if len(current_gram) == gram_length:
+            prob *= distribution[current_gram]
+
+    return prob
+
 
 def calculate_candidate_function(old, frequencies_change, distribution):
     change = 1
@@ -184,6 +197,8 @@ def calculate_candidate_function(old, frequencies_change, distribution):
 
 def calculate_candidate_change(frequencies_change, distribution):
     return calculate_candidate_function(1, frequencies_change, distribution)
+
+#add a function to calculate a function from a text
 
 
 def find_change_in_key(old_key, new_key):
@@ -219,19 +234,26 @@ def get_frequency_change_fixed(old_key, new_key, n, current_decryption, alphabet
 
     return frequencies_change
 
-def update_decryption(old_key, new_key, current_decryption):
-    return
 
-# deprecated - to be fixed
-#
-# def get_frequency_change_bounded(old_key, new_key, n, frequencies, text, alphabet):
-#     if len(old_key) == len(new_key):
-#         return get_frequency_change_fixed(old_key, new_key, n, text, alphabet)
-#     else:
-#         new_frequencies = calculate_frequencies(encrypt_decrypt_text(text, new_key), n, alphabet)
-#         frequencies_change = get_frequencies_change(frequencies, new_frequencies)
-#
-#         return frequencies_change
+# wherever only alphabet length is needed, make it this way
+# set some constant arguments order
+def update_decryption_fixed(old_key, new_key, current_decryption, alphabet):
+    change = find_change_in_key(old_key, new_key)
+    shift = (new_key[change] - old_key[change]) % alphabet.length
+    for i in range(change, len(current_decryption), len(old_key)):
+        current_decryption[i] = encrypt_decrypt_single(current_decryption[i], shift, alphabet)
+
+
+def get_frequency_change_bounded(old_key, new_key, n, frequencies, text, current_decryption, alphabet):
+    if len(old_key) == len(new_key):
+        return get_frequency_change_fixed(old_key, new_key, n, current_decryption, alphabet)
+    else:
+        new_frequencies = calculate_frequencies(encrypt_decrypt_text(text, new_key, alphabet), n, alphabet)
+        frequencies_change = get_frequencies_change(frequencies, new_frequencies)
+        return frequencies_change
+
+def update_decryption_bounded(new_key, text, current_decryption, alphabet):
+    current_decryption = encrypt_decrypt_text(text, new_key, alphabet)
 
 
 def update_frequency(frequency, frequency_change):
@@ -256,7 +278,7 @@ class TestVigenereEncryptionDecryption(unittest.TestCase):
 
 
     def test_text_encrypt_decrypt(self):
-        self.assertEqual(encrypt_decrypt_text("YEARGREATYEAR", [3, 2, 1, 0], self.alphabet), "BGBRJTFAWAFAU")
+        self.assertEqual(encrypt_decrypt_text(list("YEARGREATYEAR"), [3, 2, 1, 0], self.alphabet), list("BGBRJTFAWAFAU"))
 
     def test_ith_fixed_neighbour(self):
         self.assertEqual(
@@ -338,7 +360,7 @@ class TestVigenereEncryptionDecryption(unittest.TestCase):
         self.assertEqual(init_frequencies["CD"], 1)
 
     def test_calculate_change_fixed(self):
-        original_text = "ABCD"
+        original_text = list("ABCD")
         self.assertEqual(get_frequency_change_fixed([0, 1], [0, 2], 2, encrypt_decrypt_text(original_text, [0,1], self.alphabet),
                                                     self.alphabet),
                          {"AC": -1, "AD": 1, "CC": -1, "DC": 1, "CE": -1, "CF": 1})
@@ -375,29 +397,34 @@ def fixed_procedure(text, distribution, starting_state, n, steps, alphabet):
         dist_change = calculate_candidate_change(frequency_change, distribution)
         u = random.random()
         if u < dist_change:
+            update_decryption_fixed(current_state, candidate, current_decryption, alphabet)
             current_state = candidate
             update_frequency(current_frequencies, frequency_change)
             current_state_function *= dist_change
-            current_decryption = encrypt_decrypt_text(text, current_state, alphabet)
             if current_state_function > max_function:
                 max_state = candidate
                 max_function = current_state_function
 
     print(encrypt_decrypt_text(text, max_state, alphabet))
+    print(calculate_function(encrypt_decrypt_text(text, max_state, alphabet), 2, distribution))
+    print(calculate_function(encrypt_decrypt_text(text, [-4, -3, -2, -11, -4, -8, -17], alphabet), 2, distribution))
+
 
 from distribution_generator import generate_from_file
 
-random.seed(19)
+random.seed(54)
 
 standard = generate_from_file("encrypting_and_decrypting/english_bigrams_standard.txt")
 alphabeto = Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-plain = '''IWANTTOFINISHTHISTHESISANDIHOPEIWILLACCOMPLISHITBECAUSEITWOULDBEVERYNICEMOREOVERBEGENTLESENTIMENTAL'''
+plain = list('''DOYOUKNOWIWANTTOFINISHTHISTHESISANDIHOPEIWILLACCOMPLISHITBECAUSEITWOULDBEVERYNICELETITBESOPLEASEREBELWITHOUTACAUSE''')
 
+
+#local minima problem
 encrypted = encrypt_decrypt_text(plain, [4, 3, 2, 11, 4, 8, 17], alphabeto)
 
 print(encrypted)
-
-
+print(len(plain))
 fixed_procedure(encrypted, standard, [1,1,1,1,1,1,1], 2, 10000, alphabeto)
-if __name__ == '__main__':
-    unittest.main()
+
+# if __name__ == '__main__':
+#     unittest.main()

@@ -11,6 +11,6 @@ def generate_from_file(filename):
     for i in freqs:
         normalizer += freqs[i]
     for i in freqs:
-        freqs[i] /= (normalizer / 10)
+        freqs[i] /= (normalizer / 100)
 
     return freqs
