@@ -6,7 +6,6 @@
 import unittest
 import random
 import mock
-from timeit import default_timer as timer
 
 MIN_FREQUENCY_FACTOR = 1e-50
 
@@ -30,6 +29,53 @@ class Alphabet:
 
     def __getitem__(self, key):
         return self.alphabet[key]
+
+
+class StrippedText:
+
+    def __init__(self, non_stripped_text, alphabet):
+        length = len(non_stripped_text)
+        self.alphabetic_signs = []
+        self.non_alphabetic_segments = []
+        self.ends_of_words = []
+        self.alphabet = alphabet
+        non_alphabet = ""
+        end_of_word = 0
+        for i in range(length):
+            if non_stripped_text[i] in self.alphabet.letters_to_position:
+                self.alphabetic_signs.append(non_stripped_text[i])
+                end_of_word += 1
+                if non_alphabet:
+                    self.non_alphabetic_segments.append(non_alphabet)
+                    non_alphabet = ""
+                if i + 1 == length or non_stripped_text[i + 1] not in self.alphabet.letters_to_position:
+                    self.ends_of_words.append(True)
+                else:
+                    self.ends_of_words.append(False)
+            else:
+                non_alphabet += non_stripped_text[i]
+                if i + 1 == length:
+                    self.non_alphabetic_segments.append(non_alphabet)
+        self.non_alphabetic_segments.append("")
+
+    def __getitem__(self, key):
+        return self.alphabetic_signs[key]
+
+    def __setitem__(self, key, value):
+        self.alphabetic_signs[key] = value
+
+    def __len__(self, ):
+        return len(self.alphabetic_signs)
+
+    def get_non_stripped_text(self):
+        text = ""
+        word_index = 0
+        for i in range(len(self.alphabetic_signs)):
+            text += self.alphabetic_signs[i]
+            if self.ends_of_words[i]:
+                text += self.non_alphabetic_segments[word_index]
+                word_index += 1
+        return text
 
 
 def alphabets_product(alphabet1, alphabet2):
@@ -57,14 +103,23 @@ def encrypt_decrypt_single(letter, shift, alphabet):
 # @param text – text to be coded/decoded
 # @param code - code used for coding/decoding
 # alphabet - alphabet used
-def encrypt_decrypt_text(text, shift_key, alphabet):
+def encrypt_decrypt_text(text, shift_key):
     key_length = len(shift_key)
     current_key_ptr = 0
     encrypted_decrypted = []
     for index in range(len(text)):
-        encrypted_decrypted.append(encrypt_decrypt_single(text[index], shift_key[current_key_ptr], alphabet))
+        encrypted_decrypted.append(encrypt_decrypt_single(text[index], shift_key[current_key_ptr], text.alphabet))
         current_key_ptr = (current_key_ptr + 1) % key_length
 
+    return encrypted_decrypted
+
+def encrypt_text(text, shift_key, alphabet):
+    key_length = len(shift_key)
+    current_key_ptr = 0
+    encrypted_decrypted = ""
+    for index in range(len(text)):
+        encrypted_decrypted += (encrypt_decrypt_single(text[index], shift_key[current_key_ptr], alphabet))
+        current_key_ptr = (current_key_ptr + 1) % key_length
 
     return encrypted_decrypted
 
@@ -81,7 +136,12 @@ def get_ith_neighbour_fixed(current, i, alphabet):
            current[position_to_change + 1:]
 
 
-def get_ith_neighbour_bounded2(current, i, boundary, alphabet):
+## @brief function for getting ith neighbour of current in bounded-length Vigenere cipher
+# @param current - current state
+# @param i - number of neighbour to be selected
+# @param boundary - maximum code (state) length
+# @param alphabet - alphabet used
+def get_ith_neighbour_bounded(current, i, boundary, alphabet):
     current_length = len(current)
     if current_length == 0:
         return [i]
@@ -100,49 +160,6 @@ def get_ith_neighbour_bounded2(current, i, boundary, alphabet):
     no_insertion_i = no_deletion_i - (current_length + 1) * alphabet.length
     return get_ith_neighbour_fixed(current, no_insertion_i, alphabet)
 
-## @brief function for getting ith neighbour of current in bounded-length Vigenere cipher
-# @param current - current state
-# @param i - number of neighbour to be selected
-# @param boundary - maximum code (state) length
-# @param alphabet - alphabet used
-def get_ith_neighbour_bounded(current, i, boundary, alphabet):
-    current_length = len(current)
-
-    if i == 0 and current_length != 1:
-        return current[:-1]
-    if current_length > 1:
-        i -= 1
-
-    if i < len(current)*alphabet.max_shift_length:
-        return get_ith_neighbour_fixed(current, i, alphabet)
-
-    i -= len(current)*alphabet.max_shift_length
-    res = current[:]
-    res.append(i)
-    return res
-
-def get_ith_neighbour_bounded3(current, i, boundary, alphabet):
-    current_length = len(current)
-    if i <= boundary - current_length:
-        return current + [random.randint(0, alphabet.length) for j in range(i)]
-
-    i -= (boundary - current_length)
-    if i < current_length and i > 0:
-        return current[:(current_length - i)]
-
-    i -= (current_length - 1)
-
-    return get_ith_neighbour_fixed(current, i, alphabet)
-
-def get_ith_neighbour_bounded4(current, i, boundary, alphabet):
-    if i == 0:
-        new_key = []
-        for k in range(random.randint(1,boundary)):
-            new_key.append(random.randint(0, alphabet.length))
-        return new_key
-    return get_ith_neighbour_fixed(current, i-1, alphabet)
-
-
 
 ## @brief function for getting a number of neighbours of a given current state in fixed-length
 # Vigenere cipher
@@ -158,29 +175,12 @@ def get_neighbours_number_fixed(current, alphabet):
 # @param boundary - maximum code (state) length
 # @param alphabet - alphabet used
 def get_neighbours_number_bounded(current, boundary, alphabet):
-    # only alphabet length will be enough to pass
-    if boundary == 1:
-        return alphabet.max_shift_length
-    elif len(current) == 1:
-        return alphabet.max_shift_length + alphabet.length
-    elif len(current) == boundary:
-        return 1 + len(current) * alphabet.max_shift_length
-    else:
-        return 1 + len(current) * alphabet.max_shift_length + alphabet.length
-
-def get_neighbours_number_bounded2(current, boundary, alphabet):
     if len(current) == boundary:
         return len(current) * (alphabet.max_shift_length + 1)
     elif len(current) == 0:
         return alphabet.length
     else:
         return (len(current) + 1) * alphabet.length + len(current) * (alphabet.max_shift_length + 1)
-
-def get_neighbours_number_bounded3(current, boundary, alphabet):
-    return boundary - 1 + len(current)*alphabet.max_shift_length
-
-def get_neighbours_number_bounded4(current, boundary, alphabet):
-    return 1 + len(current)*alphabet.max_shift_length
 
 
 ## @brief function for generating a candidate from a given current state
@@ -201,34 +201,23 @@ def get_candidate_bounded(current, boundary, alphabet):
     i = random.randint(0, get_neighbours_number_bounded(current, boundary, alphabet) - 1)
     return get_ith_neighbour_bounded(current, i, boundary, alphabet)
 
-def get_candidate_bounded2(current, boundary, alphabet):
-    i = random.randint(0, get_neighbours_number_bounded2(current, boundary, alphabet) - 1)
-    return get_ith_neighbour_bounded2(current, i, boundary, alphabet)
 
-def get_candidate_bounded3(current, boundary, alphabet):
-    i = random.randint(0, get_neighbours_number_bounded3(current, boundary, alphabet) - 1)
-    return get_ith_neighbour_bounded3(current, i, boundary, alphabet)
-
-def get_candidate_bounded4(current, boundary, alphabet):
-    i = random.randint(0, get_neighbours_number_bounded4(current, boundary, alphabet) - 1)
-    return get_ith_neighbour_bounded4(current, i, boundary, alphabet)
-
-
-def find_n_gram_at_i(text, n, j, i, shift, alphabet):
-    if j < 0 or j+n > len(text):
+def find_n_gram_at_i(original_text, n, j, i, shift):
+    if j < 0 or j+n > len(original_text):
         return None
     gram = ""
     for k in range(j, j + n):
+        if original_text.ends_of_words[k] and k + 1 < j + n:
+            return None
         if k == i:
-            gram += encrypt_decrypt_single(text[k], shift, alphabet)
+            gram += encrypt_decrypt_single(original_text[k], shift, original_text.alphabet)
         else:
-            gram += text[k]
+            gram += original_text[k]
     return gram
 
 
-
-def calculate_frequencies(text, gram_length, alphabet):
-    frequencies_dict = n_gram_dict(alphabet, gram_length)
+def calculate_initial_frequencies(text, gram_length):
+    frequencies_dict = n_gram_dict(text.alphabet, gram_length)
     current_gram = ""
     for i in range(len(text)):
         current_gram += text[i]
@@ -236,20 +225,24 @@ def calculate_frequencies(text, gram_length, alphabet):
             current_gram = current_gram[1:]
         if len(current_gram) == gram_length:
             frequencies_dict[current_gram] += 1
+        if text.ends_of_words[i]:
+            current_gram = ""
 
     return frequencies_dict
 
-def calculate_function(text, gram_length, distribution):
-    prob = 1
+def calculate_frequencies(original_text, encrypted_decrypted, gram_length):
+    frequencies_dict = n_gram_dict(original_text.alphabet, gram_length)
     current_gram = ""
-    for i in range(len(text)):
-        current_gram += text[i]
+    for i in range(len(original_text)):
+        current_gram += encrypted_decrypted[i]
         if len(current_gram) > gram_length:
             current_gram = current_gram[1:]
         if len(current_gram) == gram_length:
-            prob *= distribution[current_gram]
+            frequencies_dict[current_gram] += 1
+        if original_text.ends_of_words[i]:
+            current_gram = ""
 
-    return prob
+    return frequencies_dict
 
 
 def calculate_candidate_function(old, frequencies_change, distribution):
@@ -271,7 +264,6 @@ def find_change_in_key(old_key, new_key):
         if old_key[i] != new_key[i]:
             return i
 
-
 def get_frequencies_change(old_frequencies, new_frequencies):
     frequencies_change = {}
     for i in old_frequencies:
@@ -280,15 +272,16 @@ def get_frequencies_change(old_frequencies, new_frequencies):
     return frequencies_change
 
 
-def get_frequency_change_fixed(old_key, new_key, n, current_decryption, alphabet):
+def get_frequency_change_fixed(old_key, new_key, n, text):
     change = find_change_in_key(old_key, new_key)
     frequencies_change = {}
     key_length = len(old_key)
-    shift = new_key[change] - old_key[change]
-    for i in range(change, len(current_decryption), key_length):
+    old_shift = old_key[change]
+    new_shift = new_key[change]
+    for i in range(change, len(text), key_length):
         for j in range(i - n + 1, i + 1):
-            old_gram = find_n_gram_at_i(current_decryption, n, j, i, 0, alphabet)
-            new_gram = find_n_gram_at_i(current_decryption, n, j, i, shift, alphabet)
+            old_gram = find_n_gram_at_i(text, n, j, i, old_shift)
+            new_gram = find_n_gram_at_i(text, n, j, i, new_shift)
             if old_gram and new_gram:
                 try:
                     frequencies_change[old_gram] -= 1
@@ -300,27 +293,14 @@ def get_frequency_change_fixed(old_key, new_key, n, current_decryption, alphabet
     return frequencies_change
 
 
-
-# wherever only alphabet length is needed, make it this way
-# set some constant arguments order
-def update_decryption_fixed(old_key, new_key, current_decryption, alphabet):
-    change = find_change_in_key(old_key, new_key)
-    shift = (new_key[change] - old_key[change]) % alphabet.length
-    for i in range(change, len(current_decryption), len(old_key)):
-        current_decryption[i] = encrypt_decrypt_single(current_decryption[i], shift, alphabet)
-
-
-def get_frequency_change_bounded(old_key, new_key, n, frequencies, text, current_decryption, alphabet):
+def get_frequency_change_bounded(old_key, new_key, n, frequencies, text):
     if len(old_key) == len(new_key):
-        return get_frequency_change_fixed(old_key, new_key, n, current_decryption, alphabet)
+        return get_frequency_change_fixed(old_key, new_key, n, text)
     else:
-        new_frequencies = calculate_frequencies(encrypt_decrypt_text(text, new_key, alphabet), n, alphabet)
+        new_frequencies = calculate_frequencies(text, encrypt_decrypt_text(text, new_key), n)
         frequencies_change = get_frequencies_change(frequencies, new_frequencies)
+
         return frequencies_change
-
-
-def update_decryption_bounded(new_key, old_key, text, current_decryption, alphabet):
-    return
 
 
 def update_frequency(frequency, frequency_change):
@@ -342,10 +322,27 @@ class TestVigenereEncryptionDecryption(unittest.TestCase):
     def test_single_letter_encrypt_decrypt(self):
         self.assertEqual(encrypt_decrypt_single("Z", 4, self.alphabet), "D")
 
+    def test_stripped_text_properties(self):
+        self.assertTrue(StrippedText("M C MC", self.alphabet).ends_of_words[0])
+        self.assertTrue(StrippedText("M C MC", self.alphabet).ends_of_words[1])
+        self.assertFalse(StrippedText("M C MC", self.alphabet).ends_of_words[2])
+        self.assertTrue(StrippedText("M C MC", self.alphabet).ends_of_words[3])
+        self.assertEqual(StrippedText("MCMC ARE THE BEST.", self.alphabet).alphabetic_signs,
+                         list("MCMCARETHEBEST"))
+        self.assertEqual(StrippedText("MCMC ARE -> THE BEST", self.alphabet).non_alphabetic_segments,
+                         [" ", " -> ", " ", ""])
+        self.assertEqual(StrippedText("MCMC ARE THE BEST.", self.alphabet).get_non_stripped_text(),
+                         "MCMC ARE THE BEST.")
 
+        text = StrippedText("MCMC ARE THE BEST.", self.alphabet)
+        text[1] = "B"
+        self.assertEqual(text[1], "B")
+        self.assertEqual(text.alphabetic_signs, list("MBMCARETHEBEST"))
 
     def test_text_encrypt_decrypt(self):
-        self.assertEqual(encrypt_decrypt_text(list("YEARGREATYEAR"), [3, 2, 1, 0], self.alphabet), list("BGBRJTFAWAFAU"))
+        text = StrippedText("YEARGREATYEAR", self.alphabet)
+        self.assertEqual(encrypt_decrypt_text(text, [3, 2, 1, 0]), list("BGBRJTFAWAFAU"))
+        self.assertEqual(encrypt_text("YEARGREATYEAR", [3, 2, 1, 0], self.alphabet), "BGBRJTFAWAFAU")
 
     def test_ith_fixed_neighbour(self):
         self.assertEqual(
@@ -418,25 +415,30 @@ class TestVigenereEncryptionDecryption(unittest.TestCase):
     def test_n_gram_dict(self):
         self.assertEqual(n_gram_dict("AB", 2), {"AA": 0, "AB": 0, "BA": 0, "BB": 0})
 
-    def test_calculate_frequencies(self):
-        init_frequencies = calculate_frequencies("ABCCCDE", 2, self.alphabet)
+    def test_calculate_initial_frequencies(self):
+        init_frequencies = calculate_initial_frequencies(StrippedText("ABCCC, DE", self.alphabet), 2)
         self.assertEqual(init_frequencies["AB"], 1)
         self.assertEqual(init_frequencies["BC"], 1)
         self.assertEqual(init_frequencies["DE"], 1)
         self.assertEqual(init_frequencies["CC"], 2)
-        self.assertEqual(init_frequencies["CD"], 1)
+        self.assertEqual(init_frequencies["CD"], 0)
 
     def test_calculate_change_fixed(self):
-        original_text = list("ABCD")
-        self.assertEqual(get_frequency_change_fixed([0, 1], [0, 2], 2, encrypt_decrypt_text(original_text, [0,1], self.alphabet),
-                                                    self.alphabet),
+        original_text = StrippedText("ABCD", self.alphabet)
+        self.assertEqual(get_frequency_change_fixed([0, 1], [0, 2], 2, original_text),
                          {"AC": -1, "AD": 1, "CC": -1, "DC": 1, "CE": -1, "CF": 1})
 
-    # def test_calculate_change_bounded(self):
-    #     text = "ABCD"
-    #     frequencies = calculate_frequencies(encrypt_decrypt_text(text, [0, 1], self.alphabet), 2, self.alphabet)
-    #     self.assertEqual(get_frequency_change_bounded([0, 1], [0, 1, 0], 2, frequencies, text),
-    #                      {"CE": -1, "CD": 1})
+    def test_calculate_change_bounded(self):
+        text = StrippedText("ABCD", self.alphabet)
+        frequencies = calculate_frequencies(text, encrypt_decrypt_text(text, [0, 1]), 2)
+        self.assertEqual(get_frequency_change_bounded([0, 1], [0, 1, 0], 2, frequencies, text),
+                         {"CE": -1, "CD": 1})
+
+    def test_update_frequency(self):
+        frequency = {"AB": 1, "BC": 2, "CD": 0}
+        frequency_change = {"AB": -1, "BC": -2, "CD": 3}
+        update_frequency(frequency, frequency_change)
+        self.assertEqual(frequency, {"AB": 0, "BC": 0, "CD": 3})
 
     def test_update_frequency(self):
         frequency = {"AB": 1, "BC": 2, "CD": 0}
@@ -449,10 +451,11 @@ class TestVigenereEncryptionDecryption(unittest.TestCase):
 
 
 
-def fixed_procedure(text, distribution, starting_state, n, steps, alphabet):
+def fixed_procedure(text, distribution, starting_state, n, steps):
+    alphabet = text.alphabet
     current_state = starting_state
-    current_decryption = encrypt_decrypt_text(text, current_state, alphabet)
-    current_frequencies = calculate_frequencies(current_decryption, n, alphabet)
+    current_decryption = encrypt_decrypt_text(text, current_state)
+    current_frequencies = calculate_frequencies(text, current_decryption, n)
     current_state_function = calculate_candidate_function(1, current_frequencies, distribution)
 
     max_function = current_state_function
@@ -460,11 +463,10 @@ def fixed_procedure(text, distribution, starting_state, n, steps, alphabet):
 
     for i in range(steps):
         candidate = get_candidate_fixed(current_state, alphabet)
-        frequency_change = get_frequency_change_fixed(current_state, candidate, n, current_decryption, alphabet)
+        frequency_change = get_frequency_change_fixed(current_state, candidate, n, text)
         dist_change = calculate_candidate_change(frequency_change, distribution)
         u = random.random()
         if u < dist_change:
-            update_decryption_fixed(current_state, candidate, current_decryption, alphabet)
             current_state = candidate
             update_frequency(current_frequencies, frequency_change)
             current_state_function *= dist_change
@@ -472,71 +474,26 @@ def fixed_procedure(text, distribution, starting_state, n, steps, alphabet):
                 max_state = candidate
                 max_function = current_state_function
 
-    print(encrypt_decrypt_text(text, max_state, alphabet))
-    print(calculate_function(encrypt_decrypt_text(text, max_state, alphabet), 2, distribution))
-    print(calculate_function(encrypt_decrypt_text(text, [-4, -3, -2, -11], alphabet), 2, distribution))
 
-def bounded_procedure(text, distribution, starting_state, n, steps, alphabet, boundary):
-    current_state = starting_state
-    current_decryption = encrypt_decrypt_text(text, current_state, alphabet)
-    current_state_function = calculate_function(current_decryption, 2, distribution)
-
-    max_function = current_state_function
-    max_state = current_state
-    for i in range(steps):
-        candidate = get_candidate_bounded(current_state, boundary, alphabet)
-        new_decryption = encrypt_decrypt_text(text, candidate, alphabet)
-        new_function = calculate_function(new_decryption, n, distribution)
-        u = random.random()
-        if u < new_function / current_state_function:
-            current_state = candidate
-            current_state_function = new_function
-            if current_state_function > max_function:
-                max_state = candidate
-                max_function = current_state_function
-
-    print(encrypt_decrypt_text(text, max_state, alphabet))
-    print(calculate_function(encrypt_decrypt_text(text, max_state, alphabet), 2, distribution))
-    print(calculate_function(encrypt_decrypt_text(text, [-4, -2, -5, -6, -7], alphabet), 2, distribution))
-    print(max_state)
-
+    text.alphabetic_signs = encrypt_decrypt_text(text, max_state)
+    print(text.get_non_stripped_text())
 
 from distribution_generator import generate_from_file
 
-
-from timeit import default_timer as time
-random.seed(time())
+random.seed(20)
 
 standard = generate_from_file("encrypting_and_decrypting/english_bigrams_standard.txt")
 alphabeto = Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-plain = list('''DOYOUKNOWIWANTTOFINISHTHISTHESISANDIHOPEIWILLACCOMPLISHITBECAUSEITWOULDBEVERYNICELETITBESOPLEASEREBELWITHOUTACAUSE'''+
-             "ITHASTOWORKTOMAKEMEHAPPYIAMDOINGMYBEST")
+plain = '''THIS IS THE FIRST TRY OF THE TEXT DECODING PROGRAM HERE I HOPE FOR GOOD RESULTS BECAUSE IT IS DESIRED AND OTHERWISE
+I WILL BE UNHAPPY'''
+
+stripped = StrippedText(plain, alphabeto)
+encrypted = encrypt_decrypt_text(stripped, [4, 3, 2, 11, 4])
+stripped.alphabetic_signs = encrypted
+
+print(stripped.get_non_stripped_text())
 
 
-#local minima problem
-encrypted = encrypt_decrypt_text(plain, [4, 2, 5, 6, 7], alphabeto)
-
-# print(encrypted)
-# print(len(plain))
-#fixed_procedure(encrypted, standard, [1, 1, 1, 1], 2, 10000, alphabeto)
-bounded_procedure(encrypted, standard, [4, 1, 2, 5, 1, 3, 5], 2, 50000, alphabeto, 7)
-
-# max = 0
-# for i in range(get_neighbours_number_bounded4([25, 21, 5, 25, 21, 5], 7, alphabeto)):
-#     neigh = get_ith_neighbour_bounded4([25, 21, 5, 25, 21, 5], i, 7, alphabeto)
-#     print(neigh, calculate_function(encrypt_decrypt_text(encrypted, neigh, alphabeto), 2, standard))
-#     if calculate_function(encrypt_decrypt_text(encrypted, neigh, alphabeto), 2, standard) > max:
-#         max = calculate_function(encrypt_decrypt_text(encrypted, neigh, alphabeto), 2, standard)
-
-
-# print([25, 21, 5, 25, 21, 5], calculate_function(encrypt_decrypt_text(encrypted, [25, 21, 5, 25, 21, 5], alphabeto), 2, standard))
-# print (max)
-# if __name__ == '__main__':
-#     unittest.main()
-
-# naklepać na boku rozwiązanie "wprost" - czyli liczenie krotek i rozkładów
-# od razu i tam rozwiązywać problem minimów lokalnych
-# wprowadzić dwa rozwiazania - optimized (z różnymi trikami optymalizacyjnymi)
-# i straight ahead - zupełnie wprost - może być bardzo przydatne
-# wersja z non-alphabetic signs również może być gdzieś na boku
-# viterbi do obliczenia stanu początkowego - przejechać ze wszystkich wprost
+fixed_procedure(stripped, standard, [1, 20, 20, 14, 4], 2, 10000)
+if __name__ == '__main__':
+    unittest.main()
