@@ -15,17 +15,17 @@ def calculate_min_frequency_factor(distribution):
     return 1e-50
 
 
-## @brief class containing information about the alphabet used
+## @brief class containing information about the alphabetic used
 class Alphabet:
 
     def __init__(self, alphabet_in_string):
-        ## @brief alphabet used
+        ## @brief alphabetic used
         self.alphabet = list(alphabet_in_string)
         ## @brief mapping of letters to their positions
         self.letters_to_position = {self.alphabet[i]: i for i in range(len(self.alphabet))}
-        ## @brief length of the alphabet
+        ## @brief length of the alphabetic
         self.length = len(self.alphabet)
-        ## @brief number of different letters in alphabet (equiv number of shifts that will change a letter)
+        ## @brief number of different letters in alphabetic (equiv number of shifts that will change a letter)
         self.max_shift_length = self.length - 1
 
     def __getitem__(self, key):
@@ -36,7 +36,7 @@ def alphabets_product(alphabet1, alphabet2):
     return {i + j: 0 for i in alphabet1 for j in alphabet2}
 
 
-## @brief function generating a dictionary of all n-grams of given alphabet
+## @brief function generating a dictionary of all n-grams of given alphabetic
 # to frequencies - initially all frequencies set to zero
 def n_gram_dict(alphabet, n):
     result = [""]
@@ -47,8 +47,8 @@ def n_gram_dict(alphabet, n):
 
 ## @brief function for encrypting/decrypting single letter in Vigenere cipher
 # @param letter – letter to be encrypted/decrypted
-# @param shift – how many places letter is to be shifted in the alphabet
-# alphabet - alphabet used
+# @param shift – how many places letter is to be shifted in the alphabetic
+# alphabetic - alphabetic used
 def encrypt_decrypt_single(letter, shift, alphabet):
     return alphabet[(alphabet.letters_to_position[letter] + shift) % alphabet.length]
 
@@ -56,7 +56,7 @@ def encrypt_decrypt_single(letter, shift, alphabet):
 ## @brief function for coding text in given Vigenere cipher in
 # @param text – text to be coded/decoded
 # @param code - code used for coding/decoding
-# alphabet - alphabet used
+# alphabetic - alphabetic used
 def encrypt_decrypt_text(text, shift_key, alphabet):
     key_length = len(shift_key)
     current_key_ptr = 0
@@ -72,7 +72,7 @@ def encrypt_decrypt_text(text, shift_key, alphabet):
 ## @brief function for getting ith neighbour of current in fixed-length Vigenere cipher
 # @param current - current state
 # @param i - number of neighbour to be selected
-# @param alphabet - alphabet used
+# @param alphabetic - alphabetic used
 def get_ith_neighbour_fixed(current, i, alphabet):
     position_to_change = i // alphabet.max_shift_length
     shift = i % alphabet.max_shift_length
@@ -104,7 +104,7 @@ def get_ith_neighbour_bounded2(current, i, boundary, alphabet):
 # @param current - current state
 # @param i - number of neighbour to be selected
 # @param boundary - maximum code (state) length
-# @param alphabet - alphabet used
+# @param alphabetic - alphabetic used
 def get_ith_neighbour_bounded(current, i, boundary, alphabet):
     current_length = len(current)
 
@@ -147,7 +147,7 @@ def get_ith_neighbour_bounded4(current, i, boundary, alphabet):
 ## @brief function for getting a number of neighbours of a given current state in fixed-length
 # Vigenere cipher
 # @param current - current state
-# @param alphabet - alphabet used
+# @param alphabetic - alphabetic used
 def get_neighbours_number_fixed(current, alphabet):
     return len(current) * alphabet.max_shift_length
 
@@ -156,9 +156,9 @@ def get_neighbours_number_fixed(current, alphabet):
 # Vigenere cipher
 # @param current - current state
 # @param boundary - maximum code (state) length
-# @param alphabet - alphabet used
+# @param alphabetic - alphabetic used
 def get_neighbours_number_bounded(current, boundary, alphabet):
-    # only alphabet length will be enough to pass
+    # only alphabetic length will be enough to pass
     if boundary == 1:
         return alphabet.max_shift_length
     elif len(current) == 1:
@@ -186,7 +186,7 @@ def get_neighbours_number_bounded4(current, boundary, alphabet):
 ## @brief function for generating a candidate from a given current state
 # in fixed-length Vigenere cipher
 # @param current - current state
-# @param alphabet - alphabet used
+# @param alphabetic - alphabetic used
 def get_candidate_fixed(current, alphabet):
     i = random.randint(0, get_neighbours_number_fixed(current, alphabet) - 1)
     return get_ith_neighbour_fixed(current, i, alphabet)
@@ -196,7 +196,7 @@ def get_candidate_fixed(current, alphabet):
 # bounded-length Vigenere cipher version algorithm 1 extension
 # @param current - current state
 # @param boundary - maximum code (state) length
-# @param alphabet - alphabet used
+# @param alphabetic - alphabetic used
 def get_candidate_bounded(current, boundary, alphabet):
     i = random.randint(0, get_neighbours_number_bounded(current, boundary, alphabet) - 1)
     return get_ith_neighbour_bounded(current, i, boundary, alphabet)
@@ -301,7 +301,7 @@ def get_frequency_change_fixed(old_key, new_key, n, current_decryption, alphabet
 
 
 
-# wherever only alphabet length is needed, make it this way
+# wherever only alphabetic length is needed, make it this way
 # set some constant arguments order
 def update_decryption_fixed(old_key, new_key, current_decryption, alphabet):
     change = find_change_in_key(old_key, new_key)
@@ -330,7 +330,7 @@ def update_frequency(frequency, frequency_change):
 
 
 
-## @brief unit tests for Vigenere encryption and decryption
+## @brief unit tests for Vigenere encryption and decryption_problem
 class TestVigenereEncryptionDecryption(unittest.TestCase):
 
     def setUp(self):
@@ -412,12 +412,6 @@ class TestVigenereEncryptionDecryption(unittest.TestCase):
             self.assertEqual(get_candidate_bounded(current_state, 10, self.alphabet),
                              get_ith_neighbour_bounded(current_state, max_value // 2, 10, self.alphabet))
 
-    def test_alphabets_product(self):
-        self.assertEqual(alphabets_product("AB", "C"), {"AC": 0, "BC": 0})
-
-    def test_n_gram_dict(self):
-        self.assertEqual(n_gram_dict("AB", 2), {"AA": 0, "AB": 0, "BA": 0, "BB": 0})
-
     def test_calculate_frequencies(self):
         init_frequencies = calculate_frequencies("ABCCCDE", 2, self.alphabet)
         self.assertEqual(init_frequencies["AB"], 1)
@@ -434,7 +428,7 @@ class TestVigenereEncryptionDecryption(unittest.TestCase):
 
     # def test_calculate_change_bounded(self):
     #     text = "ABCD"
-    #     frequencies = calculate_frequencies(encrypt_decrypt_text(text, [0, 1], self.alphabet), 2, self.alphabet)
+    #     frequencies = calculate_frequencies(encrypt_decrypt_text(text, [0, 1], self.alphabetic), 2, self.alphabetic)
     #     self.assertEqual(get_frequency_change_bounded([0, 1], [0, 1, 0], 2, frequencies, text),
     #                      {"CE": -1, "CD": 1})
 
@@ -507,7 +501,7 @@ from distribution_generator import generate_from_file
 from timeit import default_timer as time
 random.seed(time())
 
-standard = generate_from_file("encrypting_and_decrypting/english_bigrams_standard.txt")
+standard = generate_from_file("encrypting_and_decrypting/english_bigrams.txt")
 alphabeto = Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 plain = list('''DOYOUKNOWIWANTTOFINISHTHISTHESISANDIHOPEIWILLACCOMPLISHITBECAUSEITWOULDBEVERYNICELETITBESOPLEASEREBELWITHOUTACAUSE'''+
              "ITHASTOWORKTOMAKEMEHAPPYIAMDOINGMYBEST")
@@ -519,7 +513,7 @@ encrypted = encrypt_decrypt_text(plain, [4, 2, 5, 6, 7], alphabeto)
 # print(encrypted)
 # print(len(plain))
 #fixed_procedure(encrypted, standard, [1, 1, 1, 1], 2, 10000, alphabeto)
-bounded_procedure(encrypted, standard, [4, 1, 2, 5, 1, 3, 5], 2, 50000, alphabeto, 7)
+bounded_procedure(encrypted, standard, [8, 1, 22, 15, 17], 2, 10000, alphabeto, 7)
 
 # max = 0
 # for i in range(get_neighbours_number_bounded4([25, 21, 5, 25, 21, 5], 7, alphabeto)):
