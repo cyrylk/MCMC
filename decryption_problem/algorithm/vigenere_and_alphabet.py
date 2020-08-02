@@ -501,7 +501,7 @@ from distribution_generator import generate_from_file
 from timeit import default_timer as time
 random.seed(time())
 
-standard = generate_from_file("encrypting_and_decrypting/english_bigrams.txt")
+standard = generate_from_file("algorithm/english_bigrams.txt")
 alphabeto = Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 plain = list('''DOYOUKNOWIWANTTOFINISHTHISTHESISANDIHOPEIWILLACCOMPLISHITBECAUSEITWOULDBEVERYNICELETITBESOPLEASEREBELWITHOUTACAUSE'''+
              "ITHASTOWORKTOMAKEMEHAPPYIAMDOINGMYBEST")

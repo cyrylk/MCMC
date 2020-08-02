@@ -2,9 +2,8 @@
 # and related "alphabetic" functions
 
 
-## @brief class containing information about the alphabetic used
+## @brief class containing information about the alphabet used
 class Alphabet:
-
     def __init__(self, alphabet_in_string):
         ## @brief alphabetic used
         self.alphabet = list(alphabet_in_string)
@@ -17,6 +16,69 @@ class Alphabet:
 
     def __getitem__(self, key):
         return self.alphabet[key]
+
+
+## @brief class containing the input text stripped of non-alphabetic signs
+# alongside with all the information needed to recreate the original text
+class StrippedText:
+    def __init__(self, text, alphabet):
+        length = len(text)
+        self.non_stripped_part = []
+        self.stripped_part = []
+        self.ends_of_words = set()
+        end_of_word = 0
+        word_number = 0
+        stripped = ""
+        for i in range(length):
+            if text[i] in alphabet.letters_to_position:
+                self.non_stripped_part.append(text[i])
+                if stripped:
+                    self.stripped_part.append(stripped)
+                    stripped = ""
+                    self.ends_of_words.add(end_of_word - 1)
+                    if end_of_word:
+                        word_number += 1
+                if i + 1 == length:
+                    self.ends_of_words.add(end_of_word)
+                end_of_word += 1
+            else:
+                stripped += text[i]
+                if i + 1 == length:
+                    if stripped:
+                        self.stripped_part.append(stripped)
+                    self.ends_of_words.add(end_of_word - 1)
+
+        self.stripped_part.append("")
+
+    def __getitem__(self, key):
+        return self.non_stripped_part[key]
+
+    def __setitem__(self, key, value):
+        self.non_stripped_part[key] = value
+
+    def __len__(self, ):
+        return len(self.non_stripped_part)
+
+    def get_non_stripped_text(self):
+        text = []
+        shift = 0
+        word_index = 0
+        if -1 in self.ends_of_words:
+            text.append(self.stripped_part[word_index])
+            word_index += 1
+        for i in range(len(self.non_stripped_part)):
+            text.append(self.non_stripped_part[i])
+            if i in self.ends_of_words:
+                text.append(self.stripped_part[word_index])
+                word_index += 1
+        return "".join(text)
+
+
+def alphabets_product(alphabet1, alphabet2):
+    return {i + j: 0 for i in alphabet1 for j in alphabet2}
+
+
+
 
 
 def alphabets_product(alphabet1, alphabet2):
