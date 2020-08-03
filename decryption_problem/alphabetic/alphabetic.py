@@ -4,18 +4,22 @@
 
 ## @brief class containing information about the alphabet used
 class Alphabet:
-    def __init__(self, alphabet_in_string):
-        ## @brief alphabetic used
-        self.alphabet = list(alphabet_in_string)
+    def __init__(self, alphabet_in_iterable):
+        ## @brief alphabet used
+        self.alphabet = list(alphabet_in_iterable)
         ## @brief mapping of letters to their positions
         self.letters_to_position = {self.alphabet[i]: i for i in range(len(self.alphabet))}
-        ## @brief length of the alphabetic
+        ## @brief length of the alphabet
         self.length = len(self.alphabet)
-        ## @brief number of different letters in alphabetic (equiv number of shifts that will change a letter)
+        ## @brief number of different letters, than given one, in alphabet
+        # (equiv number of shifts that will change a letter)
         self.max_shift_length = self.length - 1
 
     def __getitem__(self, key):
         return self.alphabet[key]
+
+    def __contains__(self, item):
+        return item in self.letters_to_position
 
 
 ## @brief class containing the input text stripped of non-alphabetic signs
@@ -30,7 +34,7 @@ class StrippedText:
         word_number = 0
         stripped = ""
         for i in range(length):
-            if text[i] in alphabet.letters_to_position:
+            if text[i] in alphabet:
                 self.non_stripped_part.append(text[i])
                 if stripped:
                     self.stripped_part.append(stripped)
@@ -78,13 +82,6 @@ def alphabets_product(alphabet1, alphabet2):
     return {i + j: 0 for i in alphabet1 for j in alphabet2}
 
 
-
-
-
-def alphabets_product(alphabet1, alphabet2):
-    return {i + j: 0 for i in alphabet1 for j in alphabet2}
-
-
 ## @brief function generating a dictionary of all n-grams of given alphabetic
 # to frequencies - initially all frequencies set to zero
 def n_gram_dict(alphabet, n):
@@ -92,3 +89,4 @@ def n_gram_dict(alphabet, n):
     for i in range(n):
         result = alphabets_product(alphabet, result)
     return result
+

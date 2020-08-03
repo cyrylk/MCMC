@@ -1,3 +1,6 @@
+import decryption_problem.alphabetic.alphabetic as alphabetic
+
+
 ## @brief package containing functions for encrypting and decrypting texts with Vigenere cipher
 
 
@@ -6,7 +9,7 @@
 # @param shift – how many places letter is to be shifted in the alphabetic
 # alphabetic - alphabetic used
 def encrypt_decrypt_single(letter, shift, alphabet):
-    if letter not in alphabet.letters_to_position:
+    if letter not in alphabet:
         return letter
     return alphabet[(alphabet.letters_to_position[letter] + shift) % alphabet.length]
 
@@ -20,11 +23,13 @@ def encrypt_decrypt_text(text, shift_key, alphabet):
     current_key_ptr = 0
     encrypted_decrypted = []
     for index in range(len(text)):
-        if text[index] in alphabet.letters_to_position:
+        if text[index] in alphabet:
             encrypted_decrypted.append(encrypt_decrypt_single(text[index], shift_key[current_key_ptr], alphabet))
             current_key_ptr = (current_key_ptr + 1) % key_length
         else:
             encrypted_decrypted.append(text[index])
+    if type(text) is alphabetic.StrippedText:
+        return alphabetic.StrippedText(encrypted_decrypted, alphabet)
     return encrypted_decrypted
 
 
@@ -38,11 +43,13 @@ def encrypt_decrypt_text_v2(text, shift_key, alphabet):
     current_key_ptr = 0
     encrypted_decrypted = []
     for index in range(len(text)):
-        if text[index] in alphabet.letters_to_position:
+        if text[index] in alphabet:
             encrypted_decrypted.append(encrypt_decrypt_single(text[index], shift_key[current_key_ptr], alphabet))
         else:
             encrypted_decrypted.append(text[index])
         current_key_ptr = (current_key_ptr + 1) % key_length
+    if type(text) is alphabetic.StrippedText:
+        return alphabetic.StrippedText(encrypted_decrypted, alphabet)
     return encrypted_decrypted
 
 

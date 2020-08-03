@@ -8,7 +8,7 @@ import random
 
 def fixed_procedure(text, distribution, starting_state, n, steps, alphabet):
     current_state = starting_state
-    current_decryption = vigenere.encrypt_decrypt_text(text, current_state, alphabet)
+    current_decryption = vigenere.encrypt_decrypt_text_v2(text, current_state, alphabet)
     current_frequencies = common.calculate_n_gram_frequencies(current_decryption, n, alphabet)
     current_state_function = common.calculate_n_gram_function(current_frequencies, distribution)
     max_function = current_state_function
@@ -32,7 +32,7 @@ def fixed_procedure(text, distribution, starting_state, n, steps, alphabet):
                 max_state = candidate
                 max_function = current_state_function
 
-    print("".join(vigenere.encrypt_decrypt_text(text, max_state, alphabet)))
+    print("".join(vigenere.encrypt_decrypt_text_v2(text, max_state, alphabet)))
 
 
 def bounded_procedure(text, distribution, starting_state, n, steps, alphabet, boundary):
@@ -92,6 +92,10 @@ alphabeto = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 plain = list('''DOYOUKNOWIWANTTOFINISHTHISTHESISANDIHOPEIWILLACCOMPLISHITBECAUSEITWOULDBEVERYNICELETITBESOPLEASEREBELWITHOUTACAUSE'''+
              "ITHASTOWORKTOMAKEMEHAPPYIAMDOINGMYBEST")
 
-encrypted = vigenere.encrypt_decrypt_text(plain, [4, 2, 5, 6, 7, 8, 9], alphabeto)
-# fixed_procedure(encrypted, standard, [1, 1, 1, 1, 1], 2, 5000, alphabeto)
-bounded_procedure(encrypted, standard, [17, 24, 11], 2, 5000, alphabeto, 7)
+plain = list('''DO YOU KNOW I WANT TO FINISH THIS THESIS AND I HOPE I WILL ACCOMPLISH IT BECAUSE IT WOULD BE VERY NICE LET IT BE
+SO PLEASE REBEL WITHOUT A CAUSE ''' +
+             "IT HAS TO WORK TO MAKE ME HAPPY I AM DOING MY BEST")
+
+encrypted = vigenere.encrypt_decrypt_text_v2(plain, [4, 2, 5, 6, 7, 8, 9, 14], alphabeto)
+fixed_procedure(encrypted, standard, neighbours.get_starting_state_fixed(alphabeto, 8), 2, 5000, alphabeto)
+#bounded_procedure(encrypted, standard, neighbours.get_starting_state_bounded(alphabeto, 20), 2, 5000, alphabeto, 20)

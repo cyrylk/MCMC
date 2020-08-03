@@ -5,12 +5,19 @@ def get_zero_frequency(frequencies):
     return min(frequencies.values())/2
 
 
+def is_word_end(text, index):
+    try:
+        return index in text.ends_of_words
+    except AttributeError:
+        return False
+
+
 def get_n_gram_at_i(text, n, i, alphabet):
     if i < 0 or i+n > len(text):
         return None
     gram = ""
     for k in range(i, i + n):
-        if text[k] in alphabet.letters_to_position:
+        if (k == i or not is_word_end(text, k-1)) and text[k] in alphabet:
             gram += text[k]
         else:
             return None
@@ -21,7 +28,7 @@ def calculate_n_gram_frequencies(text, n, alphabet):
     frequencies_dict = alphabetic.n_gram_dict(alphabet, n)
     current_gram = ""
     for i in range(len(text)):
-        if text[i] not in alphabet.letters_to_position:
+        if text[i] not in alphabet:
             current_gram = ""
             continue
         current_gram += text[i]

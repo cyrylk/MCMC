@@ -1,5 +1,21 @@
 import random
 
+
+def get_starting_state_fixed(alphabet, length):
+    starting_state = []
+    for i in range(length):
+        starting_state.append(random.randint(0, alphabet.length-1))
+    return starting_state
+
+
+def get_starting_state_bounded(alphabet, boundary):
+    starting_state = []
+    length = random.randint(1, boundary)
+    for i in range(length):
+        starting_state.append(random.randint(0, alphabet.length-1))
+    return starting_state
+
+
 ## @brief function for getting ith neighbour of current in fixed-length Vigenere cipher
 # @param current - current state
 # @param i - number of neighbour to be selected
@@ -29,6 +45,7 @@ def get_ith_neighbour_bounded2(current, i, boundary, alphabet):
 
     no_insertion_i = no_deletion_i - (current_length + 1) * alphabet.length
     return get_ith_neighbour_fixed(current, no_insertion_i, alphabet)
+
 
 ## @brief function for getting ith neighbour of current in bounded-length Vigenere cipher
 # @param current - current state
