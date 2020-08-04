@@ -24,13 +24,14 @@ def generate_from_file(filename, alphabet, n_gram_length, divisor):
     return freqs
 
 def generate_from_file_log(filename, alphabet, n_gram_length, additional_chars = []):
+    new_alphabet = alphabetic.Alphabet(alphabet.alphabet + additional_chars)
     f = open(filename, "r")
     lines = f.readlines()
     freqs = {}
     for i in lines:
         freqs[i.split()[0]] = log(float(i.split()[1]))
 
-    for i in alphabetic.n_gram_dict(alphabet, n_gram_length):
+    for i in alphabetic.n_gram_dict(new_alphabet, n_gram_length):
         if i not in freqs:
             freqs[i] = 0
 
