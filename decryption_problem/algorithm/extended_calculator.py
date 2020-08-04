@@ -1,4 +1,4 @@
-import decryption_problem.ciphers.autokey as autokey
+import decryption_problem.ciphers.vigenere_extended as extended
 import decryption_problem.common.common as common
 
 
@@ -29,28 +29,24 @@ def add_ith_gram_to_frequency_change(decryption, n_gram_length, i, alphabet, fre
 
 
 def get_frequency_change_fixed_key_length(old_key, new_key,
-                                          n_gram_length, current_decryption, alphabet):
+                                          n_gram_length, current_decryption, text, alphabet, coprimes):
     change = find_change_in_key(old_key, new_key)
     frequencies_change = {}
     key_length = len(old_key)
-    shift = new_key[change] - old_key[change]
-    power = 1
     for j in range(change, len(current_decryption), key_length):
         for i in range(j - n_gram_length + 1, j + 1):
             subtract_ith_gram_from_frequency_change(current_decryption, n_gram_length, i,
                                                     alphabet, frequencies_change)
 
-        current_decryption[j] = autokey.encrypt_decrypt_single(current_decryption[j], shift*power, alphabet)
+        current_decryption[j] = extended.encrypt_decrypt_single(text[j], new_key[change], alphabet, coprimes)
         for i in range(j - n_gram_length + 1, j + 1):
             add_ith_gram_to_frequency_change(current_decryption, n_gram_length, i, alphabet,
                                              frequencies_change)
-        current_decryption[j] = autokey.encrypt_decrypt_single(current_decryption[j], -shift*power, alphabet)
-        power*=(-1)
-
+        current_decryption[j] = extended.encrypt_decrypt_single(text[j], old_key[change], alphabet, coprimes)
 
     return frequencies_change
 
-
+#
 # def get_frequency_change(current_frequencies, n_gram_length, new_key, text, alphabet):
 #     new_frequencies = common.calculate_n_gram_frequencies(autokey.encrypt_decrypt_text(text, new_key, alphabet),
 #                                                           n_gram_length, alphabet)

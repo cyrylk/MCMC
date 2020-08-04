@@ -1,17 +1,18 @@
 import decryption_problem.alphabetic.alphabetic as alphabetic
 import decryption_problem.common.common as common
-import decryption_problem.ciphers.autokey as autokey
-import decryption_problem.algorithm.vigenere_neighbours as neighbours
-import decryption_problem.algorithm.autokey_calculator as calculator
+import decryption_problem.ciphers.vigenere_extended as extended
+import decryption_problem.algorithm.extended_neighbours as neighbours
+import decryption_problem.algorithm.extended_calculator as calculator
 import random
 from math import log
 
 from timeit import default_timer as time
 random.seed(time())
 
-def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet, coefs):
+def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet, coefs, coprimes):
     current_state = starting_state
-    current_decryption = autokey.decrypt_text(text, current_state, alphabet)
+    current_decryption = extended.encrypt_decrypt_text(text, current_state, alphabet, coprimes)
+
     current_frequencies = []
     current_state_function = 0
     index = 0
@@ -24,25 +25,24 @@ def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet
 
     max_function = current_state_function
     max_state = current_state
-
     for i in range(steps):
-        candidate = neighbours.get_candidate_fixed(current_state, alphabet)
+        candidate = neighbours.get_candidate_fixed(current_state, alphabet, coprimes)
         frequencies_change = []
         dist_change = 0
         index = 0
         for n in n_list:
             freq_change = calculator.get_frequency_change_fixed_key_length(current_state, candidate, n,
-                                                                   current_decryption, alphabet)
+                                                                   current_decryption, text, alphabet, coprimes)
             frequencies_change.append(freq_change)
 
             dist_change += common.calculate_log_function_change(freq_change, distributions[index])*coefs[index]
             index += 1
         changed_index = calculator.find_change_in_key(current_state, candidate)
-        shift = candidate[changed_index] - current_state[changed_index]
         u = random.random()
         if log(u) < dist_change:
-            autokey.update_decryption_by_key_index(current_decryption, changed_index, shift, len(current_state),
-                                                    alphabet)
+            extended.update_decryption_by_key_index(current_decryption, text, changed_index, candidate[changed_index],
+                                                    len(current_state),
+                                                    alphabet, coprimes)
             current_state = candidate
             for f in range(len(frequencies_change)):
                 common.update_frequency(current_frequencies[f], frequencies_change[f])
@@ -86,15 +86,12 @@ standard3 = generate_from_file_log("../data/english_trigrams.txt", alphabeto, 3)
 standard2 = generate_from_file_log("../data/english_bigrams.txt", alphabeto, 2)
 standard1 = generate_from_file_log("../data/english_monograms.txt", alphabeto, 1)
 
-code = [10, 11, 3, 11, 15, 20, 18, 12, 25, 8, 22, 21, 4, 23, 5, 22, 15, 22, 16, 24, 3, 25, 19, 24, 16, 23, 23, 7, 4, 23,
-        25, 1, 17, 15, 1, 0, 8, 7, 25, 8, 19, 17, 1, 1, 4, 23, 6, 16, 18, 18, 8, 1, 13, 5, 2, 1, 5, 8, 10, 10, 8, 24,
-        20,
-        23, 15, 22, 6, 16, 12, 4, 22, 13, 12, 15, 11, 24, 12, 12, 0, 5, 1, 5, 10, 19, 25, 1, 8, 0, 25, 9, 1, 19, 3, 18,
-        11, 22, 5, 1, 18, 23]
+coprimess = extended.get_coprimes(alphabeto.length)
+code = neighbours.get_starting_state_fixed(alphabeto, 60, coprimess)
 
-encrypted = autokey.encrypt_text(plain, code, alphabeto)
-res = fixed_procedure(encrypted, [standard2], neighbours.get_starting_state_fixed(alphabeto, len(code)), [2],
-                      30000, alphabeto, [1.0])
+encrypted = extended.encrypt_decrypt_text(plain, code, alphabeto, coprimess)
+res = fixed_procedure(encrypted, [standard2], neighbours.get_starting_state_fixed(alphabeto, len(code), coprimess),
+                             [2], 200000, alphabeto, [1.0], coprimess)
 maxx_state = res[0]
 maxx_function = res[1]
 # bounded_procedure(encrypted, standard2, neighbours.get_starting_state_bounded(alphabeto, 20), 2, 10000, alphabeto, 20)
@@ -110,18 +107,18 @@ maxx_function = res[1]
 #         maxx_function = curr[1]
 #
 print(maxx_function)
-decrypted1 = autokey.decrypt_text(encrypted, maxx_state, alphabeto)
+decrypted1 = extended.encrypt_decrypt_text(encrypted, maxx_state, alphabeto, coprimess)
 
-decrypted2 = autokey.decrypt_text(encrypted, [-i for i in code], alphabeto)
-state_function = 0
-frequencies = common.calculate_n_gram_frequencies(decrypted2, 1, alphabeto)
-state_function += common.calculate_log_n_gram_function(frequencies, standard1)*0.2
-frequencies = common.calculate_n_gram_frequencies(decrypted2, 2, alphabeto)
-state_function += common.calculate_log_n_gram_function(frequencies, standard2)*0.6
-frequencies = common.calculate_n_gram_frequencies(decrypted2, 3, alphabeto)
-state_function += common.calculate_log_n_gram_function(frequencies, standard3)*0.2
-print(state_function)
+# decrypted2 = extended.decrypt_text(encrypted, [-i for i, j in code], alphabeto)
+# state_function = 0
+# frequencies = common.calculate_n_gram_frequencies(decrypted2, 1, alphabeto)
+# state_function += common.calculate_log_n_gram_function(frequencies, standard1)*0.2
+# frequencies = common.calculate_n_gram_frequencies(decrypted2, 2, alphabeto)
+# state_function += common.calculate_log_n_gram_function(frequencies, standard2)*0.6
+# frequencies = common.calculate_n_gram_frequencies(decrypted2, 3, alphabeto)
+# state_function += common.calculate_log_n_gram_function(frequencies, standard3)*0.2
+# print(state_function)
 
 print(decrypted1.get_non_stripped_text())
-print()
-print(decrypted2.get_non_stripped_text())
+# print()
+# print(decrypted2.get_non_stripped_text())

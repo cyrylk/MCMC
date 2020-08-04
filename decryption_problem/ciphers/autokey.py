@@ -59,8 +59,49 @@ def decrypt_text(text, shift_key, alphabet):
     return encrypted_decrypted
 
 
+# by assumption stripped text has to be an argument here
+def encrypt_text_v2(text, shift_key, alphabet):
+    current_key_ptr = 0
+    encrypted_decrypted = []
+    for index in range(len(shift_key)):
+        encrypted_decrypted.append(encrypt_decrypt_single(text[index], shift_key[current_key_ptr], alphabet))
+        current_key_ptr += 1
+
+    coding_index = 0
+    for index in range(len(shift_key), len(text)):
+        encrypted_decrypted.append(encrypt_decrypt_single(text[index], alphabet.letters_to_position[text[coding_index]],
+                                                          alphabet))
+        coding_index += 1
+
+    if type(text) is alphabetic.StrippedText:
+        return create_stripped_encryption_decryption(text, encrypted_decrypted, alphabet)
+
+    return encrypted_decrypted
+
+# by assumption stripped text has to be an argument here
+def decrypt_text_v2(text, shift_key, alphabet):
+    current_key_ptr = 0
+    encrypted_decrypted = []
+    for index in range(len(shift_key)):
+        encrypted_decrypted.append(encrypt_decrypt_single(text[index], shift_key[current_key_ptr], alphabet))
+        current_key_ptr += 1
+
+    coding_index = 0
+
+    for index in range(len(shift_key), len(text)):
+        encrypted_decrypted.append(encrypt_decrypt_single(text[index],
+                                                          -alphabet.letters_to_position[encrypted_decrypted[coding_index]],
+                                                          alphabet))
+        coding_index += 1
+
+    if type(text) is alphabetic.StrippedText:
+        return create_stripped_encryption_decryption(text, encrypted_decrypted, alphabet)
+
+    return encrypted_decrypted
+
+
 def update_decryption_by_key_index(decryption, changed_index, shift, key_length, alphabet):
     power = 1
     for index in range(changed_index, len(decryption), key_length):
         decryption[index] = encrypt_decrypt_single(decryption[index], shift*power, alphabet)
-        power*=(-1)
+        power *= (-1)
