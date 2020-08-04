@@ -47,7 +47,6 @@ def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet
             if current_state_function > max_function:
                 max_state = candidate
                 max_function = current_state_function
-    print(max_state, max_function)
     return max_state, max_function
 
 
@@ -104,25 +103,34 @@ from timeit import default_timer as time
 random.seed(time())
 
 alphabeto = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-plain = alphabetic.StrippedText('''MONTE CARLO METHODS, OR MONTE CARLO EXPERIMENTS, ARE 
-A BROAD CLASS OF COMPUTATIONAL ALGORITHMS THAT RELY ON REPEATED RANDOM SAMPLING TO OBTAIN NUMERICAL RESULTS. THE 
-UNDERLYING CONCEPT IS TO USE RANDOMNESS TO SOLVE PROBLEMS THAT MIGHT BE DETERMINISTIC IN PRINCIPLE. THEY ARE OFTEN 
-USED IN PHYSICAL AND MATHEMATICAL PROBLEMS AND ARE MOST USEFUL WHEN IT IS DIFFICULT OR IMPOSSIBLE TO USE OTHER APPROACHES. MONTE CARLO METHODS 
-ARE MAINLY USED IN THREE PROBLEM CLASSES:[1] OPTIMIZATION, NUMERICAL INTEGRATION, AND GENERATING DRAWS FROM A PROBABILITY DISTRIBUTION.''', alphabeto)
+plain = alphabetic.StrippedText('''IF YOUTH, THROUGHOUT ALL HISTORY, HAD HAD A CHAMPION TO STAND UP FOR IT; 
+TO SHOW A DOUBTING WORLD THAT A CHILD CAN THINK; AND, POSSIBLY, DO IT PRACTICALLY; YOU WOULDN’T CONSTANTLY 
+RUN ACROSS FOLKS TODAY WHO CLAIM THAT “A CHILD DON’T KNOW ANYTHING.” A CHILD’S BRAIN STARTS FUNCTIONING AT BIRTH; 
+AND HAS, AMONGST ITS MANY INFANT CONVOLUTIONS, THOUSANDS OF DORMANT ATOMS, INTO WHICH GOD HAS PUT A MYSTIC 
+POSSIBILITY FOR NOTICING AN ADULT’S ACT, AND FIGURING OUT ITS PURPORT.
+
+UP TO ABOUT ITS PRIMARY SCHOOL DAYS A CHILD THINKS, NATURALLY, ONLY OF PLAY. BUT MANY A 
+FORM OF PLAY CONTAINS DISCIPLINARY FACTORS. “YOU CAN’T DO THIS,” OR “THAT PUTS YOU OUT,” 
+SHOWS A CHILD THAT IT MUST THINK, PRACTICALLY, OR FAIL. NOW, IF, THROUGHOUT CHILDHOOD, 
+A BRAIN HAS NO OPPOSITION, IT IS PLAIN THAT IT WILL ATTAIN A POSITION OF “STATUS QUO,” AS WITH OUR ORDINARY ANIMALS. 
+MAN KNOWS NOT WHY A COW, DOG OR LION WAS NOT BORN WITH A BRAIN ON A PAR WITH OURS; WHY SUCH ANIMALS CANNOT ADD, SUBTRACT, 
+OR OBTAIN FROM BOOKS AND SCHOOLING, THAT PARAMOUNT POSITION WHICH MAN HOLDS TODAY.''', alphabeto)
+
 
 
 
 
 standard3 = generate_from_file_log("../data/english_trigrams.txt", alphabeto, 3)
 standard2 = generate_from_file_log("../data/english_bigrams.txt", alphabeto, 2)
-standard1 = generate_from_file("../data/english_monograms.txt", alphabeto, 1, 1000)
+standard1 = generate_from_file_log("../data/english_monograms.txt", alphabeto, 1)
 
+code = [10, 11, 3, 11, 15, 20, 18, 12, 25, 8, 22, 21, 4, 23, 5, 22, 15, 22, 16, 24, 3, 25, 19, 24, 16, 23, 23, 7, 4, 23, 25, 1, 17, 15, 1, 0, 8, 7, 25, 8, 19, 17, 1, 1, 4, 23, 6, 16, 18, 18, 8, 1, 13, 5, 2, 1, 5, 8, 10, 10, 8, 24, 20, 23, 15, 22, 6, 16, 12, 4, 22, 13, 12, 15, 11, 24, 12, 12, 0, 5, 1, 5, 10, 19, 25, 1, 8, 0, 25, 9, 1, 19, 3, 18, 11, 22, 5, 1, 18, 23]
 
-
-encrypted = vigenere.encrypt_decrypt_text(plain, [4, 2, 5, 6, 7, 8, 9, 14, 1, 3, 7, 6], alphabeto)
-
-maxx_state = fixed_procedure(encrypted, [standard2], neighbours.get_starting_state_fixed(alphabeto, 12),
-                             [2], 700, alphabeto, [1.0])[0]
+encrypted = vigenere.encrypt_decrypt_text(plain, code, alphabeto)
+res = fixed_procedure(encrypted, [standard2], neighbours.get_starting_state_fixed(alphabeto, len(code)),
+                             [2], 3000, alphabeto, [1.0])
+maxx_state = res[0]
+maxx_function = res[1]
 # bounded_procedure(encrypted, standard2, neighbours.get_starting_state_bounded(alphabeto, 20), 2, 10000, alphabeto, 20)
 
 # maxx_state = []
@@ -135,9 +143,16 @@ maxx_state = fixed_procedure(encrypted, [standard2], neighbours.get_starting_sta
 #         maxx_state = curr[0]
 #         maxx_function = curr[1]
 #
-print(maxx_state)
-encrypted.set_non_stripped_part(vigenere.encrypt_decrypt_text(encrypted, maxx_state, alphabeto).non_stripped_part)
+print(maxx_function)
+decrypted1 = vigenere.encrypt_decrypt_text(encrypted, maxx_state, alphabeto)
 
-print(encrypted.get_non_stripped_text())
+decrypted2 = vigenere.encrypt_decrypt_text(encrypted, [-i for i in code], alphabeto)
+frequencies = common.calculate_n_gram_frequencies(decrypted2, 2, alphabeto)
+state_function = common.calculate_log_n_gram_function(frequencies, standard2)
+print(state_function)
+
+print(decrypted1.get_non_stripped_text())
+print()
+print(decrypted2.get_non_stripped_text())
 
 

@@ -20,6 +20,7 @@ def get_starting_state_bounded(alphabet, boundary):
 # @param current - current state
 # @param i - number of neighbour to be selected
 # @param alphabetic - alphabetic used
+# potential small optimization - when selecting a candidate, current state 
 def get_ith_neighbour_fixed(current, i, alphabet):
     position_to_change = i // alphabet.max_shift_length
     shift = i % alphabet.max_shift_length
