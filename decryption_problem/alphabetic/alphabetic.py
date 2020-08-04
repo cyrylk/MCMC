@@ -63,6 +63,15 @@ class StrippedText:
     def __len__(self, ):
         return len(self.non_stripped_part)
 
+    def set_non_stripped_part(self, new_non_stripped_part):
+        self.non_stripped_part = new_non_stripped_part
+
+    def set_stripped_part(self, new_stripped_part):
+        self.stripped_part = new_stripped_part
+
+    def set_ends_of_words(self, new_ends_of_words):
+        self.ends_of_words = new_ends_of_words
+
     def get_non_stripped_text(self):
         text = []
         shift = 0

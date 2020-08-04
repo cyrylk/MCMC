@@ -1,0 +1,3 @@
+add metrics for calculating accuracy
+some function get_key_reverse or similar
+non-stripped version for autokey?

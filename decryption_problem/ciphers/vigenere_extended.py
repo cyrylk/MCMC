@@ -1,4 +1,5 @@
 import decryption_problem.alphabetic.alphabetic as alphabetic
+from math import gcd
 
 
 ## @brief package containing functions for encrypting and decrypting texts with Vigenere cipher
@@ -8,10 +9,10 @@ import decryption_problem.alphabetic.alphabetic as alphabetic
 # @param letter – letter to be encrypted/decrypted
 # @param shift – how many places letter is to be shifted in the alphabetic
 # alphabetic - alphabetic used
-def encrypt_decrypt_single(letter, shift, alphabet):
+def encrypt_decrypt_single(letter, key, alphabet):
     if letter not in alphabet:
         return letter
-    return alphabet[(alphabet.letters_to_position[letter] + shift) % alphabet.length]
+    return alphabet[(key[0] * alphabet.letters_to_position[letter] + key[1]) % alphabet.length]
 
 
 def create_stripped_encryption_decryption(text, encryption_decryption, alphabet):
@@ -19,6 +20,7 @@ def create_stripped_encryption_decryption(text, encryption_decryption, alphabet)
     result.set_ends_of_words(text.ends_of_words)
     result.set_stripped_part(text.stripped_part)
     return result
+
 
 ## @brief function for coding/decoding text in given Vigenere cipher
 # @param text – text to be coded/decoded
@@ -55,3 +57,12 @@ def encrypt_decrypt_text_v2(text, shift_key, alphabet):
 def update_decryption_by_key_index(decryption, changed_index, shift, key_length, alphabet):
     for index in range(changed_index, len(decryption), key_length):
         decryption[index] = encrypt_decrypt_single(decryption[index], shift, alphabet)
+
+
+def coprimes(length):
+    return [i for i in range(length) if gcd(i, length) == 1]
+
+
+print(coprimes(12))
+
+

@@ -29,5 +29,6 @@ class AlphabetTest(unittest.TestCase):
         self.assertEqual(stripped_text2[0], "A")
 
 
+
 if __name__ == '__main__':
     unittest.main()

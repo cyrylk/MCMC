@@ -9,6 +9,7 @@ def is_word_end(text, index):
     try:
         return index in text.ends_of_words
     except AttributeError:
+
         return False
 
 
@@ -36,6 +37,8 @@ def calculate_n_gram_frequencies(text, n, alphabet):
             current_gram = current_gram[1:]
         if len(current_gram) == n:
             frequencies_dict[current_gram] += 1
+        if is_word_end(text, i):
+            current_gram = ""
     return frequencies_dict
 
 
@@ -43,6 +46,13 @@ def calculate_n_gram_function(frequencies, distribution):
     result = 1
     for i in frequencies:
         result *= distribution[i]**frequencies[i]
+    return result
+
+
+def calculate_log_n_gram_function(frequencies, log_distribution):
+    result = 0
+    for i in frequencies:
+        result += log_distribution[i]*frequencies[i]
     return result
 
 
@@ -58,6 +68,13 @@ def calculate_function_change(frequencies_change, distribution):
     result = 1
     for i in frequencies_change:
         result *= distribution[i]**frequencies_change[i]
+    return result
+
+
+def calculate_log_function_change(frequencies_change, log_distribution):
+    result = 0
+    for i in frequencies_change:
+        result += log_distribution[i]*frequencies_change[i]
     return result
 
 
