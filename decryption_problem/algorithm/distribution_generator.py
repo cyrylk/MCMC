@@ -23,7 +23,7 @@ def generate_from_file(filename, alphabet, n_gram_length, divisor):
 
     return freqs
 
-def generate_from_file_log(filename, alphabet, n_gram_length):
+def generate_from_file_log(filename, alphabet, n_gram_length, additional_chars = []):
     f = open(filename, "r")
     lines = f.readlines()
     freqs = {}

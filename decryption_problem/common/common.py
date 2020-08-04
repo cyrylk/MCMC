@@ -24,6 +24,17 @@ def get_n_gram_at_i(text, n, i, alphabet):
             return None
     return gram
 
+def get_n_gram_at_i_v2(text, n, i, alphabet):
+    if i < 0 or i+n > len(text):
+        return None
+    gram = ""
+    for k in range(i, i + n):
+        if (k == i or not is_word_end(text, k-1)) and text[k] in alphabet:
+            gram += text[k]
+        else:
+            return None
+    return gram
+
 
 def calculate_n_gram_frequencies(text, n, alphabet):
     frequencies_dict = alphabetic.n_gram_dict(alphabet, n)
@@ -45,14 +56,20 @@ def calculate_n_gram_frequencies(text, n, alphabet):
 def calculate_n_gram_function(frequencies, distribution):
     result = 1
     for i in frequencies:
-        result *= distribution[i]**frequencies[i]
+        try:
+            result *= distribution[i]**frequencies[i]
+        except KeyError:
+            pass
     return result
 
 
 def calculate_log_n_gram_function(frequencies, log_distribution):
     result = 0
     for i in frequencies:
-        result += log_distribution[i]*frequencies[i]
+        try:
+            result += log_distribution[i]*frequencies[i]
+        except KeyError:
+            pass
     return result
 
 
@@ -67,20 +84,29 @@ def get_frequencies_change(old_frequencies, new_frequencies):
 def calculate_function_change(frequencies_change, distribution):
     result = 1
     for i in frequencies_change:
-        result *= distribution[i]**frequencies_change[i]
+        try:
+            result *= distribution[i]**frequencies_change[i]
+        except KeyError:
+            pass
     return result
 
 
 def calculate_log_function_change(frequencies_change, log_distribution):
     result = 0
     for i in frequencies_change:
-        result += log_distribution[i]*frequencies_change[i]
+        try:
+            result += log_distribution[i]*frequencies_change[i]
+        except KeyError:
+            pass
     return result
 
 
 def update_frequency(frequency, frequency_change):
     for i in frequency_change:
-        frequency[i] += frequency_change[i]
+        try:
+            frequency[i] += frequency_change[i]
+        except KeyError:
+            pass
 
 
 

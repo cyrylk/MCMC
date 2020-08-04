@@ -69,9 +69,12 @@ def encrypt_text_v2(text, shift_key, alphabet):
 
     coding_index = 0
     for index in range(len(shift_key), len(text)):
-        encrypted_decrypted.append(encrypt_decrypt_single(text[index], alphabet.letters_to_position[text[coding_index]],
+        if (text[index] in alphabet and text[coding_index] in alphabet):
+            encrypted_decrypted.append(encrypt_decrypt_single(text[index], alphabet.letters_to_position[text[coding_index]],
                                                           alphabet))
-        coding_index += 1
+            coding_index += 1
+        else:
+            encrypted_decrypted.append(text[index])
 
     if type(text) is alphabetic.StrippedText:
         return create_stripped_encryption_decryption(text, encrypted_decrypted, alphabet)
@@ -89,10 +92,12 @@ def decrypt_text_v2(text, shift_key, alphabet):
     coding_index = 0
 
     for index in range(len(shift_key), len(text)):
-        encrypted_decrypted.append(encrypt_decrypt_single(text[index],
-                                                          -alphabet.letters_to_position[encrypted_decrypted[coding_index]],
+        if (text[index] in alphabet and text[coding_index] in alphabet):
+            encrypted_decrypted.append(encrypt_decrypt_single(text[index], -alphabet.letters_to_position[text[coding_index]],
                                                           alphabet))
-        coding_index += 1
+            coding_index += 1
+        else:
+            encrypted_decrypted.append(text[index])
 
     if type(text) is alphabetic.StrippedText:
         return create_stripped_encryption_decryption(text, encrypted_decrypted, alphabet)

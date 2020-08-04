@@ -22,7 +22,7 @@ class Alphabet:
         return item in self.letters_to_position
 
 
-## @brief class containing the input text stripped of non-alphabetic signs
+## @brief class containing the input text stripped of non-alphabetic characters
 # alongside with all the information needed to recreate the original text
 class StrippedText:
     def __init__(self, text, alphabet):
