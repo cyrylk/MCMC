@@ -56,10 +56,6 @@ def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet
 
 from decryption_problem.algorithm.distribution_generator import generate_from_file_log
 
-
-
-
-
 alphabeto = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 standard3 = generate_from_file_log("../data/english_trigrams.txt", alphabeto, 3)
 standard2 = generate_from_file_log("../data/english_bigrams.txt", alphabeto, 2)
@@ -78,13 +74,6 @@ A BRAIN HAS NO OPPOSITION, IT IS PLAIN THAT IT WILL ATTAIN A POSITION OF “STAT
 MAN KNOWS NOT WHY A COW, DOG OR LION WAS NOT BORN WITH A BRAIN ON A PAR WITH OURS; WHY SUCH ANIMALS CANNOT ADD, SUBTRACT, 
 OR OBTAIN FROM BOOKS AND SCHOOLING, THAT PARAMOUNT POSITION WHICH MAN HOLDS TODAY.''', alphabeto)
 
-
-
-
-
-standard3 = generate_from_file_log("../data/english_trigrams.txt", alphabeto, 3)
-standard2 = generate_from_file_log("../data/english_bigrams.txt", alphabeto, 2)
-standard1 = generate_from_file_log("../data/english_monograms.txt", alphabeto, 1)
 
 code = [10, 11, 3, 11, 15, 20, 18, 12, 25, 8, 22, 21, 4, 23, 5, 22, 15, 22, 16, 24, 3, 25, 19, 24, 16, 23, 23, 7, 4, 23,
         25, 1, 17, 15, 1, 0, 8, 7, 25, 8, 19, 17, 1, 1, 4, 23, 6, 16, 18, 18, 8, 1, 13, 5, 2, 1, 5, 8, 10, 10, 8, 24,

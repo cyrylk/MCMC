@@ -97,7 +97,7 @@ def bounded_procedure(text, distribution, starting_state, n, steps, alphabet, bo
     print(max_state)
 
 
-from decryption_problem.algorithm.distribution_generator import generate_from_file_log, generate_from_file
+from decryption_problem.algorithm.distribution_generator import generate_from_file_log
 
 
 from timeit import default_timer as time

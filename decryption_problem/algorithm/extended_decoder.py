@@ -87,11 +87,11 @@ standard2 = generate_from_file_log("../data/english_bigrams.txt", alphabeto, 2)
 standard1 = generate_from_file_log("../data/english_monograms.txt", alphabeto, 1)
 
 coprimess = extended.get_coprimes(alphabeto.length)
-code = neighbours.get_starting_state_fixed(alphabeto, 60, coprimess)
+code = neighbours.get_starting_state_fixed(alphabeto, 12, coprimess)
 
 encrypted = extended.encrypt_decrypt_text(plain, code, alphabeto, coprimess)
 res = fixed_procedure(encrypted, [standard2], neighbours.get_starting_state_fixed(alphabeto, len(code), coprimess),
-                             [2], 200000, alphabeto, [1.0], coprimess)
+                             [2], 25000, alphabeto, [1.0], coprimess)
 maxx_state = res[0]
 maxx_function = res[1]
 # bounded_procedure(encrypted, standard2, neighbours.get_starting_state_bounded(alphabeto, 20), 2, 10000, alphabeto, 20)
