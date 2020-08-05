@@ -1,4 +1,5 @@
 import decryption_problem.alphabetic.alphabetic as alphabetic
+from math import exp
 
 
 def get_zero_frequency(frequencies):
@@ -47,7 +48,10 @@ def calculate_n_gram_frequencies(text, n, alphabet):
         if len(current_gram) > n:
             current_gram = current_gram[1:]
         if len(current_gram) == n:
-            frequencies_dict[current_gram] += 1
+            try:
+                frequencies_dict[current_gram] += 1
+            except KeyError:
+                pass
         if is_word_end(text, i):
             current_gram = ""
     return frequencies_dict
@@ -107,6 +111,21 @@ def update_frequency(frequency, frequency_change):
             frequency[i] += frequency_change[i]
         except KeyError:
             pass
+
+
+def expected_value(log_frequencies, text_length):
+    normalizer = 0
+    expected_value = 0
+    for i in log_frequencies:
+        normalizer+=exp(log_frequencies[i])
+
+    for i in log_frequencies:
+        expected_value += log_frequencies[i]*exp(log_frequencies)
+
+    return (expected_value/normalizer)*text_length
+
+
+
 
 
 

@@ -1,3 +1,6 @@
 add metrics for calculating accuracy
-some function get_key_reverse or similar
-non-stripped version for autokey?
+some function get_key_reverse or similar - done
+non-stripped version for autokey? - done
+
+stripped with extended alphabet, encryption/decryption with normal alphabet - prepared
+some improvements for bounded versions possible

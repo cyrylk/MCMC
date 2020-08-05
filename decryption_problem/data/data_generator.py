@@ -77,15 +77,16 @@ def generate_random_excerpt(filename_or_string, length):
 
 
 
-def generate_random_vigenere_key(alphabet, key_length):
+def generate_random_vigenere_key_fixed(alphabet, key_length):
     key = []
     for i in range(key_length):
         key.append(random.randint(0, alphabet.length - 1))
     return key
 
-def generate_random_vigenere_key(alphabet):
-    key_length = random.randint(1,1000)
-    return generate_random_vigenere_key(alphabet, key_length)
+
+def generate_random_vigenere_key_bounded(alphabet, bound):
+    key_length = random.randint(1,bound)
+    return generate_random_vigenere_key_fixed(alphabet, key_length)
 
 
 def get_coprimes(length):
@@ -97,7 +98,7 @@ def get_coprimes(length):
 #     reverse_b = (-reverse_a * key[1]) % alphabet.length
 #     return reverse_a, reverse_b
 
-def generate_random_extended_key(alphabet, key_length):
+def generate_random_extended_key_fixed(alphabet, key_length):
     key = []
     coprimes = get_coprimes(alphabet.length)
     for i in range(key_length):
@@ -105,12 +106,18 @@ def generate_random_extended_key(alphabet, key_length):
         key.append((number % len(coprimes), number // len(coprimes)))
     return key
 
-def generate_random_vigenere_key(alphabet):
-    key_length = random.randint(1, 1000)
-    return generate_random_extended_key(alphabet, key_length)
+def generate_random_extended_key(alphabet, bound):
+    key_length = random.randint(1, bound)
+    return generate_random_extended_key_fixed(alphabet, key_length)
 
 def white_characters_to_spaces(string):
     return re.sub(r"\s+", " ", string)
+
+def clear_string_from_file(filename):
+    f = open(filename, "r")
+    clean = f.read()
+    f.close()
+    return white_characters_to_spaces(clean)
 
 
 

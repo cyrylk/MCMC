@@ -1,6 +1,4 @@
 import xml.etree.ElementTree as ET
-tree = ET.parse('burma14.xml')
-rooot = tree.getroot()
 
 
 def get_problem_size(root):
@@ -13,7 +11,10 @@ def get_problem_size(root):
 
 
 def generate_initial_dictionary(size):
-    return {i: {j: float("inf") for j in range(size) if j != i} for i in range(size)}
+    init = {i: {j: float("inf") for j in range(size)} for i in range(size)}
+    for i in init:
+        init[i][i] = 0
+    return init
 
 
 def get_graph_from_root(root, dictionary):
@@ -32,9 +33,6 @@ def get_data_from_file(filename):
     dictionary = generate_initial_dictionary(size)
     get_graph_from_root(root, dictionary)
     return dictionary
-
-
-print(get_data_from_file("burma14.xml"))
 
 
 
