@@ -40,9 +40,9 @@ def calculate_n_gram_frequencies(text, n, alphabet):
     frequencies_dict = alphabetic.n_gram_dict(alphabet, n)
     current_gram = ""
     for i in range(len(text)):
-        if text[i] not in alphabet:
-            current_gram = ""
-            continue
+        # if text[i] not in alphabet:
+        #     current_gram = ""
+        #     continue
         current_gram += text[i]
         if len(current_gram) > n:
             current_gram = current_gram[1:]

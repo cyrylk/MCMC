@@ -77,9 +77,7 @@ OR OBTAIN FROM BOOKS AND SCHOOLING, THAT PARAMOUNT POSITION WHICH MAN HOLDS TODA
 
 code = [10, 11, 3, 11, 15, 20, 18, 12, 25, 8, 22, 21, 4, 23, 5, 22, 15, 22, 16, 24, 3, 25, 19, 24, 16, 23, 23, 7, 4, 23,
         25, 1, 17, 15, 1, 0, 8, 7, 25, 8, 19, 17, 1, 1, 4, 23, 6, 16, 18, 18, 8, 1, 13, 5, 2, 1, 5, 8, 10, 10, 8, 24,
-        20,
-        23, 15, 22, 6, 16, 12, 4, 22, 13, 12, 15, 11, 24, 12, 12, 0, 5, 1, 5, 10, 19, 25, 1, 8, 0, 25, 9, 1, 19, 3, 18,
-        11, 22, 5, 1, 18, 23]
+        20]
 
 encrypted = autokey.encrypt_text(plain, code, alphabeto)
 res = fixed_procedure(encrypted, [standard2], neighbours.get_starting_state_fixed(alphabeto, len(code)), [2],
@@ -104,11 +102,11 @@ decrypted1 = autokey.decrypt_text(encrypted, maxx_state, alphabeto)
 decrypted2 = autokey.decrypt_text(encrypted, [-i for i in code], alphabeto)
 state_function = 0
 frequencies = common.calculate_n_gram_frequencies(decrypted2, 1, alphabeto)
-state_function += common.calculate_log_n_gram_function(frequencies, standard1)*0.2
+state_function += common.calculate_log_n_gram_function(frequencies, standard1)*0
 frequencies = common.calculate_n_gram_frequencies(decrypted2, 2, alphabeto)
-state_function += common.calculate_log_n_gram_function(frequencies, standard2)*0.6
+state_function += common.calculate_log_n_gram_function(frequencies, standard2)*1
 frequencies = common.calculate_n_gram_frequencies(decrypted2, 3, alphabeto)
-state_function += common.calculate_log_n_gram_function(frequencies, standard3)*0.2
+state_function += common.calculate_log_n_gram_function(frequencies, standard3)*0
 print(state_function)
 
 print(decrypted1.get_non_stripped_text())

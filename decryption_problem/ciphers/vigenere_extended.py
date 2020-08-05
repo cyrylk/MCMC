@@ -1,5 +1,6 @@
 import decryption_problem.alphabetic.alphabetic as alphabetic
 from math import gcd
+from sympy import mod_inverse
 
 
 ## @brief package containing functions for encrypting and decrypting texts with Vigenere cipher
@@ -62,5 +63,14 @@ def update_decryption_by_key_index(decryption, text, changed_index, key, key_len
 def get_coprimes(length):
     return [i for i in range(length) if gcd(i, length) == 1]
 
+
+def reverse_key(key, alphabet):
+    reverse_a = mod_inverse(key[0], alphabet.length)
+    reverse_b = (-reverse_a * key[1]) % alphabet.length
+    return reverse_a, reverse_b
+
+
+print(reverse_key((3, 4), alphabetic.Alphabet("ABCDEFG")))
+print(reverse_key((3, 4), alphabetic.Alphabet("ABCDEFGH")))
 
 
