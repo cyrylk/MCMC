@@ -14,9 +14,9 @@ def procedure(filename, steps):
     best_func = current_func
     for i in range(steps):
         swap = get_random_swap(size)
-        update = calculator.get_function_update1(distances, current_state, swap, 1)
+        update = calculator.get_function_update1(distances, current_state, swap)
         u = log(random.random())
-        if u < update:
+        if u < update/log(i+2):
             calculator.update_state(current_state, swap)
             current_func -= update
             if current_func < best_func:

@@ -1,6 +1,6 @@
 
 
-def get_function_update1(distances, current_state, swap, anneal):
+def get_function_update1(distances, current_state, swap):
     size = len(current_state)
     update = 0
 
@@ -18,7 +18,7 @@ def get_function_update1(distances, current_state, swap, anneal):
 
     update_state(current_state, (swap[1], swap[0]))
 
-    return update/anneal
+    return update
 
 
 def update_state(current_state, swap):
