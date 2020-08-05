@@ -36,5 +36,3 @@ def get_data_from_file(filename):
 
 
 
-
-
