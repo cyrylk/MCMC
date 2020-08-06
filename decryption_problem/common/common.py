@@ -38,8 +38,8 @@ def get_n_gram_at_i(text, n, i, alphabet):
             k += 1
         except IndexError:
             return None
-        if is_word_end(text, k):
-            stripped = text.stripped_part[text.ends_of_words[k]]
+        if is_word_end(text, k - 1):
+            stripped = text.stripped_part[text.ends_of_words[k-1]]
             j = 0
             while k - i < n and j < len(stripped):
                 gram += stripped[j]
