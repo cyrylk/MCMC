@@ -7,6 +7,24 @@ import random
 from math import log
 
 
+def get_max_monogram_state_coord(text, coordinate, monogram_dist, key_length, alphabet):
+    max_state = 0
+    max_func = 0
+    for j in range(len(monogram_dist)):
+        func = 0
+        for i in range(coordinate, len(text), key_length):
+            func += monogram_dist[vigenere.encrypt_decrypt_single(text[i], j, alphabet)]
+        if func > max_func:
+            max_state = j
+            max_func = func
+    return max_state
+
+
+def get_max_monogram_state(text, monogram_dist, key_length, alphabet):
+    return [get_max_monogram_state_coord(text, coordinate, monogram_dist, key_length, alphabet) for coordinate in
+            range(key_length)]
+
+
 def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet, coefs):
     current_state = starting_state
     current_decryption = vigenere.encrypt_decrypt_text(text, current_state, alphabet)
@@ -127,8 +145,8 @@ standard1 = generate_from_file_log("../data/english_monograms.txt", alphabeto, 1
 code = [10, 11, 3, 11, 15, 20, 18, 12, 25, 8, 22, 21, 4, 23, 5, 22, 15, 22, 16, 24, 3, 25, 19, 24, 16, 23, 23, 7, 4, 23, 25, 1, 17, 15, 1, 0, 8, 7, 25, 8, 19, 17, 1, 1, 4, 23, 6, 16, 18, 18, 8, 1, 13, 5, 2, 1, 5, 8, 10, 10, 8, 24, 20, 23, 15, 22, 6, 16, 12, 4, 22, 13, 12, 15, 11, 24, 12, 12, 0, 5, 1, 5, 10, 19, 25, 1, 8, 0, 25, 9, 1, 19, 3, 18, 11, 22, 5, 1, 18, 23]
 
 encrypted = vigenere.encrypt_decrypt_text(plain, code, alphabeto)
-res = fixed_procedure(encrypted, [standard2], neighbours.get_starting_state_fixed(alphabeto, len(code)),
-                             [2], 25000, alphabeto, [1.0])
+res = fixed_procedure(encrypted, [standard2], get_max_monogram_state(encrypted, standard1, len(code), alphabeto),
+                             [2], 3000, alphabeto, [1.0])
 maxx_state = res[0]
 maxx_function = res[1]
 # bounded_procedure(encrypted, standard2, neighbours.get_starting_state_bounded(alphabeto, 20), 2, 10000, alphabeto, 20)
@@ -154,5 +172,13 @@ print(state_function)
 print(decrypted1.get_non_stripped_text())
 print()
 print(decrypted2.get_non_stripped_text())
+print()
 
+print("TESTTTTTTTT")
+decrypted3 = vigenere.encrypt_decrypt_text(encrypted, get_max_monogram_state(encrypted, standard1, len(code), alphabeto),
+                                           alphabeto)
+frequencies = common.calculate_n_gram_frequencies(decrypted3, 2, alphabeto)
+state_function = common.calculate_log_n_gram_function(frequencies, standard2)
+print(decrypted3.get_non_stripped_text())
+print(state_function)
 

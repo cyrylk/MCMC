@@ -9,6 +9,25 @@ from math import log
 from timeit import default_timer as time
 random.seed(time())
 
+def get_max_monogram_state_coord(text, coordinate, monogram_dist, key_length, alphabet):
+    max_state = 0
+    max_func = 0
+    for j in range(len(monogram_dist)):
+        k = j
+        func = 0
+        for i in range(coordinate, len(text), key_length):
+            k = autokey.encrypt_decrypt_single(text[i], k, alphabet)
+            func += monogram_dist[autokey.encrypt_decrypt_single(text[i], k, alphabet)]
+        if func > max_func:
+            max_state = j
+            max_func = func
+    return max_state
+
+
+def get_max_monogram_state(text, monogram_dist, key_length, alphabet):
+    return [get_max_monogram_state_coord(text, coordinate, monogram_dist, key_length, alphabet) for coordinate in
+            range(key_length)]
+
 def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet, coefs):
     current_state = starting_state
     current_decryption = autokey.decrypt_text(text, current_state, alphabet)
