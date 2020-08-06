@@ -129,7 +129,7 @@ code = [10, 11, 3, 11, 15, 20, 18, 12, 25, 8, 22, 21, 4, 23, 5, 22, 15, 22, 16, 
 
 encrypted = vigenere.encrypt_decrypt_text(plain, code, alphabeto)
 res = fixed_procedure(encrypted, [standard2], neighbours.get_starting_state_fixed(alphabeto, len(code)),
-                             [2], 25000, alphabeto, [1.0])
+                             [2], 50000, alphabeto, [1.0])
 maxx_state = res[0]
 maxx_function = res[1]
 # bounded_procedure(encrypted, standard2, neighbours.get_starting_state_bounded(alphabeto, 20), 2, 10000, alphabeto, 20)

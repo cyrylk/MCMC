@@ -29,7 +29,7 @@ class StrippedText:
         length = len(text)
         self.non_stripped_part = []
         self.stripped_part = []
-        self.ends_of_words = set()
+        self.ends_of_words = {}
         end_of_word = 0
         word_number = 0
         stripped = ""
@@ -39,18 +39,18 @@ class StrippedText:
                 if stripped:
                     self.stripped_part.append(stripped)
                     stripped = ""
-                    self.ends_of_words.add(end_of_word - 1)
+                    self.ends_of_words[(end_of_word - 1)] = len(self.stripped_part) - 1
                     if end_of_word:
                         word_number += 1
                 if i + 1 == length:
-                    self.ends_of_words.add(end_of_word)
+                    self.ends_of_words[end_of_word] = len(self.stripped_part)
                 end_of_word += 1
             else:
                 stripped += text[i]
                 if i + 1 == length:
                     if stripped:
                         self.stripped_part.append(stripped)
-                    self.ends_of_words.add(end_of_word - 1)
+                    self.ends_of_words[(end_of_word - 1)] = len(self.stripped_part) - 1
 
         self.stripped_part.append("")
 
@@ -74,16 +74,12 @@ class StrippedText:
 
     def get_non_stripped_text(self):
         text = []
-        shift = 0
-        word_index = 0
         if -1 in self.ends_of_words:
-            text.append(self.stripped_part[word_index])
-            word_index += 1
+            text.append(self.stripped_part[self.ends_of_words[-1]])
         for i in range(len(self.non_stripped_part)):
             text.append(self.non_stripped_part[i])
             if i in self.ends_of_words:
-                text.append(self.stripped_part[word_index])
-                word_index += 1
+                text.append(self.stripped_part[self.ends_of_words[i]])
         return "".join(text)
 
 
