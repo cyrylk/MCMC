@@ -4,3 +4,7 @@ non-stripped version for autokey? - done
 
 stripped with extended alphabet, encryption/decryption with normal alphabet - prepared
 some improvements for bounded versions possible
+do wszystkiego związanego z szyfrowaniem wchodzi krótszy alfabet (także do stworzenia strippedtextu)
+do liczenia częstości - rozszerzony.
+Jak chcemy przesuwać się po niealfabetycznych znakach (v2), to robimy to nie na strippedtekście,
+tylko na liście

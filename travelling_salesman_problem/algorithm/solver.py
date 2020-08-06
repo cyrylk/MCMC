@@ -41,5 +41,5 @@ def procedure(filename, steps):
 
 random.seed(time())
 
-procedure("../data/d2103.xml", 100000)
+procedure("../data/burma14.xml", 100000)
 

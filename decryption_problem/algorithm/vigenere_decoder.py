@@ -47,7 +47,6 @@ def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet
             if current_state_function > max_function:
                 max_state = candidate
                 max_function = current_state_function
-    print (current_state_function)
     return max_state, max_function
 
 
