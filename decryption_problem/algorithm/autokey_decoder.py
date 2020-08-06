@@ -17,7 +17,8 @@ def get_max_monogram_state_coord(text, coordinate, monogram_dist, key_length, al
         func = 0
         for i in range(coordinate, len(text), key_length):
             k = autokey.encrypt_decrypt_single(text[i], k, alphabet)
-            func += monogram_dist[autokey.encrypt_decrypt_single(text[i], k, alphabet)]
+            func += monogram_dist[k]
+            k = alphabet.letters_to_position[k]
         if func > max_func:
             max_state = j
             max_func = func
@@ -99,8 +100,8 @@ code = [10, 11, 3, 11, 15, 20, 18, 12, 25, 8, 22, 21, 4, 23, 5, 22, 15, 22, 16, 
         20]
 
 encrypted = autokey.encrypt_text(plain, code, alphabeto)
-res = fixed_procedure(encrypted, [standard2], neighbours.get_starting_state_fixed(alphabeto, len(code)), [2],
-                      30000, alphabeto, [1.0])
+res = fixed_procedure(encrypted, [standard2], get_max_monogram_state(encrypted, standard1, len(code), alphabeto), [2],
+                      15000, alphabeto, [1.0])
 maxx_state = res[0]
 maxx_function = res[1]
 # bounded_procedure(encrypted, standard2, neighbours.get_starting_state_bounded(alphabeto, 20), 2, 10000, alphabeto, 20)
