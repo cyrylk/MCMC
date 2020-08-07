@@ -25,6 +25,65 @@ def get_max_monogram_state(text, monogram_dist, key_length, alphabet):
             range(key_length)]
 
 
+def get_bigram_weight(text, bigram, coord, key_length, bigram_dist, alphabet):
+    weight = 0
+    for i in range(coord, len(text) - 1, key_length):
+        text[i] = vigenere.encrypt_decrypt_single(text[i], bigram[0], alphabet)
+        text[i+1] = vigenere.encrypt_decrypt_single(text[i+1], bigram[1], alphabet)
+        gram = common.get_n_gram_at_i(text, 2, i, alphabet)
+        try:
+            weight += bigram_dist[gram]
+        except KeyError:
+            pass
+        text[i] = vigenere.encrypt_decrypt_single(text[i], -bigram[0], alphabet)
+        text[i + 1] = vigenere.encrypt_decrypt_single(text[i + 1], -bigram[1], alphabet)
+    return weight
+
+
+def get_max_bigram_state(text, bigram_dist, key_length, alphabet):
+    codes = [[[0 for i in range(key_length-1)] for a in range(alphabet.length)] for b in range(alphabet.length)]
+    values = [[get_bigram_weight(text, (a, b), 0, key_length, bigram_dist, alphabet) for b in range(alphabet.length)]
+              for a in range(alphabet.length)]
+    new_values = [[0 for b in range(alphabet.length)] for a in range(alphabet.length)]
+    for r in range(1, key_length):
+        for i in range(len(codes)):
+            for j in range(len(codes[i])):
+                max_func = values[i][0] + get_bigram_weight(text, (0, j), r, key_length, bigram_dist, alphabet)
+                max_val = 0
+                for k in range(len(codes[i])):
+                    func = values[i][k] + get_bigram_weight(text, (k, j), r, key_length, bigram_dist, alphabet)
+                    if func > max_func:
+                        max_func = func
+                        max_val = k
+                new_values[i][j] = max_func
+                codes[i][j][r-1] = max_val
+
+        aux = values
+        values = new_values
+        new_values = aux
+
+    maxi = values[0][0]
+    max_state = 0
+    for i in range(len(values)):
+        if values[i][i] > maxi:
+            maxi = values[i][i]
+            max_state = i
+
+    print("MAXIMIZADO", maxi)
+    res = []
+    t = len(codes[max_state][max_state]) - 1
+    current = max_state
+    for i in range(len(codes[max_state][max_state])):
+        current = codes[max_state][current][t]
+        res.append(current)
+        t -= 1
+    res.append(max_state)
+    res.reverse()
+    return res
+
+
+
+
 def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet, coefs):
     current_state = starting_state
     current_decryption = vigenere.encrypt_decrypt_text(text, current_state, alphabet)
@@ -142,7 +201,7 @@ standard3 = generate_from_file_log("../data/english_trigrams.txt", alphabeto, 3)
 standard2 = generate_from_file_log("../data/english_bigrams.txt", alphabeto, 2)
 standard1 = generate_from_file_log("../data/english_monograms.txt", alphabeto, 1)
 
-code = [10, 11, 3, 11, 15, 20, 18, 12, 25, 8, 22, 21, 4, 23, 5, 22, 15, 22, 16, 24, 3, 25, 19, 24, 16, 23, 23, 7, 4, 23, 25, 1, 17, 15, 1, 0, 8, 7, 25, 8, 19, 17, 1, 1, 4, 23, 6, 16, 18, 18, 8, 1, 13, 5, 2, 1, 5, 8, 10, 10, 8, 24, 20, 23, 15, 22, 6, 16, 12, 4, 22, 13, 12, 15, 11, 24, 12, 12, 0, 5, 1, 5, 10, 19, 25, 1, 8, 0, 25, 9, 1, 19, 3, 18, 11, 22, 5, 1, 18, 23]
+code = neighbours.get_starting_state_fixed(alphabeto, 100)
 
 encrypted = vigenere.encrypt_decrypt_text(plain, code, alphabeto)
 res = fixed_procedure(encrypted, [standard2], get_max_monogram_state(encrypted, standard1, len(code), alphabeto),
@@ -175,10 +234,21 @@ print(decrypted2.get_non_stripped_text())
 print()
 
 print("TESTTTTTTTT")
-decrypted3 = vigenere.encrypt_decrypt_text(encrypted, get_max_monogram_state(encrypted, standard1, len(code), alphabeto),
+maximizer = get_max_bigram_state(encrypted, standard2, len(code), alphabeto)
+decrypted3 = vigenere.encrypt_decrypt_text(encrypted, maximizer,
                                            alphabeto)
 frequencies = common.calculate_n_gram_frequencies(decrypted3, 2, alphabeto)
 state_function = common.calculate_log_n_gram_function(frequencies, standard2)
 print(decrypted3.get_non_stripped_text())
 print(state_function)
+print([(-i) % 26 for i in code])
+print(maximizer)
+
+# e = 0
+# sol = [-i for i in code]
+# for i in range(len(sol) - 1):
+#     e += get_bigram_weigth(encrypted, (sol[i], sol[i+1]), i, len(sol), standard2, alphabeto)
+#
+# print(e)
+
 
