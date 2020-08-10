@@ -1,10 +1,12 @@
-add metrics for calculating accuracy
+add metrics for calculating accuracy - done
 some function get_key_reverse or similar - done
 non-stripped version for autokey? - done
 
 stripped with extended alphabet, encryption/decryption with normal alphabet - prepared
 some improvements for bounded versions possible
 do wszystkiego związanego z szyfrowaniem wchodzi krótszy alfabet (także do stworzenia strippedtextu)
-do liczenia częstości - rozszerzony.
+do liczenia częstości - rozszerzony
 Jak chcemy przesuwać się po niealfabetycznych znakach (v2), to robimy to nie na strippedtekście,
 tylko na liście
+do update'owania częstości muszą być dwa alfabety - rozszerzony - do liczenia gramów i zwykły
+do szyfrowania

@@ -70,7 +70,8 @@ def reverse_key(key, alphabet):
     return reverse_a, reverse_b
 
 
-print(reverse_key((3, 4), alphabetic.Alphabet("ABCDEFG")))
-print(reverse_key((3, 4), alphabetic.Alphabet("ABCDEFGH")))
+def get_all_single_keys(alphabet, coprimes):
+    return [(i, j) for i in range(len(coprimes)) for j in range(alphabet.length)]
+
 
 

@@ -29,6 +29,68 @@ def get_max_monogram_state(text, monogram_dist, key_length, alphabet):
     return [get_max_monogram_state_coord(text, coordinate, monogram_dist, key_length, alphabet) for coordinate in
             range(key_length)]
 
+def get_bigram_weight(text, bigram, coord, key_length, bigram_dist, alphabet):
+    weight = 0
+    for i in range(coord, len(text) - 1, key_length):
+        if i == key_length - 1:
+            bigram = (bigram[0],
+                      -alphabet.letters_to_position[autokey.encrypt_decrypt_single(text[0], bigram[1], alphabet)])
+        text[i] = autokey.encrypt_decrypt_single(text[i], bigram[0], alphabet)
+        text[i+1] = autokey.encrypt_decrypt_single(text[i+1], bigram[1], alphabet)
+        new_bigram = (-alphabet.letters_to_position[text[i]], -alphabet.letters_to_position[text[i+1]])
+        gram = common.get_n_gram_at_i(text, 2, i, alphabet)
+        try:
+            weight += bigram_dist[gram]
+        except KeyError:
+            pass
+        text[i] = autokey.encrypt_decrypt_single(text[i], -bigram[0], alphabet)
+        text[i + 1] = autokey.encrypt_decrypt_single(text[i + 1], -bigram[1], alphabet)
+        bigram = new_bigram
+    return weight
+
+
+def get_max_bigram_state(text, bigram_dist, key_length, alphabet):
+    codes = [[[0 for i in range(key_length-1)] for a in range(alphabet.length)] for b in range(alphabet.length)]
+    values = [[get_bigram_weight(text, (a, b), 0, key_length, bigram_dist, alphabet) for b in range(alphabet.length)]
+              for a in range(alphabet.length)]
+    new_values = [[0 for b in range(alphabet.length)] for a in range(alphabet.length)]
+    for r in range(1, key_length):
+        for i in range(len(codes)):
+            for j in range(len(codes[i])):
+                max_func = values[i][0] + get_bigram_weight(text, (0, j), r, key_length, bigram_dist, alphabet)
+                max_val = 0
+                for k in range(len(codes[i])):
+                    func = values[i][k] + get_bigram_weight(text, (k, j), r, key_length, bigram_dist, alphabet)
+                    if func > max_func:
+                        max_func = func
+                        max_val = k
+                new_values[i][j] = max_func
+                codes[i][j][r-1] = max_val
+
+        aux = values
+        values = new_values
+        new_values = aux
+
+    maxi = values[0][0]
+    max_state = 0
+    for i in range(len(values)):
+        if values[i][i] > maxi:
+            maxi = values[i][i]
+            max_state = i
+
+    print("MAXIMIZADO", maxi)
+    res = []
+    t = len(codes[max_state][max_state]) - 1
+    current = max_state
+    for i in range(len(codes[max_state][max_state])):
+        current = codes[max_state][current][t]
+        res.append(current)
+        t -= 1
+    res.append(max_state)
+    res.reverse()
+    return res
+
+
 def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet, coefs):
     current_state = starting_state
     current_decryption = autokey.decrypt_text(text, current_state, alphabet)
@@ -132,3 +194,13 @@ print(state_function)
 print(decrypted1.get_non_stripped_text())
 print()
 print(decrypted2.get_non_stripped_text())
+
+maximizer = get_max_bigram_state(encrypted, standard2, len(code), alphabeto)
+decrypted3 = autokey.decrypt_text(encrypted, maximizer,
+                                           alphabeto)
+frequencies = common.calculate_n_gram_frequencies(decrypted3, 2, alphabeto)
+state_function = common.calculate_log_n_gram_function(frequencies, standard2)
+print(decrypted3.get_non_stripped_text())
+print(state_function)
+print([(-i) % 26 for i in code])
+print(maximizer)

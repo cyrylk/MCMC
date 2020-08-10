@@ -45,8 +45,7 @@ def get_frequency_change_fixed_key_length(old_key, new_key,
             add_ith_gram_to_frequency_change(current_decryption, n_gram_length, i, alphabet,
                                              frequencies_change)
         current_decryption[j] = autokey.encrypt_decrypt_single(current_decryption[j], -shift*power, alphabet)
-        power*=(-1)
-
+        power *= (-1)
 
     return frequencies_change
 

@@ -9,6 +9,84 @@ from math import log
 from timeit import default_timer as time
 random.seed(time())
 
+def get_max_monogram_state_coord(text, coordinate, monogram_dist, key_length, alphabet, coprimes):
+    max_state = 0
+    max_func = 0
+    for j in extended.get_all_single_keys(alphabet, coprimes):
+        func = 0
+        for i in range(coordinate, len(text), key_length):
+            func += monogram_dist[extended.encrypt_decrypt_single(text[i], j, alphabet)]
+        if func > max_func:
+            max_state = j
+            max_func = func
+    return max_state
+
+
+def get_max_monogram_state(text, monogram_dist, key_length, alphabet, coprimes):
+    return [get_max_monogram_state_coord(text, coordinate, monogram_dist, key_length, alphabet, coprimes) for coordinate in
+            range(key_length)]
+
+
+def get_bigram_weight(text, bigram, coord, key_length, bigram_dist, alphabet, coprimes):
+    weight = 0
+    for i in range(coord, len(text) - 1, key_length):
+        old_text0 = text[i]
+        old_text1 = text[i+1]
+        text[i] = extended.encrypt_decrypt_single(text[i], bigram[0], alphabet, coprimes)
+        text[i+1] = extended.encrypt_decrypt_single(text[i+1], bigram[1], alphabet, coprimes)
+        gram = common.get_n_gram_at_i(text, 2, i, alphabet)
+        try:
+            weight += bigram_dist[gram]
+        except KeyError:
+            pass
+        text[i] = old_text0
+        text[i + 1] = old_text1
+    return weight
+
+
+def get_max_bigram_state(text, bigram_dist, key_length, alphabet, coprimes):
+    all_single_keys = extended.get_all_single_keys(alphabet, coprimes)
+    codes = {a: {b: [(0, 0) for i in range(key_length-1)] for b in all_single_keys} for a in all_single_keys}
+    values = {a: {b: get_bigram_weight(text, (a, b), 0, key_length, bigram_dist, alphabet, coprimes) for b in
+                  all_single_keys} for a in all_single_keys}
+    new_values = {a: {b: 0 for b in all_single_keys} for a in all_single_keys}
+    for r in range(1, key_length):
+        for i in all_single_keys:
+            for j in codes[i]:
+                max_func = values[i][all_single_keys[0]] + get_bigram_weight(text, (all_single_keys[0], j), r, key_length, bigram_dist, alphabet,
+                                                                             coprimes)
+                max_val = 0
+                for k in codes[i]:
+                    func = values[i][k] + get_bigram_weight(text, (k, j), r, key_length, bigram_dist, alphabet, coprimes)
+                    if func > max_func:
+                        max_func = func
+                        max_val = k
+                new_values[i][j] = max_func
+                codes[i][j][r-1] = max_val
+
+        aux = values
+        values = new_values
+        new_values = aux
+
+    maxi = values[all_single_keys[0]][all_single_keys[0]]
+    max_state = 0
+    for i in all_single_keys:
+        if values[i][i] > maxi:
+            maxi = values[i][i]
+            max_state = i
+
+    print("MAXIMIZADO", maxi)
+    res = []
+    t = len(codes[max_state][max_state]) - 1
+    current = max_state
+    for i in range(len(codes[max_state][max_state])):
+        current = codes[max_state][current][t]
+        res.append(current)
+        t -= 1
+    res.append(max_state)
+    res.reverse()
+    return res
+
 def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet, coefs, coprimes):
     current_state = starting_state
     current_decryption = extended.encrypt_decrypt_text(text, current_state, alphabet, coprimes)
@@ -50,44 +128,24 @@ def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet
             if current_state_function > max_function:
                 max_state = candidate
                 max_function = current_state_function
-    print(max_state, max_function)
     return max_state, max_function
 
 
 from decryption_problem.algorithm.distribution_generator import generate_from_file_log
 
 
-
-
-
-alphabeto = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+alphabeto = alphabetic.Alphabet("ABCDEFGH")
 standard3 = generate_from_file_log("../data/english_trigrams.txt", alphabeto, 3)
 standard2 = generate_from_file_log("../data/english_bigrams.txt", alphabeto, 2)
 standard1 = generate_from_file_log("../data/english_monograms.txt", alphabeto, 1)
 
 plain = alphabetic.StrippedText('''IF YOUTH, THROUGHOUT ALL HISTORY, HAD HAD A CHAMPION TO STAND UP FOR IT; 
-TO SHOW A DOUBTING WORLD THAT A CHILD CAN THINK; AND, POSSIBLY, DO IT PRACTICALLY; YOU WOULDN’T CONSTANTLY 
-RUN ACROSS FOLKS TODAY WHO CLAIM THAT “A CHILD DON’T KNOW ANYTHING.” A CHILD’S BRAIN STARTS FUNCTIONING AT BIRTH; 
-AND HAS, AMONGST ITS MANY INFANT CONVOLUTIONS, THOUSANDS OF DORMANT ATOMS, INTO WHICH GOD HAS PUT A MYSTIC 
-POSSIBILITY FOR NOTICING AN ADULT’S ACT, AND FIGURING OUT ITS PURPORT.
-
-UP TO ABOUT ITS PRIMARY SCHOOL DAYS A CHILD THINKS, NATURALLY, ONLY OF PLAY. BUT MANY A 
-FORM OF PLAY CONTAINS DISCIPLINARY FACTORS. “YOU CAN’T DO THIS,” OR “THAT PUTS YOU OUT,” 
-SHOWS A CHILD THAT IT MUST THINK, PRACTICALLY, OR FAIL. NOW, IF, THROUGHOUT CHILDHOOD, 
-A BRAIN HAS NO OPPOSITION, IT IS PLAIN THAT IT WILL ATTAIN A POSITION OF “STATUS QUO,” AS WITH OUR ORDINARY ANIMALS. 
-MAN KNOWS NOT WHY A COW, DOG OR LION WAS NOT BORN WITH A BRAIN ON A PAR WITH OURS; WHY SUCH ANIMALS CANNOT ADD, SUBTRACT, 
-OR OBTAIN FROM BOOKS AND SCHOOLING, THAT PARAMOUNT POSITION WHICH MAN HOLDS TODAY.''', alphabeto)
+TO SHOW A DOUBTING WORLD THAT A CHILD CAN THINK; AND, POSSIBLY''', alphabeto)
 
 
-
-
-
-standard3 = generate_from_file_log("../data/english_trigrams.txt", alphabeto, 3)
-standard2 = generate_from_file_log("../data/english_bigrams.txt", alphabeto, 2)
-standard1 = generate_from_file_log("../data/english_monograms.txt", alphabeto, 1)
 
 coprimess = extended.get_coprimes(alphabeto.length)
-code = neighbours.get_starting_state_fixed(alphabeto, 15, coprimess)
+code = neighbours.get_starting_state_fixed(alphabeto, len(plain)//11, coprimess)
 
 encrypted = extended.encrypt_decrypt_text(plain, code, alphabeto, coprimess)
 res = fixed_procedure(encrypted, [standard2], neighbours.get_starting_state_fixed(alphabeto, len(code), coprimess),
@@ -122,3 +180,19 @@ decrypted1 = extended.encrypt_decrypt_text(encrypted, maxx_state, alphabeto, cop
 print(decrypted1.get_non_stripped_text())
 # print()
 # print(decrypted2.get_non_stripped_text())
+
+print("TESTTTTTTTT")
+maximizer = get_max_bigram_state(encrypted, standard2, len(code), alphabeto, coprimess)
+decrypted3 = extended.encrypt_decrypt_text(encrypted, maximizer,
+                                           alphabeto, coprimess)
+frequencies = common.calculate_n_gram_frequencies(decrypted3, 2, alphabeto)
+state_function = common.calculate_log_n_gram_function(frequencies, standard2)
+print(decrypted3.get_non_stripped_text())
+print(state_function)
+
+frequencies = common.calculate_n_gram_frequencies(plain, 2, alphabeto)
+state_function = common.calculate_log_n_gram_function(frequencies, standard2)
+print([extended.reverse_key((coprimess[k[0]], k[1]), alphabeto) for k in code], state_function)
+print(maximizer)
+print(maxx_state)
+

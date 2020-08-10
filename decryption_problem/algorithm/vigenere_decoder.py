@@ -82,8 +82,6 @@ def get_max_bigram_state(text, bigram_dist, key_length, alphabet):
     return res
 
 
-
-
 def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet, coefs):
     current_state = starting_state
     current_decryption = vigenere.encrypt_decrypt_text(text, current_state, alphabet)
@@ -180,6 +178,7 @@ from timeit import default_timer as time
 random.seed(time())
 
 alphabeto = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
 plain = alphabetic.StrippedText('''IF YOUTH, THROUGHOUT ALL HISTORY, HAD HAD A CHAMPION TO STAND UP FOR IT; 
 TO SHOW A DOUBTING WORLD THAT A CHILD CAN THINK; AND, POSSIBLY, DO IT PRACTICALLY; YOU WOULDN’T CONSTANTLY 
 RUN ACROSS FOLKS TODAY WHO CLAIM THAT “A CHILD DON’T KNOW ANYTHING.” A CHILD’S BRAIN STARTS FUNCTIONING AT BIRTH; 
@@ -194,18 +193,16 @@ MAN KNOWS NOT WHY A COW, DOG OR LION WAS NOT BORN WITH A BRAIN ON A PAR WITH OUR
 OR OBTAIN FROM BOOKS AND SCHOOLING, THAT PARAMOUNT POSITION WHICH MAN HOLDS TODAY.''', alphabeto)
 
 
-
-
-
 standard3 = generate_from_file_log("../data/english_trigrams.txt", alphabeto, 3)
 standard2 = generate_from_file_log("../data/english_bigrams.txt", alphabeto, 2)
 standard1 = generate_from_file_log("../data/english_monograms.txt", alphabeto, 1)
 
-code = neighbours.get_starting_state_fixed(alphabeto, 100)
+code = neighbours.get_starting_state_fixed(alphabeto, int(len(plain)/12))
+print(len(code))
 
 encrypted = vigenere.encrypt_decrypt_text(plain, code, alphabeto)
 res = fixed_procedure(encrypted, [standard2], get_max_monogram_state(encrypted, standard1, len(code), alphabeto),
-                             [2], 3000, alphabeto, [1.0])
+                             [2], 15000, alphabeto, [1.0])
 maxx_state = res[0]
 maxx_function = res[1]
 # bounded_procedure(encrypted, standard2, neighbours.get_starting_state_bounded(alphabeto, 20), 2, 10000, alphabeto, 20)

@@ -28,6 +28,7 @@ def add_ith_gram_to_frequency_change(decryption, n_gram_length, i, alphabet, fre
         frequencies_change[gram] = 1
 
 
+#two alphabets to be provided – extended and the one used for encryption/decryption
 def get_frequency_change_fixed_key_length(old_key, new_key,
                                           n_gram_length, current_decryption, text, alphabet, coprimes):
     change = find_change_in_key(old_key, new_key)
