@@ -8,7 +8,7 @@ from math import log
 
 def get_max_monogram_state_coord(encryption, coordinate, monogram_log_distribution, key_length, alphabet):
     max_state = cipher.get_zero_mono_key()
-    max_weight = weight = float("-inf")
+    max_weight = float("-inf")
     for j in cipher.get_all_mono_keys(alphabet):
         weight = 0
         for i in range(coordinate, len(encryption), key_length):
