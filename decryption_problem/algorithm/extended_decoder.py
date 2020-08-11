@@ -5,48 +5,48 @@ import decryption_problem.algorithm.extended_calculator as calculator
 import random
 from math import log
 
-def get_max_monogram_state_coord(text, coordinate, monogram_log_distribution, key_length, alphabet, coprimes):
-    max_state = 0
-    max_func = 0
+def get_max_monogram_state_coord(encryption, coordinate, monogram_log_distribution, key_length, alphabet, coprimes):
+    max_state = cipher.get_zero_mono_key()
+    max_weight = float("-inf")
     for j in cipher.get_all_mono_keys(alphabet, coprimes):
-        func = 0
-        for i in range(coordinate, len(text), key_length):
-            func += monogram_log_distribution[cipher.encrypt_decrypt_single(text[i], j, alphabet, coprimes)]
-        if func > max_func:
+        weight = 0
+        for i in range(coordinate, len(encryption), key_length):
+            weight += monogram_log_distribution[cipher.encrypt_decrypt_single(encryption[i], j, alphabet, coprimes)]
+        if weight > max_weight:
             max_state = j
-            max_func = func
+            max_weight = weight
     return max_state
 
 
-def get_max_monogram_state(text, monogram_log_distribution, key_length, alphabet):
+def get_max_monogram_state(encryption, monogram_log_distribution, key_length, alphabet):
     coprimes = cipher.get_coprimes(alphabet.length)
-    return [get_max_monogram_state_coord(text, coordinate, monogram_log_distribution, key_length, alphabet, coprimes) for coordinate in
+    return [get_max_monogram_state_coord(encryption, coordinate, monogram_log_distribution, key_length, alphabet, coprimes) for coordinate in
             range(key_length)]
 
 
-def get_bigram_weight(text, bigram, coord, key_length, bigram_log_distribution, alphabet, coprimes):
+def get_bigram_part_weight(encryption, part, coord, key_length, bigram_log_distribution, alphabet, coprimes):
     weight = 0
-    for i in range(coord, len(text) - 1, key_length):
-        old_text0 = text[i]
-        old_text1 = text[i+1]
-        text[i] = cipher.encrypt_decrypt_single(text[i], bigram[0], alphabet, coprimes)
-        text[i+1] = cipher.encrypt_decrypt_single(text[i + 1], bigram[1], alphabet, coprimes)
-        gram = common.get_n_gram_at_i(text, 2, i)
+    for i in range(coord, len(encryption) - 1, key_length):
+        old_text0 = encryption[i]
+        old_text1 = encryption[i + 1]
+        encryption[i] = cipher.encrypt_decrypt_single(encryption[i], part[0], alphabet, coprimes)
+        encryption[i + 1] = cipher.encrypt_decrypt_single(encryption[i + 1], part[1], alphabet, coprimes)
+        gram = common.get_n_gram_at_i(encryption, 2, i)
         try:
             weight += bigram_log_distribution[gram]
         except KeyError:
             pass
-        text[i] = old_text0
-        text[i + 1] = old_text1
+        encryption[i] = old_text0
+        encryption[i + 1] = old_text1
     return weight
 
 
-def get_max_bigram_key_and_function(values, codes, all_mono_keys):
-    max_bigram_function_value = -float("inf")
+def get_max_bigram_key_and_weight(values, codes, all_mono_keys):
+    max_bigram_weight_value = -float("inf")
     max_state = cipher.get_zero_mono_key()
     for i in all_mono_keys:
-        if values[i][i] > max_bigram_function_value:
-            max_bigram_function_value = values[i][i]
+        if values[i][i] > max_bigram_weight_value:
+            max_bigram_weight_value = values[i][i]
             max_state = i
     bigram_maximizer = []
     t = len(codes[max_state][max_state]) - 1
@@ -57,24 +57,26 @@ def get_max_bigram_key_and_function(values, codes, all_mono_keys):
         t -= 1
     bigram_maximizer.append(max_state)
     bigram_maximizer.reverse()
-    return bigram_maximizer, max_bigram_function_value
+    return bigram_maximizer, max_bigram_weight_value
 
 
-def get_max_bigram_state(text, bigram_log_distribution, key_length, alphabet):
+def get_max_bigram_state(encryption, bigram_log_distribution, key_length, alphabet):
     coprimes = cipher.get_coprimes(alphabet.length)
     all_mono_keys = cipher.get_all_mono_keys(alphabet, coprimes)
     codes = {a: {b: [cipher.get_zero_mono_key() for i in range(key_length - 1)] for b in all_mono_keys} for a in all_mono_keys}
-    values = {a: {b: get_bigram_weight(text, (a, b), 0, key_length, bigram_log_distribution, alphabet, coprimes) for b in
+    values = {a: {b: get_bigram_part_weight(encryption, (a, b), 0, key_length, bigram_log_distribution, alphabet, coprimes) for b in
                   all_mono_keys} for a in all_mono_keys}
     new_values = {a: {b: 0 for b in all_mono_keys} for a in all_mono_keys}
     for r in range(1, key_length):
         for i in all_mono_keys:
             for j in codes[i]:
-                max_func = values[i][all_mono_keys[0]] + get_bigram_weight(text, (all_mono_keys[0], j), r, key_length, bigram_log_distribution, alphabet,
-                                                                           coprimes)
+                max_func = values[i][all_mono_keys[0]] + get_bigram_part_weight(encryption, (all_mono_keys[0], j), r,
+                                                                                key_length, bigram_log_distribution,
+                                                                                alphabet, coprimes)
                 max_val = 0
                 for k in codes[i]:
-                    func = values[i][k] + get_bigram_weight(text, (k, j), r, key_length, bigram_log_distribution, alphabet, coprimes)
+                    func = values[i][k] + get_bigram_part_weight(encryption, (k, j), r, key_length,
+                                                                 bigram_log_distribution, alphabet, coprimes)
                     if func > max_func:
                         max_func = func
                         max_val = k
@@ -85,7 +87,8 @@ def get_max_bigram_state(text, bigram_log_distribution, key_length, alphabet):
         values = new_values
         new_values = aux
 
-    return get_max_bigram_key_and_function(values, codes, all_mono_keys)
+    return get_max_bigram_key_and_weight(values, codes, all_mono_keys)
+
 
 def generate_frequencies_and_state_weight(decryption, n_list, coefs, log_distributions):
     frequencies = []

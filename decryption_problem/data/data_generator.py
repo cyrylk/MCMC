@@ -40,7 +40,11 @@ def generate_log_distribution_from_learning_set(filenames_or_strings, alphabet, 
                 current_gram = current_gram[1:]
             if len(current_gram) == n_gram_length:
                 freq_dict[current_gram] += 1
-
+    for record in freq_dict:
+        try:
+            freq_dict[record] = log(freq_dict[record])
+        except ValueError:
+            freq_dict[record] = -1
     return freq_dict
 
 

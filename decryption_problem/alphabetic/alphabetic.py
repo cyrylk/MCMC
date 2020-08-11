@@ -83,11 +83,11 @@ class StrippedText(object):
 
 
 def alphabets_product(alphabet1, alphabet2):
-    return {i + j: -1 for i in alphabet1 for j in alphabet2}
+    return {i + j: 0 for i in alphabet1 for j in alphabet2}
 
 
 ## @brief function generating a dictionary of all n-grams of given alphabetic
-# to frequencies - initially all log frequencies set to -1
+# to frequencies - initially all log frequencies set to 0
 def n_gram_dict(alphabet, n):
     result = [""]
     for i in range(n):

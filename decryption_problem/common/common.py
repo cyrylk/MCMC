@@ -91,7 +91,7 @@ def get_frequencies_change(old_frequencies, new_frequencies):
     return frequencies_change
 
 
-def calculate_log_function_change(frequencies_change, log_distribution):
+def calculate_log_value_change(frequencies_change, log_distribution):
     result = 0
     for i in frequencies_change:
         try:
