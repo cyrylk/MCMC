@@ -38,7 +38,7 @@ def get_bigram_weight(text, bigram, coord, key_length, bigram_dist, alphabet):
         text[i] = autokey.encrypt_decrypt_single(text[i], bigram[0], alphabet)
         text[i+1] = autokey.encrypt_decrypt_single(text[i+1], bigram[1], alphabet)
         new_bigram = (-alphabet.letters_to_position[text[i]], -alphabet.letters_to_position[text[i+1]])
-        gram = common.get_n_gram_at_i(text, 2, i, alphabet)
+        gram = common.get_n_gram_at_i(text, 2, i)
         try:
             weight += bigram_dist[gram]
         except KeyError:
@@ -99,7 +99,7 @@ def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet
     index = 0
     #one function it should be from list of freqs
     for n in n_list:
-        freqs = common.calculate_n_gram_frequencies(current_decryption, n, alphabet)
+        freqs = common.calculate_n_gram_frequencies(current_decryption, n)
         current_frequencies.append(freqs)
         current_state_function += common.calculate_log_n_gram_function(freqs, distributions[index])*coefs[index]
         index += 1
@@ -183,11 +183,11 @@ decrypted1 = autokey.decrypt_text(encrypted, maxx_state, alphabeto)
 
 decrypted2 = autokey.decrypt_text(encrypted, [-i for i in code], alphabeto)
 state_function = 0
-frequencies = common.calculate_n_gram_frequencies(decrypted2, 1, alphabeto)
+frequencies = common.calculate_n_gram_frequencies(decrypted2, 1)
 state_function += common.calculate_log_n_gram_function(frequencies, standard1)*0
-frequencies = common.calculate_n_gram_frequencies(decrypted2, 2, alphabeto)
+frequencies = common.calculate_n_gram_frequencies(decrypted2, 2)
 state_function += common.calculate_log_n_gram_function(frequencies, standard2)*1
-frequencies = common.calculate_n_gram_frequencies(decrypted2, 3, alphabeto)
+frequencies = common.calculate_n_gram_frequencies(decrypted2, 3)
 state_function += common.calculate_log_n_gram_function(frequencies, standard3)*0
 print(state_function)
 
@@ -198,7 +198,7 @@ print(decrypted2.get_non_stripped_text())
 maximizer = get_max_bigram_state(encrypted, standard2, len(code), alphabeto)
 decrypted3 = autokey.decrypt_text(encrypted, maximizer,
                                            alphabeto)
-frequencies = common.calculate_n_gram_frequencies(decrypted3, 2, alphabeto)
+frequencies = common.calculate_n_gram_frequencies(decrypted3, 2)
 state_function = common.calculate_log_n_gram_function(frequencies, standard2)
 print(decrypted3.get_non_stripped_text())
 print(state_function)

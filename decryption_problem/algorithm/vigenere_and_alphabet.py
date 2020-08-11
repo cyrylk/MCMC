@@ -412,13 +412,7 @@ class TestVigenereEncryptionDecryption(unittest.TestCase):
             self.assertEqual(get_candidate_bounded(current_state, 10, self.alphabet),
                              get_ith_neighbour_bounded(current_state, max_value // 2, 10, self.alphabet))
 
-    def test_calculate_frequencies(self):
-        init_frequencies = calculate_frequencies("ABCCCDE", 2, self.alphabet)
-        self.assertEqual(init_frequencies["AB"], 1)
-        self.assertEqual(init_frequencies["BC"], 1)
-        self.assertEqual(init_frequencies["DE"], 1)
-        self.assertEqual(init_frequencies["CC"], 2)
-        self.assertEqual(init_frequencies["CD"], 1)
+
 
     def test_calculate_change_fixed(self):
         original_text = list("ABCD")

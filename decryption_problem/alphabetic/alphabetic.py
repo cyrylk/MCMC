@@ -1,10 +1,10 @@
-## @brief package containing alphabetic class definition
-# and related "alphabetic" functions
 
-
-## @brief class containing information about the alphabet used
 class Alphabet:
     def __init__(self, alphabet_in_iterable):
+        """
+        :param alphabet_in_iterable: ordered list of alphabetic characters
+        self.alphabet
+        """
         ## @brief alphabet used
         self.alphabet = list(alphabet_in_iterable)
         ## @brief mapping of letters to their positions

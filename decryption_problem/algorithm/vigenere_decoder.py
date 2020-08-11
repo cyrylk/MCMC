@@ -30,7 +30,7 @@ def get_bigram_weight(text, bigram, coord, key_length, bigram_dist, alphabet):
     for i in range(coord, len(text) - 1, key_length):
         text[i] = vigenere.encrypt_decrypt_single(text[i], bigram[0], alphabet)
         text[i+1] = vigenere.encrypt_decrypt_single(text[i+1], bigram[1], alphabet)
-        gram = common.get_n_gram_at_i(text, 2, i, alphabet)
+        gram = common.get_n_gram_at_i(text, 2, i)
         try:
             weight += bigram_dist[gram]
         except KeyError:
@@ -89,7 +89,7 @@ def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet
     current_state_function = 0
     index = 0
     for n in n_list:
-        freqs = common.calculate_n_gram_frequencies(current_decryption, n, alphabet)
+        freqs = common.calculate_n_gram_frequencies(current_decryption, n)
         current_frequencies.append(freqs)
         current_state_function += common.calculate_log_n_gram_function(freqs, distributions[index])*coefs[index]
         index += 1
@@ -128,13 +128,13 @@ def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet
 def bounded_procedure(text, distribution, starting_state, n, steps, alphabet, boundary):
     current_state = starting_state
     current_decryption = vigenere.encrypt_decrypt_text(text, current_state, alphabet)
-    current_frequencies = common.calculate_n_gram_frequencies(current_decryption, n, alphabet)
+    current_frequencies = common.calculate_n_gram_frequencies(current_decryption, n)
     current_state_function = common.calculate_log_n_gram_function(current_frequencies, distribution)
 
     max_function = current_state_function
     max_state = current_state
     for i in range(steps):
-        candidate = neighbours.get_candidate_bounded2(current_state, boundary, alphabet)
+        candidate = neighbours.get_candidate_bounded4(current_state, boundary, alphabet)
         if len(candidate) == len(current_state):
             frequency_change = calculator.get_frequency_change_fixed_key_length(current_state, candidate, n,
                                                                                 current_decryption, alphabet)
@@ -147,14 +147,14 @@ def bounded_procedure(text, distribution, starting_state, n, steps, alphabet, bo
                                                         alphabet)
                 current_state = candidate
                 common.update_frequency(current_frequencies, frequency_change)
-                current_state_function *= dist_change
+                current_state_function += dist_change
                 if current_state_function > max_function:
                     max_state = candidate
                     max_function = current_state_function
             continue
 
         new_decryption = vigenere.encrypt_decrypt_text(text, candidate, alphabet)
-        new_frequencies = common.calculate_n_gram_frequencies(new_decryption, n, alphabet)
+        new_frequencies = common.calculate_n_gram_frequencies(new_decryption, n)
         new_function = common.calculate_log_n_gram_function(new_frequencies, distribution)
         u = random.random()
         diff = new_function - current_state_function
@@ -166,9 +166,7 @@ def bounded_procedure(text, distribution, starting_state, n, steps, alphabet, bo
                 max_state = candidate
                 max_function = current_state_function
 
-    text.set_non_stripped_part(vigenere.encrypt_decrypt_text(encrypted, max_state, alphabeto).non_stripped_part)
-    print(text.get_non_stripped_text())
-    print(max_state)
+    return max_state, max_function
 
 
 from decryption_problem.algorithm.distribution_generator import generate_from_file_log
@@ -197,15 +195,17 @@ standard3 = generate_from_file_log("../data/english_trigrams.txt", alphabeto, 3)
 standard2 = generate_from_file_log("../data/english_bigrams.txt", alphabeto, 2)
 standard1 = generate_from_file_log("../data/english_monograms.txt", alphabeto, 1)
 
-code = neighbours.get_starting_state_fixed(alphabeto, int(len(plain)/12))
+code = neighbours.get_starting_state_fixed(alphabeto, 40)
 print(len(code))
 
 encrypted = vigenere.encrypt_decrypt_text(plain, code, alphabeto)
 res = fixed_procedure(encrypted, [standard2], get_max_monogram_state(encrypted, standard1, len(code), alphabeto),
                              [2], 15000, alphabeto, [1.0])
+
+# res = bounded_procedure(encrypted, standard2, neighbours.get_starting_state_bounded(alphabeto, 60), 2, 15000, alphabeto,
+#                         60)
 maxx_state = res[0]
 maxx_function = res[1]
-# bounded_procedure(encrypted, standard2, neighbours.get_starting_state_bounded(alphabeto, 20), 2, 10000, alphabeto, 20)
 
 # maxx_state = []
 # maxx_function = 0
@@ -217,11 +217,11 @@ maxx_function = res[1]
 #         maxx_state = curr[0]
 #         maxx_function = curr[1]
 #
-print(maxx_function)
+print(maxx_function, maxx_state)
 decrypted1 = vigenere.encrypt_decrypt_text(encrypted, maxx_state, alphabeto)
 
 decrypted2 = vigenere.encrypt_decrypt_text(encrypted, [-i for i in code], alphabeto)
-frequencies = common.calculate_n_gram_frequencies(decrypted2, 2, alphabeto)
+frequencies = common.calculate_n_gram_frequencies(decrypted2, 2)
 state_function = common.calculate_log_n_gram_function(frequencies, standard2)
 print(state_function)
 
@@ -234,7 +234,7 @@ print("TESTTTTTTTT")
 maximizer = get_max_bigram_state(encrypted, standard2, len(code), alphabeto)
 decrypted3 = vigenere.encrypt_decrypt_text(encrypted, maximizer,
                                            alphabeto)
-frequencies = common.calculate_n_gram_frequencies(decrypted3, 2, alphabeto)
+frequencies = common.calculate_n_gram_frequencies(decrypted3, 2)
 state_function = common.calculate_log_n_gram_function(frequencies, standard2)
 print(decrypted3.get_non_stripped_text())
 print(state_function)

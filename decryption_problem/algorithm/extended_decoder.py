@@ -34,7 +34,7 @@ def get_bigram_weight(text, bigram, coord, key_length, bigram_dist, alphabet, co
         old_text1 = text[i+1]
         text[i] = extended.encrypt_decrypt_single(text[i], bigram[0], alphabet, coprimes)
         text[i+1] = extended.encrypt_decrypt_single(text[i+1], bigram[1], alphabet, coprimes)
-        gram = common.get_n_gram_at_i(text, 2, i, alphabet)
+        gram = common.get_n_gram_at_i(text, 2, i)
         try:
             weight += bigram_dist[gram]
         except KeyError:
@@ -96,7 +96,7 @@ def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet
     index = 0
     #one function it should be from list of freqs
     for n in n_list:
-        freqs = common.calculate_n_gram_frequencies(current_decryption, n, alphabet)
+        freqs = common.calculate_n_gram_frequencies(current_decryption, n)
         current_frequencies.append(freqs)
         current_state_function += common.calculate_log_n_gram_function(freqs, distributions[index])*coefs[index]
         index += 1
@@ -185,12 +185,12 @@ print("TESTTTTTTTT")
 maximizer = get_max_bigram_state(encrypted, standard2, len(code), alphabeto, coprimess)
 decrypted3 = extended.encrypt_decrypt_text(encrypted, maximizer,
                                            alphabeto, coprimess)
-frequencies = common.calculate_n_gram_frequencies(decrypted3, 2, alphabeto)
+frequencies = common.calculate_n_gram_frequencies(decrypted3, 2)
 state_function = common.calculate_log_n_gram_function(frequencies, standard2)
 print(decrypted3.get_non_stripped_text())
 print(state_function)
 
-frequencies = common.calculate_n_gram_frequencies(plain, 2, alphabeto)
+frequencies = common.calculate_n_gram_frequencies(plain, 2)
 state_function = common.calculate_log_n_gram_function(frequencies, standard2)
 print([extended.reverse_key((coprimess[k[0]], k[1]), alphabeto) for k in code], state_function)
 print(maximizer)

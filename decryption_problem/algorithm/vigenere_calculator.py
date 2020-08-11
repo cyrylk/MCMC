@@ -9,7 +9,7 @@ def find_change_in_key(old_key, new_key):
 
 
 def subtract_ith_gram_from_frequency_change(decryption, n_gram_length, i, alphabet, frequencies_change):
-    gram = common.get_n_gram_at_i(decryption, n_gram_length, i, alphabet)
+    gram = common.get_n_gram_at_i(decryption, n_gram_length, i)
     if not gram:
         return
     try:
@@ -19,7 +19,7 @@ def subtract_ith_gram_from_frequency_change(decryption, n_gram_length, i, alphab
 
 
 def add_ith_gram_to_frequency_change(decryption, n_gram_length, i, alphabet, frequencies_change):
-    gram = common.get_n_gram_at_i(decryption, n_gram_length, i, alphabet)
+    gram = common.get_n_gram_at_i(decryption, n_gram_length, i)
     if not gram:
         return
     try:
@@ -49,7 +49,7 @@ def get_frequency_change_fixed_key_length(old_key, new_key,
 
 def get_frequency_change(current_frequencies, n_gram_length, new_key, text, alphabet):
     new_frequencies = common.calculate_n_gram_frequencies(vigenere.encrypt_decrypt_text(text, new_key, alphabet),
-                                                          n_gram_length, alphabet)
+                                                          n_gram_length)
     frequencies_change = common.get_frequencies_change(current_frequencies, new_frequencies)
     return frequencies_change
 

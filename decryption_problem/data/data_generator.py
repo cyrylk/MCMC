@@ -1,7 +1,7 @@
 import decryption_problem.alphabetic.alphabetic as alphabetic
 import decryption_problem.common.common as common
 import random
-from math import log
+from math import log, gcd
 import re
 
 def generate_from_file(filename, alphabet, n_gram_length, divisor):

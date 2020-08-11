@@ -7,9 +7,9 @@ def find_change_in_key(old_key, new_key):
         if old_key[i] != new_key[i]:
             return i
 
-
+# both extract to common
 def subtract_ith_gram_from_frequency_change(decryption, n_gram_length, i, alphabet, frequencies_change):
-    gram = common.get_n_gram_at_i(decryption, n_gram_length, i, alphabet)
+    gram = common.get_n_gram_at_i(decryption, n_gram_length, i)
     if not gram:
         return
     try:
@@ -19,7 +19,7 @@ def subtract_ith_gram_from_frequency_change(decryption, n_gram_length, i, alphab
 
 
 def add_ith_gram_to_frequency_change(decryption, n_gram_length, i, alphabet, frequencies_change):
-    gram = common.get_n_gram_at_i(decryption, n_gram_length, i, alphabet)
+    gram = common.get_n_gram_at_i(decryption, n_gram_length, i)
     if not gram:
         return
     try:
