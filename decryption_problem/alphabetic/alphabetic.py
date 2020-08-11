@@ -21,6 +21,9 @@ class Alphabet:
     def __contains__(self, item):
         return item in self.letters_to_position
 
+    def __len__(self):
+        return self.length
+
 
 ## @brief class containing the input text stripped of non-alphabetic characters
 # alongside with all the information needed to recreate the original text

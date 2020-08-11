@@ -12,7 +12,7 @@ random.seed(time())
 def get_max_monogram_state_coord(text, coordinate, monogram_dist, key_length, alphabet, coprimes):
     max_state = 0
     max_func = 0
-    for j in extended.get_all_single_keys(alphabet, coprimes):
+    for j in extended.get_all_mono_keys(alphabet, coprimes):
         func = 0
         for i in range(coordinate, len(text), key_length):
             func += monogram_dist[extended.encrypt_decrypt_single(text[i], j, alphabet)]
@@ -45,8 +45,8 @@ def get_bigram_weight(text, bigram, coord, key_length, bigram_dist, alphabet, co
 
 
 def get_max_bigram_state(text, bigram_dist, key_length, alphabet, coprimes):
-    all_single_keys = extended.get_all_single_keys(alphabet, coprimes)
-    codes = {a: {b: [(0, 0) for i in range(key_length-1)] for b in all_single_keys} for a in all_single_keys}
+    all_single_keys = extended.get_all_mono_keys(alphabet, coprimes)
+    codes = {a: {b: [extended.get_zero_mono_key() for i in range(key_length-1)] for b in all_single_keys} for a in all_single_keys}
     values = {a: {b: get_bigram_weight(text, (a, b), 0, key_length, bigram_dist, alphabet, coprimes) for b in
                   all_single_keys} for a in all_single_keys}
     new_values = {a: {b: 0 for b in all_single_keys} for a in all_single_keys}

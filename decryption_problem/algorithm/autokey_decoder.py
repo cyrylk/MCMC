@@ -50,30 +50,32 @@ def get_bigram_weight(text, bigram, coord, key_length, bigram_dist, alphabet):
 
 
 def get_max_bigram_state(text, bigram_dist, key_length, alphabet):
-    codes = [[[0 for i in range(key_length-1)] for a in range(alphabet.length)] for b in range(alphabet.length)]
-    values = [[get_bigram_weight(text, (a, b), 0, key_length, bigram_dist, alphabet) for b in range(alphabet.length)]
-              for a in range(alphabet.length)]
-    new_values = [[0 for b in range(alphabet.length)] for a in range(alphabet.length)]
+    all_single_keys = autokey.get_all_mono_keys(alphabet)
+    codes = {a: {b: [autokey.get_zero_mono_key() for i in range(key_length - 1)] for b in all_single_keys} for a in all_single_keys}
+    values = {a: {b: get_bigram_weight(text, (a, b), 0, key_length, bigram_dist, alphabet) for b in
+                  all_single_keys} for a in all_single_keys}
+    new_values = {a: {b: 0 for b in all_single_keys} for a in all_single_keys}
     for r in range(1, key_length):
-        for i in range(len(codes)):
-            for j in range(len(codes[i])):
-                max_func = values[i][0] + get_bigram_weight(text, (0, j), r, key_length, bigram_dist, alphabet)
+        for i in all_single_keys:
+            for j in codes[i]:
+                max_func = values[i][all_single_keys[0]] + get_bigram_weight(text, (all_single_keys[0], j), r,
+                                                                             key_length, bigram_dist, alphabet)
                 max_val = 0
-                for k in range(len(codes[i])):
+                for k in codes[i]:
                     func = values[i][k] + get_bigram_weight(text, (k, j), r, key_length, bigram_dist, alphabet)
                     if func > max_func:
                         max_func = func
                         max_val = k
                 new_values[i][j] = max_func
-                codes[i][j][r-1] = max_val
+                codes[i][j][r - 1] = max_val
 
         aux = values
         values = new_values
         new_values = aux
 
-    maxi = values[0][0]
+    maxi = values[all_single_keys[0]][all_single_keys[0]]
     max_state = 0
-    for i in range(len(values)):
+    for i in all_single_keys:
         if values[i][i] > maxi:
             maxi = values[i][i]
             max_state = i

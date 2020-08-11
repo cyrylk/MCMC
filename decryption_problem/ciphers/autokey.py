@@ -110,3 +110,12 @@ def update_decryption_by_key_index(decryption, changed_index, shift, key_length,
     for index in range(changed_index, len(decryption), key_length):
         decryption[index] = encrypt_decrypt_single(decryption[index], shift*power, alphabet)
         power *= (-1)
+
+
+def get_zero_mono_key():
+    return 0
+
+
+def get_all_mono_keys(alphabet):
+    return list(range(alphabet.length))
+

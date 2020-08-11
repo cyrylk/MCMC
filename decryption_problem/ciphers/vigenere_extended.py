@@ -70,7 +70,11 @@ def reverse_key(key, alphabet):
     return reverse_a, reverse_b
 
 
-def get_all_single_keys(alphabet, coprimes):
+def get_zero_mono_key():
+    return 0, 0
+
+
+def get_all_mono_keys(alphabet, coprimes):
     return [(i, j) for i in range(len(coprimes)) for j in range(alphabet.length)]
 
 
