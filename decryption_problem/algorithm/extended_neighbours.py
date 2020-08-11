@@ -2,7 +2,7 @@ import random
 import decryption_problem.ciphers.vigenere_extended as extended
 
 
-def get_starting_state_fixed(alphabet, length, coprimes):
+def get_random_starting_state(alphabet, length, coprimes):
     starting_state = []
     for i in range(length):
         number = random.randint(0, alphabet.length * len(coprimes))

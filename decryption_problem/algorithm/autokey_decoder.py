@@ -108,7 +108,7 @@ def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet
     max_state = current_state
 
     for i in range(steps):
-        candidate = neighbours.get_candidate_fixed(current_state, alphabet)
+        candidate = neighbours.get_candidate(current_state, alphabet)
         frequencies_change = []
         dist_change = 0
         index = 0

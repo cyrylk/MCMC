@@ -145,11 +145,11 @@ TO SHOW A DOUBTING WORLD THAT A CHILD CAN THINK; AND, POSSIBLY''', alphabeto)
 
 
 coprimess = extended.get_coprimes(alphabeto.length)
-code = neighbours.get_starting_state_fixed(alphabeto, len(plain)//11, coprimess)
+code = neighbours.get_random_starting_state(alphabeto, len(plain) // 11, coprimess)
 
 encrypted = extended.encrypt_decrypt_text(plain, code, alphabeto, coprimess)
-res = fixed_procedure(encrypted, [standard2], neighbours.get_starting_state_fixed(alphabeto, len(code), coprimess),
-                             [2], 15000, alphabeto, [1.0], coprimess)
+res = fixed_procedure(encrypted, [standard2], neighbours.get_random_starting_state(alphabeto, len(code), coprimess),
+                      [2], 15000, alphabeto, [1.0], coprimess)
 maxx_state = res[0]
 maxx_function = res[1]
 # bounded_procedure(encrypted, standard2, neighbours.get_starting_state_bounded(alphabeto, 20), 2, 10000, alphabeto, 20)
