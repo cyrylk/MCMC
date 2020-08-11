@@ -16,5 +16,3 @@ def consistency(guessed_key, real_key, alphabet_length):
     return dist/len(guessed_copy)
 
 
-print(consistency([1, 2, 3], [1, 3], 6))
-

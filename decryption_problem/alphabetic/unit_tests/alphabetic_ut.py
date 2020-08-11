@@ -16,7 +16,8 @@ class AlphabetTest(unittest.TestCase):
         self.assertFalse("D" in alphabetic.Alphabet("ABC"))
 
     def test_stripped_text_properties(self):
-        stripped_text1 = alphabetic.StrippedText("LET US GO! IT IS TIME. ", alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+        stripped_text1 = alphabetic.StrippedText("LET US GO! IT IS TIME. ",
+                                                 alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
         self.assertEqual(stripped_text1.ends_of_words, {2: 0, 4: 1, 6: 2, 8: 3, 10: 4, 14: 5})
         self.assertEqual(stripped_text1.stripped_part, [" ", " ", "! ", " ", " ", ". ", ""])
         self.assertEqual(stripped_text1.get_non_stripped_text(), "LET US GO! IT IS TIME. ")
@@ -32,3 +33,4 @@ class AlphabetTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+

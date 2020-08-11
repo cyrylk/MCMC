@@ -1,10 +1,6 @@
 
-class Alphabet:
+class Alphabet(object):
     def __init__(self, alphabet_in_iterable):
-        """
-        :param alphabet_in_iterable: ordered list of alphabetic characters
-        self.alphabet
-        """
         ## @brief alphabet used
         self.alphabet = list(alphabet_in_iterable)
         ## @brief mapping of letters to their positions
@@ -27,7 +23,7 @@ class Alphabet:
 
 ## @brief class containing the input text stripped of non-alphabetic characters
 # alongside with all the information needed to recreate the original text
-class StrippedText:
+class StrippedText(object):
     def __init__(self, text, alphabet):
         length = len(text)
         self.non_stripped_part = []
@@ -97,4 +93,3 @@ def n_gram_dict(alphabet, n):
     for i in range(n):
         result = alphabets_product(alphabet, result)
     return result
-

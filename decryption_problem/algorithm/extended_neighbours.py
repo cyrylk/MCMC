@@ -9,20 +9,12 @@ def get_random_starting_state(alphabet, length, coprimes):
         starting_state.append((number % len(coprimes), number // len(coprimes)))
     return starting_state
 
-#
-# def get_starting_state_bounded(alphabet, boundary):
-#     starting_state = []
-#     length = random.randint(1, boundary)
-#     for i in range(length):
-#         starting_state.append(random.randint(0, alphabet.length-1))
-#     return starting_state
-
 
 ## @brief function for getting ith neighbour of current in fixed-length Vigenere cipher
 # @param current - current state
 # @param i - number of neighbour to be selected
 # @param alphabetic - alphabetic used
-def get_ith_neighbour_fixed(current, i, alphabet, coprimes):
+def get_ith_neighbour(current, i, alphabet, coprimes):
     position_to_change = i // (alphabet.length * len(coprimes) - 1)
     change = i % (alphabet.length * len(coprimes) - 1)
 
@@ -56,7 +48,7 @@ def get_ith_neighbour_fixed(current, i, alphabet, coprimes):
 # Vigenere cipher
 # @param current - current state
 # @param alphabetic - alphabetic used
-def get_neighbours_number_fixed(current, alphabet, coprimes):
+def get_neighbours_number(current, alphabet, coprimes):
     return len(current) * (alphabet.length * len(coprimes) - 1)
 
 
@@ -65,8 +57,8 @@ def get_neighbours_number_fixed(current, alphabet, coprimes):
 # in fixed-length Vigenere cipher
 # @param current - current state
 # @param alphabetic - alphabetic used
-def get_candidate_fixed(current, alphabet, coprimes):
-    i = random.randint(0, get_neighbours_number_fixed(current, alphabet, coprimes) - 1)
-    return get_ith_neighbour_fixed(current, i, alphabet, coprimes)
+def get_candidate(current, alphabet, coprimes):
+    i = random.randint(0, get_neighbours_number(current, alphabet, coprimes) - 1)
+    return get_ith_neighbour(current, i, alphabet, coprimes)
 
 

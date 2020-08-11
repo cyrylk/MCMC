@@ -109,15 +109,38 @@ def update_frequency(frequency, frequency_change):
             pass
 
 
+def find_change_in_key(old_key, new_key):
+    for i in range(len(old_key)):
+        if old_key[i] != new_key[i]:
+            return i
+
+
+def subtract_ith_gram_from_frequency_change(decryption, n_gram_length, i, frequencies_change):
+    gram = get_n_gram_at_i(decryption, n_gram_length, i)
+    if not gram:
+        return
+    try:
+        frequencies_change[gram] -= 1
+    except KeyError:
+        frequencies_change[gram] = -1
+
+
+def add_ith_gram_to_frequency_change(decryption, n_gram_length, i, frequencies_change):
+    gram = get_n_gram_at_i(decryption, n_gram_length, i)
+    if not gram:
+        return
+    try:
+        frequencies_change[gram] += 1
+    except KeyError:
+        frequencies_change[gram] = 1
+
+
 def expected_value(log_frequencies, text_length):
     normalizer = 0
     expected = 0
     for i in log_frequencies:
         normalizer += exp(log_frequencies[i])
-
     for i in log_frequencies:
         expected += log_frequencies[i]*exp(log_frequencies)
-
     return (expected/normalizer)*text_length
-
 
