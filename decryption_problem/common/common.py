@@ -73,7 +73,7 @@ def calculate_n_gram_frequencies(text, n):
     return frequencies_dict
 
 
-def calculate_log_n_gram_function(frequencies, log_distribution):
+def calculate_n_gram_log_weight(frequencies, log_distribution):
     result = 0
     for i in frequencies:
         try:
@@ -91,7 +91,7 @@ def get_frequencies_change(old_frequencies, new_frequencies):
     return frequencies_change
 
 
-def calculate_log_value_change(frequencies_change, log_distribution):
+def calculate_log_weight_change(frequencies_change, log_distribution):
     result = 0
     for i in frequencies_change:
         try:

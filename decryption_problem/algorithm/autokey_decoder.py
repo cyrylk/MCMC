@@ -99,7 +99,7 @@ def generate_frequencies_and_state_weight(decryption, n_list, coefs, log_distrib
     for n in n_list:
         partial_frequencies = common.calculate_n_gram_frequencies(decryption, n)
         frequencies.append(partial_frequencies)
-        state_weight += common.calculate_log_n_gram_function(partial_frequencies, log_distributions[index])*coefs[index]
+        state_weight += common.calculate_n_gram_log_weight(partial_frequencies, log_distributions[index]) * coefs[index]
         index += 1
 
     return frequencies, state_weight
@@ -114,7 +114,7 @@ def generate_frequency_and_weight_change(current_state, candidate, n_list, coefs
         freq_change = calculator.get_frequency_change_fixed_key_length(current_state, candidate, n,
                                                                        decryption, alphabet)
         frequencies_change.append(freq_change)
-        weight_change += common.calculate_log_function_change(freq_change, log_distributions[index]) * coefs[index]
+        weight_change += common.calculate_log_weight_change(freq_change, log_distributions[index]) * coefs[index]
         index += 1
     return frequencies_change, weight_change
 

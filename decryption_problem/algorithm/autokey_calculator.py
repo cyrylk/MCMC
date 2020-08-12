@@ -2,32 +2,6 @@ import decryption_problem.ciphers.autokey as cipher
 import decryption_problem.common.common as common
 
 
-def find_change_in_key(old_key, new_key):
-    for i in range(len(old_key)):
-        if old_key[i] != new_key[i]:
-            return i
-
-
-def subtract_ith_gram_from_frequency_change(decryption, n_gram_length, i, frequencies_change):
-    gram = common.get_n_gram_at_i(decryption, n_gram_length, i)
-    if not gram:
-        return
-    try:
-        frequencies_change[gram] -= 1
-    except KeyError:
-        frequencies_change[gram] = -1
-
-
-def add_ith_gram_to_frequency_change(decryption, n_gram_length, i, frequencies_change):
-    gram = common.get_n_gram_at_i(decryption, n_gram_length, i)
-    if not gram:
-        return
-    try:
-        frequencies_change[gram] += 1
-    except KeyError:
-        frequencies_change[gram] = 1
-
-
 def get_frequency_change_fixed_key_length(old_key, new_key,
                                           n_gram_length, current_decryption, alphabet):
     change = common.find_change_in_key(old_key, new_key)
