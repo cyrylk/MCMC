@@ -122,10 +122,10 @@ def generate_frequency_and_weight_change(current_state, candidate, n_list, coefs
     return frequencies_change, weight_change
 
 
-def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_list, coefs, distributions, steps):
+def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_list, coefs, log_distributions, steps):
     current_state = starting_state
     current_decryption = cipher.decrypt_text(encryption, current_state, alphabet)
-    start = generate_frequencies_and_state_weight(current_decryption, n_list, coefs, distributions)
+    start = generate_frequencies_and_state_weight(current_decryption, n_list, coefs, log_distributions)
     current_frequencies = start[0]
     current_state_weight = start[1]
     max_weight = current_state_weight
@@ -133,7 +133,8 @@ def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_li
     for step in range(steps):
         candidate = neighbours.get_candidate(current_state, alphabet)
         frequency_and_weight_change = generate_frequency_and_weight_change(current_state, candidate, n_list, coefs,
-                                                                           distributions, current_decryption, alphabet)
+                                                                           log_distributions, current_decryption,
+                                                                           alphabet)
         frequencies_change = frequency_and_weight_change[0]
         weight_change = frequency_and_weight_change[1]
         changed_index = common.find_change_in_key(current_state, candidate)

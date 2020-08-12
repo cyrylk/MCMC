@@ -1,6 +1,6 @@
 
 
-def get_function_update1(distances, current_state, swap):
+def get_state_function_update1(distances, current_state, swap):
     size = len(current_state)
     update = 0
 
@@ -21,7 +21,7 @@ def get_function_update1(distances, current_state, swap):
     return update
 
 
-def get_function_update2(distances, current_state, swap):
+def get_state_function_update2(distances, current_state, swap):
     size = len(current_state)
     update = 0
 

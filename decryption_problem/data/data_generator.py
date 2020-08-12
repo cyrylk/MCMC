@@ -1,12 +1,12 @@
 import decryption_problem.alphabetic.alphabetic as alphabetic
-import decryption_problem.common.common as common
 import random
 from math import log, gcd
 import re
+import json
 
 
 def generate_log_distribution_from_file(filename, alphabet, n_gram_length, additional_chars=""):
-    new_alphabet = alphabetic.Alphabet(alphabet.alphabet + list(additional_chars))
+    new_alphabet = alphabetic.Alphabet(alphabet.complete_alphabet + list(additional_chars))
     f = open(filename, "r")
     lines = f.readlines()
     freqs = {}
@@ -20,19 +20,20 @@ def generate_log_distribution_from_file(filename, alphabet, n_gram_length, addit
     return freqs
 
 
-def generate_log_distribution_from_learning_set(filenames_or_strings, alphabet, n_gram_length, additional_chars=""):
-    new_alphabet = alphabetic.Alphabet(alphabet.alphabet + list(additional_chars))
-    freq_dict = alphabetic.n_gram_dict(new_alphabet, n_gram_length)
+def generate_log_distribution_from_learning_set(filenames_or_strings, alphabet, n_gram_length):
+    freq_dict = alphabetic.n_gram_dict(alphabet, n_gram_length)
     for filename_or_string in filenames_or_strings:
+        learning_set = filename_or_string
         try:
-            f = open(filename_or_string, "r")
-            learning_set = f.read()
-            f.close()
+            if len(filename_or_string) < 100:
+                f = open(filename_or_string, "r")
+                learning_set = f.read()
+                f.close()
         except FileNotFoundError:
-            learning_set = filename_or_string
+            pass
         current_gram = ""
         for i in range(len(learning_set)):
-            if learning_set[i] not in new_alphabet:
+            if learning_set[i] not in alphabet:
                 current_gram = ""
                 continue
             current_gram += learning_set[i]
@@ -49,12 +50,14 @@ def generate_log_distribution_from_learning_set(filenames_or_strings, alphabet, 
 
 
 def generate_random_excerpt(filename_or_string, length):
+    excerpt = filename_or_string
     try:
-        f = open(filename_or_string, "r")
-        excerpt = f.read()
-        f.close()
+        if len(filename_or_string) < 100:
+            f = open(filename_or_string, "r")
+            excerpt = f.read()
+            f.close()
     except FileNotFoundError:
-        excerpt = filename_or_string
+        pass
     begin = random.randint(0, len(excerpt) - length - 1)
     return excerpt[begin:begin+length]
 
@@ -93,15 +96,18 @@ def white_characters_to_spaces(string):
     return re.sub(r"\s+", " ", string)
 
 
-def clear_string_from_file(filename):
-    f = open(filename, "r")
-    clean = f.read()
-    f.close()
-    return white_characters_to_spaces(clean)
+def get_string_cleared(filename_or_string):
+    to_clean = filename_or_string
+    try:
+        if len(filename_or_string) < 100:
+            f = open(filename_or_string, "r")
+            to_clean = f.read()
+            f.close()
+    except FileNotFoundError:
+        pass
+    return white_characters_to_spaces(to_clean)
 
 
-
-print(generate_log_distribution_from_learning_set(["war_and_peace.txt"], alphabetic.Alphabet("abc"), 2, [","]))
-print(generate_random_excerpt("war_and_peace.txt", 4))
-print(white_characters_to_spaces("1\n\n  241   4"))
-
+def get_log_distribution_from_json(json_file):
+    json_file = open(json_file, "r")
+    return json.load(json_file)

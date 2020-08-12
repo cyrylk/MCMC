@@ -84,6 +84,8 @@ class StrippedText(object):
 
 
 def alphabets_product(alphabet1, alphabet2):
+    if not alphabet2:
+        return {i: 0 for i in alphabet1}
     return {i + j: 0 for i in alphabet1 for j in alphabet2}
 
 
