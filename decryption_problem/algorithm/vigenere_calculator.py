@@ -17,5 +17,3 @@ def get_frequency_change_fixed_key_length(old_key, new_key,
             common.add_ith_gram_to_frequency_change(current_decryption, n_gram_length, i, frequencies_change)
         current_decryption[j] = cipher.encrypt_decrypt_single(current_decryption[j], -shift, alphabet)
     return frequencies_change
-
-

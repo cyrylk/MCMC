@@ -1,5 +1,6 @@
 
 class Alphabet(object):
+
     def __init__(self, alphabet_in_iterable):
         ## @brief alphabet used
         self.alphabet = list(alphabet_in_iterable)

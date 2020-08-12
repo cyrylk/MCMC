@@ -1,5 +1,6 @@
 import random
 
+
 def get_random_starting_state(alphabet, key_length):
     starting_state = []
     for i in range(key_length):

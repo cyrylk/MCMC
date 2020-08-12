@@ -39,7 +39,6 @@ def procedure(filename, steps):
 
     print(best_func, calculator.calculate_distance(best_state, distances))
 
+
 random.seed(time())
-
 procedure("../data/burma14.xml", 100000)
-

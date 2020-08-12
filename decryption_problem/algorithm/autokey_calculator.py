@@ -20,4 +20,3 @@ def get_frequency_change_fixed_key_length(old_key, new_key,
         power *= (-1)
 
     return frequencies_change
-

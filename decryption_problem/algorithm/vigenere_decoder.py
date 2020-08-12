@@ -172,4 +172,3 @@ def break_bounded_length_code_with_mcmc_optimized(encryption, alphabet, n_list, 
             max_state = break_attempt[0]
             max_weight = break_attempt[1]
     return max_state, max_weight
-

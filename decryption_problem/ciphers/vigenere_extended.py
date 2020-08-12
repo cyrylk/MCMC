@@ -57,6 +57,3 @@ def get_zero_mono_key():
 
 def get_all_mono_keys(alphabet, coprimes):
     return [(i, j) for i in range(len(coprimes)) for j in range(alphabet.length)]
-
-
-

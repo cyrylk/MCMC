@@ -23,8 +23,8 @@ def get_max_monogram_state_coord(encryption, coordinate, monogram_log_distributi
 
 
 def get_max_monogram_state(encryption, monogram_log_distribution, key_length, alphabet):
-    return [get_max_monogram_state_coord(encryption, coordinate, monogram_log_distribution, key_length, alphabet) for coordinate in
-            range(key_length)]
+    return [get_max_monogram_state_coord(encryption, coordinate, monogram_log_distribution, key_length, alphabet)
+            for coordinate in range(key_length)]
 
 
 def get_bigram_part_weight(encryption, part, coord, key_length, bigram_log_distribution, alphabet):
@@ -66,20 +66,23 @@ def get_max_bigram_key_and_weight(values, codes, all_mono_keys):
     return bigram_maximizer, max_bigram_weight_value
 
 
-def get_max_bigram_state(text, bigram_log_distribution, key_length, alphabet):
+def get_max_bigram_state(encryption, bigram_log_distribution, key_length, alphabet):
     all_mono_keys = cipher.get_all_mono_keys(alphabet)
-    codes = {a: {b: [cipher.get_zero_mono_key() for i in range(key_length - 1)] for b in all_mono_keys} for a in all_mono_keys}
-    values = {a: {b: get_bigram_part_weight(text, (a, b), 0, key_length, bigram_log_distribution, alphabet) for b in
-                  all_mono_keys} for a in all_mono_keys}
+    codes = {a: {b: [cipher.get_zero_mono_key() for i in range(key_length - 1)] for b in all_mono_keys}
+             for a in all_mono_keys}
+    values = {a: {b: get_bigram_part_weight(encryption, (a, b), 0, key_length, bigram_log_distribution, alphabet)
+                  for b in all_mono_keys} for a in all_mono_keys}
     new_values = {a: {b: 0 for b in all_mono_keys} for a in all_mono_keys}
     for r in range(1, key_length):
         for i in all_mono_keys:
             for j in codes[i]:
-                max_func = values[i][all_mono_keys[0]] + get_bigram_part_weight(text, (all_mono_keys[0], j), r,
-                                                                                key_length, bigram_log_distribution, alphabet)
+                max_func = values[i][all_mono_keys[0]] + get_bigram_part_weight(encryption, (all_mono_keys[0], j), r,
+                                                                                key_length, bigram_log_distribution,
+                                                                                alphabet)
                 max_val = 0
                 for k in codes[i]:
-                    func = values[i][k] + get_bigram_part_weight(text, (k, j), r, key_length, bigram_log_distribution, alphabet)
+                    func = values[i][k] + get_bigram_part_weight(encryption, (k, j), r, key_length,
+                                                                 bigram_log_distribution, alphabet)
                     if func > max_func:
                         max_func = func
                         max_val = k

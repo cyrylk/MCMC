@@ -37,6 +37,7 @@ def encrypt_text(text, shift_key, alphabet):
 
     return encrypted_decrypted
 
+
 # by assumption stripped text has to be an argument here
 def decrypt_text(text, shift_key, alphabet):
     current_key_ptr = 0
@@ -69,9 +70,10 @@ def encrypt_text_v2(text, shift_key, alphabet):
 
     coding_index = 0
     for index in range(len(shift_key), len(text)):
-        if (text[index] in alphabet and text[coding_index] in alphabet):
-            encrypted_decrypted.append(encrypt_decrypt_single(text[index], alphabet.letters_to_position[text[coding_index]],
-                                                          alphabet))
+        if text[index] in alphabet and text[coding_index] in alphabet:
+            encrypted_decrypted.append(encrypt_decrypt_single(text[index],
+                                                              alphabet.letters_to_position[text[coding_index]],
+                                                              alphabet))
             coding_index += 1
         else:
             encrypted_decrypted.append(text[index])
@@ -80,6 +82,7 @@ def encrypt_text_v2(text, shift_key, alphabet):
         return create_stripped_encryption_decryption(text, encrypted_decrypted, alphabet)
 
     return encrypted_decrypted
+
 
 # by assumption stripped text has to be an argument here
 def decrypt_text_v2(text, shift_key, alphabet):
@@ -92,9 +95,10 @@ def decrypt_text_v2(text, shift_key, alphabet):
     coding_index = 0
 
     for index in range(len(shift_key), len(text)):
-        if (text[index] in alphabet and text[coding_index] in alphabet):
-            encrypted_decrypted.append(encrypt_decrypt_single(text[index], -alphabet.letters_to_position[text[coding_index]],
-                                                          alphabet))
+        if text[index] in alphabet and text[coding_index] in alphabet:
+            encrypted_decrypted.append(encrypt_decrypt_single(text[index],
+                                                              -alphabet.letters_to_position[text[coding_index]],
+                                                              alphabet))
             coding_index += 1
         else:
             encrypted_decrypted.append(text[index])

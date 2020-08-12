@@ -1,4 +1,3 @@
-import decryption_problem.alphabetic.alphabetic as alphabetic
 from math import exp
 
 
@@ -143,4 +142,3 @@ def expected_value(log_frequencies, text_length):
     for i in log_frequencies:
         expected += log_frequencies[i]*exp(log_frequencies)
     return (expected/normalizer)*text_length
-

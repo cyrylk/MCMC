@@ -1,5 +1,4 @@
 import random
-import decryption_problem.ciphers.vigenere_extended as extended
 
 
 def get_random_starting_state(alphabet, length, coprimes):
@@ -31,17 +30,9 @@ def get_ith_neighbour(current, i, alphabet, coprimes):
 
     a_change = change % (len(coprimes) - 1)
     b_change = change // (len(coprimes) - 1)
-    key_update = ((current[position_to_change][0] + a_change + 1) % len(coprimes), (current[position_to_change][1] + b_change + 1) % alphabet.length)
+    key_update = ((current[position_to_change][0] + a_change + 1) % len(coprimes), (current[position_to_change][1] +
+                                                                                    b_change + 1) % alphabet.length)
     return current[:position_to_change] + [key_update] + current[position_to_change + 1:]
-
-
-
-
-    # if change < alphabet.max_shift_length:
-    #     return current[:position_to_change] + \
-    #        [(current[position_to_change](current[position_to_change] + shift + 1) % alphabet.length)] + current[position_to_change + 1:]
-
-
 
 
 ## @brief function for getting a number of neighbours of a given current state in fixed-length
@@ -52,7 +43,6 @@ def get_neighbours_number(current, alphabet, coprimes):
     return len(current) * (alphabet.length * len(coprimes) - 1)
 
 
-
 ## @brief function for generating a candidate from a given current state
 # in fixed-length Vigenere cipher
 # @param current - current state
@@ -60,5 +50,3 @@ def get_neighbours_number(current, alphabet, coprimes):
 def get_candidate(current, alphabet, coprimes):
     i = random.randint(0, get_neighbours_number(current, alphabet, coprimes) - 1)
     return get_ith_neighbour(current, i, alphabet, coprimes)
-
-

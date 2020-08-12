@@ -1,6 +1,7 @@
 import decryption_problem.ciphers.vigenere_extended as cipher
 import decryption_problem.common.common as common
 
+
 def get_frequency_change_fixed_key_length(old_key, new_key,
                                           n_gram_length, current_decryption, text, alphabet, coprimes):
     change = common.find_change_in_key(old_key, new_key)
@@ -16,5 +17,3 @@ def get_frequency_change_fixed_key_length(old_key, new_key,
         current_decryption[j] = cipher.encrypt_decrypt_single(text[j], old_key[change], alphabet, coprimes)
 
     return frequencies_change
-
-
