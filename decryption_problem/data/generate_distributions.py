@@ -47,5 +47,3 @@ file1.close()
 file2.close()
 file3.close()
 file4.close()
-
-

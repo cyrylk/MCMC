@@ -1,7 +1,3 @@
-add metrics for calculating accuracy - done
-some function get_key_reverse or similar - done
-non-stripped version for autokey? - done
-
 stripped with extended alphabet, encryption/decryption with normal alphabet - prepared
 some improvements for bounded versions possible
 do wszystkiego związanego z szyfrowaniem wchodzi krótszy alfabet (także do stworzenia strippedtextu)
@@ -10,3 +6,8 @@ Jak chcemy przesuwać się po niealfabetycznych znakach (v2), to robimy to nie n
 tylko na liście
 do update'owania częstości muszą być dwa alfabety - rozszerzony - do liczenia gramów i zwykły
 do szyfrowania
+
+metrics for consistency/accuracy to be moved to common
+version of mcmc that stops when desired accuracy is achieved (for estimating some constant values)
+documentation
+brief uts
