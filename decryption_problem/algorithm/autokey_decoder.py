@@ -36,11 +36,12 @@ def get_bigram_part_weight(encryption, part, coord, key_length, bigram_log_distr
         encryption[i] = cipher.encrypt_decrypt_single(encryption[i], part[0], alphabet)
         encryption[i + 1] = cipher.encrypt_decrypt_single(encryption[i + 1], part[1], alphabet)
         new_bigram = (-alphabet.letters_to_position[encryption[i]], -alphabet.letters_to_position[encryption[i + 1]])
-        gram = common.get_n_gram_at_i(encryption, 2, i)
-        try:
-            weight += bigram_log_distribution[gram]
-        except KeyError:
-            pass
+        grams = common.get_bigrams_in_coords(encryption, i)
+        for gram in grams:
+            try:
+                weight += bigram_log_distribution[gram]
+            except KeyError:
+                pass
         encryption[i] = cipher.encrypt_decrypt_single(encryption[i], -part[0], alphabet)
         encryption[i + 1] = cipher.encrypt_decrypt_single(encryption[i + 1], -part[1], alphabet)
         part = new_bigram
@@ -76,18 +77,16 @@ def get_max_bigram_state(encryption, bigram_log_distribution, key_length, alphab
     for r in range(1, key_length):
         for i in all_mono_keys:
             for j in codes[i]:
-                max_func = values[i][all_mono_keys[0]] + get_bigram_part_weight(encryption, (all_mono_keys[0], j), r,
-                                                                                key_length, bigram_log_distribution,
-                                                                                alphabet)
-                max_val = 0
+                max_func = float("-inf")
+                max_arg = cipher.get_zero_mono_key()
                 for k in codes[i]:
                     func = values[i][k] + get_bigram_part_weight(encryption, (k, j), r, key_length,
                                                                  bigram_log_distribution, alphabet)
                     if func > max_func:
                         max_func = func
-                        max_val = k
+                        max_arg = k
                 new_values[i][j] = max_func
-                codes[i][j][r - 1] = max_val
+                codes[i][j][r - 1] = max_arg
         aux = values
         values = new_values
         new_values = aux

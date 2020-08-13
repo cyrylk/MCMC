@@ -1,6 +1,9 @@
 from math import exp
 
 
+def number_code_from_letter_code(letter_code, alphabet):
+    return [alphabet.letters_to_position[letter] for letter in letter_code]
+
 def get_zero_frequency(frequencies):
     return min(frequencies.values())/2
 
@@ -13,42 +16,74 @@ def is_word_end(text, index):
         return False
 
 
-def get_n_gram_at_i(text, n, i):
-    if i < 0:
-        return None
+def get_n_gram_generator_at_i_left(text, n, i):
     gram = ""
     k = i
-    while k - i < n:
-        try:
-            gram += text[k]
-            k += 1
-        except IndexError:
-            return None
+    t = k
+    while i - t < n and k >= 0:
+        gram = text[k] + gram
+        k -= 1
+        t -= 1
+        if is_word_end(text, k):
+            stripped = text.stripped_part[text.ends_of_words[k]]
+            j = len(stripped) - 1
+            while i - t < n and j >= 0:
+                gram = stripped[j] + gram
+                t -= 1
+                j -= 1
+    if gram:
+        return gram[:-1]
+    return gram
+
+
+def get_n_gram_generator_at_i_right(text, n, i):
+    gram = ""
+    k = i
+    t = i
+    while t - i < n and k < len(text):
+        gram += text[k]
+        k += 1
+        t += 1
         if is_word_end(text, k - 1):
             stripped = text.stripped_part[text.ends_of_words[k-1]]
             j = 0
-            while k - i < n and j < len(stripped):
+            while t - i < n and j < len(stripped):
                 gram += stripped[j]
-                k += 1
+                t += 1
                 j += 1
     return gram
 
 
-def get_n_gram_at_i_v2(text, n, i):
-    if i < 0 or i+n > len(text):
+def get_n_gram_generator_at_i(text, n, i):
+    if i < 0 or i >= len(text):
         return None
-    gram = ""
-    for k in range(i, i + n):
-        if k == i or not is_word_end(text, k-1):
-            gram += text[k]
-        else:
-            return None
+    gram = get_n_gram_generator_at_i_left(text, n, i) + get_n_gram_generator_at_i_right(text, n, i)
+    if len(gram) < n:
+        return None
     return gram
+
+
+def get_n_grams_with_i(text, n, i):
+    generator = get_n_gram_generator_at_i(text, n, i)
+    if generator:
+        return [generator[i:i+n] for i in range(len(generator) - n + 1)]
+    return []
 
 
 def calculate_n_gram_frequencies(text, n):
     frequencies_dict = {}
     current_gram = ""
+    if is_word_end(text, -1):
+        stripped_beginning = text.stripped_part[text.ends_of_words[-1]]
+        for i in range(len(stripped_beginning)):
+            current_gram += stripped_beginning[i]
+            if len(current_gram) > n:
+                current_gram = current_gram[1:]
+            if len(current_gram) == n:
+                try:
+                    frequencies_dict[current_gram] += 1
+                except KeyError:
+                    frequencies_dict[current_gram] = 1
     for i in range(len(text)):
         current_gram += text[i]
         if len(current_gram) > n:
@@ -114,8 +149,16 @@ def find_change_in_key(old_key, new_key):
             return i
 
 
-def subtract_ith_gram_from_frequency_change(decryption, n_gram_length, i, frequencies_change):
-    gram = get_n_gram_at_i(decryption, n_gram_length, i)
+def add_gram_to_frequency_change(gram, frequencies_change):
+    if not gram:
+        return
+    try:
+        frequencies_change[gram] += 1
+    except KeyError:
+        frequencies_change[gram] = 1
+
+
+def subtract_gram_from_frequency_change(gram, frequencies_change):
     if not gram:
         return
     try:
@@ -124,14 +167,20 @@ def subtract_ith_gram_from_frequency_change(decryption, n_gram_length, i, freque
         frequencies_change[gram] = -1
 
 
-def add_ith_gram_to_frequency_change(decryption, n_gram_length, i, frequencies_change):
-    gram = get_n_gram_at_i(decryption, n_gram_length, i)
-    if not gram:
-        return
-    try:
-        frequencies_change[gram] += 1
-    except KeyError:
-        frequencies_change[gram] = 1
+def get_bigrams_in_coords(text, i):
+    bigrams = []
+    if i == 0 and is_word_end(text, -1):
+        beginning = text.stripped_part[text.ends_of_words[-1]]
+        bigrams.append(beginning[-1] + text[i])
+    if not is_word_end(text, i) and i + 1 < len(text):
+        bigrams.append(text[i]+text[i+1])
+        return bigrams
+    stripped_index = text.ends_of_words[i]
+    if text.stripped_part[stripped_index]:
+        bigrams.append(text[i] + text.stripped_part[stripped_index][0])
+        if i + 1 < len(text):
+            bigrams.append(text.stripped_part[stripped_index][-1] + text[i+1])
+    return bigrams
 
 
 def expected_value(log_frequencies, text_length):

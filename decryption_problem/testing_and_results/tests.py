@@ -4,8 +4,14 @@ import decryption_problem.ciphers.vigenere as vigenere
 import decryption_problem.ciphers.autokey as autokey
 import decryption_problem.ciphers.vigenere_extended as extended
 import decryption_problem.algorithm.vigenere_decoder as vigenere_decoder
+import decryption_problem.algorithm.autokey_decoder as autokey_decoder
+import decryption_problem.algorithm.extended_decoder as extended_decoder
 import decryption_problem.common.common as common
+from timeit import default_timer as time
+import random
 
+
+random.seed(time)
 
 alphabet = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 standard2 = data_generator.get_log_distribution_from_json("../data/bigram_log_distributions_uppercase.json")
@@ -13,7 +19,7 @@ standard1 = data_generator.get_log_distribution_from_json("../data/monogram_log_
 
 print(standard1)
 
-plain = alphabetic.StrippedText('''IF YOUTH, THROUGHOUT ALL HISTORY, HAD HAD A CHAMPION TO STAND UP FOR IT; 
+plain = alphabetic.StrippedText('''   IF YOUTH, THROUGHOUT ALL HISTORY, HAD HAD A CHAMPION TO STAND UP FOR IT; 
 TO SHOW A DOUBTING WORLD THAT A CHILD CAN THINK; AND, POSSIBLY, DO IT PRACTICALLY; YOU WOULDN’T CONSTANTLY 
 RUN ACROSS FOLKS TODAY WHO CLAIM THAT “A CHILD DON’T KNOW ANYTHING.” A CHILD’S BRAIN STARTS FUNCTIONING AT BIRTH; 
 AND HAS, AMONGST ITS MANY INFANT CONVOLUTIONS, THOUSANDS OF DORMANT ATOMS, INTO WHICH GOD HAS PUT A MYSTIC 
@@ -25,14 +31,16 @@ A BRAIN HAS NO OPPOSITION, IT IS PLAIN THAT IT WILL ATTAIN A POSITION OF “STAT
 MAN KNOWS NOT WHY A COW, DOG OR LION WAS NOT BORN WITH A BRAIN ON A PAR WITH OURS; WHY SUCH ANIMALS CANNOT ADD, SUBTRACT, 
 OR OBTAIN FROM BOOKS AND SCHOOLING, THAT PARAMOUNT POSITION WHICH MAN HOLDS TODAY.''', alphabet)
 
+print(common.get_bigrams_in_coords(plain, 0))
 
-code = [10, 11, 3, 11, 15, 20, 18, 12, 25, 8, 22, 21, 4, 23, 5, 22, 15, 22, 16, 24, 3, 25, 19, 24, 16, 23, 23, 7, 4, 23,
-        25, 1, 17, 15, 1, 0, 8, 7, 25, 8, 19, 17, 1, 1, 4, 23, 6, 16, 18, 18, 8, 1, 13, 5, 2, 1, 5, 8, 10, 10, 8, 24,
-        20]
+code = data_generator.generate_random_extended_key_fixed(alphabet, 20)
 
-encryption = vigenere.encrypt_decrypt_text(plain, code, alphabet)
-res = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, alphabet,
-                                                         vigenere_decoder.get_max_monogram_state(encryption,
+print(len(code))
+coprimes = extended.get_coprimes(alphabet.length)
+coprimes_mapping = extended.get_coprimes_mapping(coprimes)
+encryption = extended.encrypt_decrypt_text(plain, code, alphabet, coprimes)
+res = extended_decoder.break_fixed_length_code_with_mcmc(encryption, alphabet,
+                                                         extended_decoder.get_max_monogram_state(encryption,
                                                                                                  standard1, len(code),
                                                                                                  alphabet), [2], [1.0],
                                                          [standard2],
@@ -41,9 +49,10 @@ maxx_state = res[0]
 maxx_weight = res[1]
 
 print(maxx_weight)
-decrypted1 = vigenere.encrypt_decrypt_text(encryption, maxx_state, alphabet)
+decrypted1 = extended.encrypt_decrypt_text(encryption, maxx_state, alphabet, coprimes)
 
-decrypted2 = vigenere.encrypt_decrypt_text(encryption, [-i for i in code], alphabet)
+decrypted2 = extended.encrypt_decrypt_text(encryption, [extended.reverse_key(i, alphabet, coprimes, coprimes_mapping)
+                                                        for i in code], alphabet, coprimes)
 state_function = 0
 frequencies = common.calculate_n_gram_frequencies(decrypted2, 2)
 state_function += common.calculate_n_gram_log_weight(frequencies, standard2)
@@ -53,13 +62,14 @@ print(decrypted1.get_non_stripped_text())
 print()
 print(decrypted2.get_non_stripped_text())
 
-maximizer = vigenere_decoder.get_max_bigram_state(encryption, standard2, len(code), alphabet)[0]
-decrypted3 = vigenere.encrypt_decrypt_text(encryption, maximizer,
-                                           alphabet)
+maximizer = extended_decoder.get_max_bigram_state(encryption, standard2, len(code), alphabet)[0]
+decrypted3 = extended.encrypt_decrypt_text(encryption, maximizer,
+                                           alphabet, coprimes)
 frequencies = common.calculate_n_gram_frequencies(decrypted3, 2)
 state_function = common.calculate_n_gram_log_weight(frequencies, standard2)
 print(decrypted3.get_non_stripped_text())
 print(state_function)
-print([(-i) % 26 for i in code])
+print([extended.reverse_key(i, alphabet, coprimes, coprimes_mapping)
+                                                        for i in code])
 print(maximizer)
 

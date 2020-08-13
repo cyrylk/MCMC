@@ -8,12 +8,11 @@ def get_frequency_change_fixed_key_length(old_key, new_key,
     frequencies_change = {}
     key_length = len(old_key)
     shift = new_key[change] - old_key[change]
-    for j in range(change, len(current_decryption), key_length):
-        for i in range(j - n_gram_length + 1, j + 1):
-            common.subtract_ith_gram_from_frequency_change(current_decryption, n_gram_length, i, frequencies_change)
-
-        current_decryption[j] = cipher.encrypt_decrypt_single(current_decryption[j], shift, alphabet)
-        for i in range(j - n_gram_length + 1, j + 1):
-            common.add_ith_gram_to_frequency_change(current_decryption, n_gram_length, i, frequencies_change)
-        current_decryption[j] = cipher.encrypt_decrypt_single(current_decryption[j], -shift, alphabet)
+    for i in range(change, len(current_decryption), key_length):
+        for gram in common.get_n_grams_with_i(current_decryption, n_gram_length, i):
+            common.subtract_gram_from_frequency_change(gram, frequencies_change)
+        current_decryption[i] = cipher.encrypt_decrypt_single(current_decryption[i], shift, alphabet)
+        for gram in common.get_n_grams_with_i(current_decryption, n_gram_length, i):
+            common.add_gram_to_frequency_change(gram, frequencies_change)
+        current_decryption[i] = cipher.encrypt_decrypt_single(current_decryption[i], -shift, alphabet)
     return frequencies_change

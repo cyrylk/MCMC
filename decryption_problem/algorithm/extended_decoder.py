@@ -32,11 +32,12 @@ def get_bigram_part_weight(encryption, part, coord, key_length, bigram_log_distr
         old_text1 = encryption[i + 1]
         encryption[i] = cipher.encrypt_decrypt_single(encryption[i], part[0], alphabet, coprimes)
         encryption[i + 1] = cipher.encrypt_decrypt_single(encryption[i + 1], part[1], alphabet, coprimes)
-        gram = common.get_n_gram_at_i(encryption, 2, i)
-        try:
-            weight += bigram_log_distribution[gram]
-        except KeyError:
-            pass
+        grams = common.get_bigrams_in_coords(encryption, i)
+        for gram in grams:
+            try:
+                weight += bigram_log_distribution[gram]
+            except KeyError:
+                pass
         encryption[i] = old_text0
         encryption[i + 1] = old_text1
     return weight
@@ -72,18 +73,16 @@ def get_max_bigram_state(encryption, bigram_log_distribution, key_length, alphab
     for r in range(1, key_length):
         for i in all_mono_keys:
             for j in codes[i]:
-                max_func = values[i][all_mono_keys[0]] + get_bigram_part_weight(encryption, (all_mono_keys[0], j), r,
-                                                                                key_length, bigram_log_distribution,
-                                                                                alphabet, coprimes)
-                max_val = 0
+                max_func = float("-inf")
+                max_arg = cipher.get_zero_mono_key()
                 for k in codes[i]:
                     func = values[i][k] + get_bigram_part_weight(encryption, (k, j), r, key_length,
                                                                  bigram_log_distribution, alphabet, coprimes)
                     if func > max_func:
                         max_func = func
-                        max_val = k
+                        max_arg = k
                 new_values[i][j] = max_func
-                codes[i][j][r-1] = max_val
+                codes[i][j][r-1] = max_arg
 
         aux = values
         values = new_values
@@ -119,8 +118,10 @@ def generate_frequency_and_weight_change(current_state, candidate, n_list, coefs
     return frequencies_change, weight_change
 
 
-def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_list, coefs, log_distributions, steps):
-    coprimes = cipher.get_coprimes(alphabet.length)
+def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_list, coefs, log_distributions, steps,
+                                      coprimes=[]):
+    if not coprimes:
+        coprimes = cipher.get_coprimes(alphabet.length)
     current_state = starting_state
     current_decryption = cipher.encrypt_decrypt_text(encryption, current_state, alphabet, coprimes)
     start = generate_frequencies_and_state_weight(current_decryption, n_list, coefs, log_distributions)
@@ -154,10 +155,11 @@ def break_bounded_length_code_with_mcmc(encryption, alphabet, n_list, coefs, log
                                         monogram_log_distribution):
     max_weight = float("-inf")
     max_state = [cipher.get_zero_mono_key()]
+    coprimes = cipher.get_coprimes(alphabet.length)
     for length in range(1, boundary+1):
         start = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)
         break_attempt = break_fixed_length_code_with_mcmc(encryption, alphabet, start, n_list, coefs,
-                                                          log_distributions, steps)
+                                                          log_distributions, steps, coprimes)
         if break_attempt[1] > max_weight:
             max_state = break_attempt[0]
             max_weight = break_attempt[1]
@@ -168,11 +170,12 @@ def break_bounded_length_code_with_mcmc_optimized(encryption, alphabet, n_list, 
                                                   boundary, monogram_log_distribution):
     max_weight = float("-inf")
     max_state = [cipher.get_zero_mono_key()]
+    coprimes = cipher.get_coprimes(alphabet.length)
     for length in range(1, boundary+1):
         start = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)
         optimized_steps = int(length/boundary * steps)
         break_attempt = break_fixed_length_code_with_mcmc(encryption, alphabet, start, n_list, coefs,
-                                                          log_distributions, optimized_steps)
+                                                          log_distributions, optimized_steps, coprimes)
         if break_attempt[1] > max_weight:
             max_state = break_attempt[0]
             max_weight = break_attempt[1]

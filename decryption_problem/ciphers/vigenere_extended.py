@@ -45,10 +45,17 @@ def get_coprimes(length):
     return [i for i in range(length) if gcd(i, length) == 1]
 
 
-def reverse_key(key, alphabet):
-    reverse_a = mod_inverse(key[0], alphabet.length)
+def reverse_key(key, alphabet, coprimes, coprimes_mapping):
+    reverse_a = mod_inverse(coprimes[key[0]], alphabet.length)
     reverse_b = (-reverse_a * key[1]) % alphabet.length
-    return reverse_a, reverse_b
+    return coprimes_mapping[reverse_a], reverse_b
+
+
+def get_coprimes_mapping(coprimes):
+    mapping = {}
+    for i in range(len(coprimes)):
+        mapping[coprimes[i]] = i
+    return mapping
 
 
 def get_zero_mono_key():
