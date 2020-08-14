@@ -3,7 +3,7 @@ class Alphabet(object):
 
     def __init__(self, alphabet_in_iterable):
         ## @brief alphabet used
-        self.alphabet = list(alphabet_in_iterable)
+        self.alphabet = {i: alphabet_in_iterable[i] for i in range(len(alphabet_in_iterable))}
         ## @brief mapping of letters to their positions
         self.letters_to_position = {self.alphabet[i]: i for i in range(len(self.alphabet))}
         ## @brief length of the alphabet
@@ -21,6 +21,9 @@ class Alphabet(object):
     def __len__(self):
         return self.length
 
+    def letters(self):
+        return self.alphabet.values()
+
 
 ## @brief class containing the input text stripped of non-alphabetic characters
 # alongside with all the information needed to recreate the original text
@@ -30,12 +33,14 @@ class StrippedText(object):
         self.non_stripped_part = []
         self.stripped_part = []
         self.ends_of_words = {}
+        self.positions = {letter: set() for letter in alphabet.letters()}
         end_of_word = 0
         word_number = 0
         stripped = ""
         for i in range(length):
             if text[i] in alphabet:
                 self.non_stripped_part.append(text[i])
+                self.positions[text[i]].add(end_of_word)
                 if stripped:
                     self.stripped_part.append(stripped)
                     stripped = ""
@@ -58,7 +63,9 @@ class StrippedText(object):
         return self.non_stripped_part[key]
 
     def __setitem__(self, key, value):
+        self.positions[self.non_stripped_part[key]].remove(key)
         self.non_stripped_part[key] = value
+        self.positions[value].add(key)
 
     def __len__(self, ):
         return len(self.non_stripped_part)

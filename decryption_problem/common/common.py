@@ -140,7 +140,7 @@ def update_frequency(frequency, frequency_change):
         try:
             frequency[i] += frequency_change[i]
         except KeyError:
-            pass
+            frequency[i] = frequency_change[i]
 
 
 def find_change_in_key(old_key, new_key):

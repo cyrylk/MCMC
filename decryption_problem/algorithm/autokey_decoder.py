@@ -11,11 +11,11 @@ def get_max_monogram_state_coord(encryption, coordinate, monogram_log_distributi
     max_weight = float("-inf")
     for j in cipher.get_all_mono_keys(alphabet):
         k = j
-        weight = float("-inf")
+        weight = 0
         for i in range(coordinate, len(encryption), key_length):
             k = cipher.encrypt_decrypt_single(encryption[i], k, alphabet)
             weight += monogram_log_distribution[k]
-            k = alphabet.letters_to_position[k]
+            k = -alphabet.letters_to_position[k]
         if weight > max_weight:
             max_state = j
             max_weight = weight
