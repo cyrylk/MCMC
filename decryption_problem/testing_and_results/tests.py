@@ -9,9 +9,9 @@ import decryption_problem.algorithm.extended_decoder as extended_decoder
 import decryption_problem.common.common as common
 from timeit import default_timer as time
 import random
-from decryption_problem.testing_and_results.metrics import consistency_vigenere, consistency_vigenere_extended
+from decryption_problem.common.common import consistency
 
-random.seed(time)
+random.seed(time())
 
 alphabet = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 standard2 = data_generator.get_log_distribution_from_json("../data/bigram_log_distributions_uppercase.json")
@@ -35,7 +35,7 @@ OR OBTAIN FROM BOOKS AND SCHOOLING, THAT PARAMOUNT POSITION WHICH MAN HOLDS TODA
 
 print(common.get_bigrams_in_coords(plain, 0))
 
-code = data_generator.generate_random_extended_key_fixed(alphabet, 80)
+code = data_generator.generate_random_extended_key_fixed(alphabet, 40)
 
 print(len(code))
 print(len(plain))
@@ -45,21 +45,21 @@ encryption = extended.encrypt_decrypt_text(plain, code, alphabet, coprimes)
 x = extended_decoder.get_max_monogram_state(encryption, standard1, len(code), alphabet)
 print(extended.encrypt_decrypt_text(encryption, x, alphabet, coprimes).get_non_stripped_text())
 # print([- i % alphabet.length for i in code])
-print(consistency_vigenere_extended(x, [extended.reverse_key(i, alphabet, coprimes, coprimes_mapping)
-                                        for i in code], alphabet.length))
+print(consistency(x, [extended.reverse_key(i, alphabet, coprimes, coprimes_mapping)
+                                        for i in code], alphabet))
 res = extended_decoder.break_fixed_length_code_with_mcmc(encryption, alphabet,
                                                          x,
-                                                         [3], [1.0],
-                                                         [standard3],
-                                                         100000)
+                                                         [2], [1.0],
+                                                         [standard2],
+                                                         10000)
 
 
 maxx_state = res[0]
 maxx_weight = res[1]
 
 print(maxx_weight)
-print(consistency_vigenere_extended(maxx_state, [extended.reverse_key(i, alphabet, coprimes, coprimes_mapping)
-                                        for i in code], alphabet.length))
+print(consistency(maxx_state, [extended.reverse_key(i, alphabet, coprimes, coprimes_mapping)
+                                        for i in code], alphabet))
 decrypted1 = extended.encrypt_decrypt_text(encryption, maxx_state, alphabet, coprimes)
 
 decrypted2 = plain
@@ -80,6 +80,6 @@ state_function = common.calculate_n_gram_log_weight(frequencies, standard2)
 print(decrypted3.get_non_stripped_text())
 print(state_function)
 print(maximizer)
-print(consistency_vigenere(maximizer, [extended.reverse_key(i, alphabet, coprimes, coprimes_mapping)
-                                        for i in code], alphabet.length))
+print(consistency(maximizer, [extended.reverse_key(i, alphabet, coprimes, coprimes_mapping)
+                                        for i in code], alphabet))
 

@@ -119,7 +119,7 @@ def generate_frequency_and_weight_change(current_state, candidate, n_list, coefs
 
 
 def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_list, coefs, log_distributions, steps,
-                                      coprimes=[]):
+                                      coprimes=[], true_decrypting_code=[], consistency_threshold=1.0):
     if not coprimes:
         coprimes = cipher.get_coprimes(alphabet.length)
     current_state = starting_state
@@ -148,6 +148,9 @@ def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_li
             if current_state_weight > max_weight:
                 max_state = candidate
                 max_weight = current_state_weight
+                if true_decrypting_code and \
+                        common.consistency(current_state, true_decrypting_code, alphabet) > consistency_threshold:
+                    return max_state, max_weight, step
     return max_state, max_weight
 
 
@@ -179,4 +182,21 @@ def break_bounded_length_code_with_mcmc_optimized(encryption, alphabet, n_list, 
         if break_attempt[1] > max_weight:
             max_state = break_attempt[0]
             max_weight = break_attempt[1]
-    return max_state, max_weight
+    return break_fixed_length_code_with_mcmc(encryption, alphabet, max_state, n_list, coefs,
+                                             log_distributions, 2 * steps)
+
+
+def break_bounded_length_code_with_mcmc_monogram_criteria(encryption, alphabet, n_list, coefs, log_distributions, steps,
+                                                            boundary, monogram_log_distribution):
+    max_weight = float("-inf")
+    max_state = [cipher.get_zero_mono_key()]
+    coprimes = cipher.get_coprimes(alphabet.length)
+    for length in range(1, boundary+1):
+        state = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)
+        current_decryption = cipher.encrypt_decrypt_text(encryption, state, alphabet, coprimes)
+        weight = generate_frequencies_and_state_weight(current_decryption, n_list, coefs, log_distributions)
+        if weight > max_weight:
+            max_weight = weight
+            max_state = state
+    return break_fixed_length_code_with_mcmc(encryption, alphabet, max_state, n_list, coefs,
+                                             log_distributions, 2 * steps, coprimes)

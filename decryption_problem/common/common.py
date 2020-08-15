@@ -191,3 +191,42 @@ def expected_value(log_frequencies, text_length):
     for i in log_frequencies:
         expected += log_frequencies[i]*exp(log_frequencies)
     return (expected/normalizer)*text_length
+
+
+def consistency_vigenere(guessed_key, real_key, alphabet):
+    guessed_copy = guessed_key[:]
+    real_copy = real_key[:]
+    while len(guessed_copy) != len(real_copy):
+        if len(guessed_copy) > len(real_copy):
+            real_copy += real_key
+        else:
+            guessed_copy += guessed_key
+    accuracy = 0
+    for i in range(len(guessed_copy)):
+        if not (guessed_copy[i] - real_copy[i]) % alphabet.length:
+            accuracy += 1
+
+    return accuracy/len(guessed_copy)
+
+
+def consistency_vigenere_extended(guessed_key, real_key, alphabet):
+    guessed_copy = guessed_key[:]
+    real_copy = real_key[:]
+    while len(guessed_copy) != len(real_copy):
+        if len(guessed_copy) > len(real_copy):
+            real_copy += real_key
+        else:
+            guessed_copy += guessed_key
+    accuracy = 0
+    for i in range(len(guessed_copy)):
+        if not (guessed_copy[i][0] - real_copy[i][0]) % alphabet.length and \
+                not (guessed_copy[i][1] - real_copy[i][1]) % alphabet.length:
+            accuracy += 1
+    return accuracy/len(guessed_copy)
+
+
+def consistency(guessed_key, real_key, alphabet):
+    try:
+        return consistency_vigenere(guessed_key, real_key, alphabet)
+    except TypeError:
+        return consistency_vigenere_extended(guessed_key, real_key, alphabet)
