@@ -193,10 +193,10 @@ def break_bounded_length_code_with_mcmc_optimized(encryption, alphabet, n_list, 
 
 
 def break_bounded_length_code_with_mcmc_monogram_criteria(encryption, alphabet, n_list, coefs, log_distributions, steps,
-                                                            boundary, monogram_log_distribution):
+                                                          lower_bound, upper_bound, monogram_log_distribution):
     max_weight = float("-inf")
     max_state = [cipher.get_zero_mono_key()]
-    for length in range(1, boundary+1):
+    for length in range(lower_bound, upper_bound+1):
         max_monogram = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)
         state = max_monogram[0]
         weight = max_monogram[1]

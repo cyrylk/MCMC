@@ -1,6 +1,8 @@
-#file for potential future development, currently it is not a part of the project
-#testing of potential possibilities for resolving convolution of vigenere
-#and substitution cipher
+# file for potential future development, currently it is not a part of the project
+# testing of potential possibilities for resolving convolution of substitution
+# and vigenere cipher
+
+# currently
 
 
 import decryption_problem.alphabetic.alphabetic as alphabetic

@@ -1,10 +1,6 @@
 import decryption_problem.alphabetic.alphabetic as alphabetic
 
 
-## @brief function for encrypting/decrypting single letter in autokey cipher
-# @param letter – letter to be encrypted/decrypted
-# @param shift – how many places letter is to be shifted in the alphabetic
-# alphabetic - alphabetic used
 def encrypt_decrypt_single(letter, shift, alphabet):
     if letter not in alphabet:
         return letter
@@ -18,7 +14,6 @@ def create_stripped_encryption_decryption(text, encryption_decryption, alphabet)
     return result
 
 
-# by assumption stripped text has to be an argument here
 def encrypt_text(text, shift_key, alphabet):
     current_key_ptr = 0
     encrypted_decrypted = []
@@ -60,7 +55,6 @@ def decrypt_text(text, shift_key, alphabet):
     return encrypted_decrypted
 
 
-# by assumption stripped text has to be an argument here
 def encrypt_text_v2(text, shift_key, alphabet):
     current_key_ptr = 0
     encrypted_decrypted = []
@@ -84,7 +78,6 @@ def encrypt_text_v2(text, shift_key, alphabet):
     return encrypted_decrypted
 
 
-# by assumption stripped text has to be an argument here
 def decrypt_text_v2(text, shift_key, alphabet):
     current_key_ptr = 0
     encrypted_decrypted = []

@@ -3,10 +3,6 @@ from math import gcd
 from sympy import mod_inverse
 
 
-## @brief function for encrypting/decrypting single letter in Vigenere cipher
-# @param letter – letter to be encrypted/decrypted
-# @param shift – how many places letter is to be shifted in the alphabetic
-# alphabetic - alphabetic used
 def encrypt_decrypt_single(letter, key, alphabet, coprimes):
     if letter not in alphabet:
         return letter
@@ -20,10 +16,6 @@ def create_stripped_encryption_decryption(text, encryption_decryption, alphabet)
     return result
 
 
-## @brief function for coding/decoding text in given Vigenere cipher
-# @param text – text to be coded/decoded
-# @param code - code used for coding/decoding
-# alphabetic - alphabetic used
 def encrypt_decrypt_text(text, shift_key, alphabet, coprimes):
     key_length = len(shift_key)
     current_key_ptr = 0

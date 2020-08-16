@@ -2,14 +2,9 @@
 class Alphabet(object):
 
     def __init__(self, alphabet_in_iterable):
-        ## @brief alphabet used
         self.alphabet = {i: alphabet_in_iterable[i] for i in range(len(alphabet_in_iterable))}
-        ## @brief mapping of letters to their positions
         self.letters_to_position = {self.alphabet[i]: i for i in range(len(self.alphabet))}
-        ## @brief length of the alphabet
         self.length = len(self.alphabet)
-        ## @brief number of different letters, than given one, in alphabet
-        # (equiv number of shifts that will change a letter)
         self.max_shift_length = self.length - 1
 
     def __getitem__(self, key):
@@ -25,8 +20,6 @@ class Alphabet(object):
         return self.alphabet.values()
 
 
-## @brief class containing the input text stripped of non-alphabetic characters
-# alongside with all the information needed to recreate the original text
 class StrippedText(object):
     def __init__(self, text, alphabet):
         length = len(text)
@@ -96,8 +89,6 @@ def alphabets_product(alphabet1, alphabet2):
     return {i + j: 0 for i in alphabet1 for j in alphabet2}
 
 
-## @brief function generating a dictionary of all n-grams of given alphabetic
-# to frequencies - initially all log frequencies set to 0
 def n_gram_dict(alphabet, n):
     result = [""]
     for i in range(n):

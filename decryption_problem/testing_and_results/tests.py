@@ -16,42 +16,57 @@ upper_bigrams_distribution = data_generator.get_log_distribution_from_json\
     ("../data/bigram_log_distributions_uppercase.json")
 upper_monograms_distribution = data_generator.get_log_distribution_from_json\
     ("../data/monogram_log_distributions_uppercase.json")
-upper_trigrams_distribution = data_generator.get_log_distribution_from_json\
-    ("../data/trigram_log_distributions_uppercase.json")
+# upper_trigrams_distribution = data_generator.get_log_distribution_from_json\
+#     ("../data/trigram_log_distributions_uppercase.json")
 full_bigrams_distribution = data_generator.get_log_distribution_from_json("../data/bigram_log_distributions.json")
 full_monograms_distribution = data_generator.get_log_distribution_from_json("../data/monogram_log_distributions.json")
-full_trigrams_distribution = data_generator.get_log_distribution_from_json("../data/trigram_log_distributions.json")
+# full_trigrams_distribution = data_generator.get_log_distribution_from_json("../data/trigram_log_distributions.json")
+# scrabble = set([word[:-1] for word in open("../data/scrabble_words.txt", "r").readlines()])
 
 vigenere_alphabet = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 alpha_qwerty_alphabet = alphabetic.Alphabet('''abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`~!@#$''' +
                                             '''%^&*()_-=+{}[]|;:"<>,.?/''')
+qwerty_alpha_alphabet = alphabetic.Alphabet('''qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM''' +
+                                            '''`~!@#$%^&*()_-=+{}[]|;:"<>,.?/,0123456789''')
 
-code = data_generator.generate_random_vigenere_key_fixed(alpha_qwerty_alphabet, 245)
-coded = autokey.encrypt_text(alphabetic.StrippedText
-                                      (data_generator.get_string_cleared(
-    data_generator.generate_random_excerpt("../data/1984.txt", 1000)),
-                                       alpha_qwerty_alphabet),
-                                      code,
-                                      alpha_qwerty_alphabet)
+# print(qwerty_alpha_alphabet[(alpha_qwerty_alphabet.letters_to_position["t"] +
+#                              alpha_qwerty_alphabet.letters_to_position["H"])
+#       % qwerty_alpha_alphabet.length])
+# exp = alpha_qwerty_alphabet[(qwerty_alpha_alphabet.letters_to_position["`"])]
+# exp = alpha_qwerty_alphabet[(alpha_qwerty_alphabet.letters_to_position[exp]
+#                             - alpha_qwerty_alphabet.letters_to_position["H"]) % alpha_qwerty_alphabet.length]
+# print(exp, alpha_qwerty_alphabet.length)
 
+# first, we are testing what are the boundaries when the frequency approach has a chance to work at all
+# (1) with vigenere alphabet - for vigenere cipher only, because other ciphers base on actually the same concept
+#
 
-print("ORIGINAL")
-print(coded.get_non_stripped_text())
-x = autokey_decoder.get_max_monogram_state(coded, full_monograms_distribution, 245, alpha_qwerty_alphabet)
-print("MAX MONOGRAM")
-print(autokey.decrypt_text(coded, x[0], alpha_qwerty_alphabet).get_non_stripped_text(), x[1])
-print("MONOGRAM CONSISTENCY")
-print(consistency(x[0], autokey.reverse_key(code, alpha_qwerty_alphabet), alpha_qwerty_alphabet))
-
-
-result = autokey_decoder.break_bounded_length_code_with_mcmc_monogram_criteria(coded, alpha_qwerty_alphabet,
-                                                   [2], [1.0], [full_bigrams_distribution], 100000, 250,
-                                                                               full_monograms_distribution)
-
-print(len(result[0]))
-print("MAX BIGRAM")
-print(autokey.decrypt_text(coded, result[0], alpha_qwerty_alphabet).get_non_stripped_text())
-print("BIGRAM CONSISTENCY")
-print(consistency(result[0], autokey.reverse_key(code, alpha_qwerty_alphabet), alpha_qwerty_alphabet))
+plain_text = alphabetic.StrippedText(
+    data_generator.get_string_cleared(data_generator.generate_random_excerpt("../data/1984.txt", 1000).upper()),
+    vigenere_alphabet)
+efficiency = open("monograms_and_bigrams_efficiency1000.txt", "w")
 
 
+random.seed(time())
+
+for key_length in range(20, 600, 20):
+    encoding_key = data_generator.generate_random_vigenere_key_fixed(vigenere_alphabet, key_length)
+    decoding_key = vigenere.reverse_key(encoding_key, vigenere_alphabet)
+    encryption = vigenere.encrypt_decrypt_text(plain_text, encoding_key, vigenere_alphabet)
+
+    efficiency.write(str(key_length)+"\n")
+
+    monogram_maximizer = vigenere_decoder.get_max_monogram_state(encryption, upper_monograms_distribution,
+                                                                 key_length, vigenere_alphabet)
+
+    efficiency.write("MONOGRAM ACCURACY: " + str(consistency(monogram_maximizer[0], decoding_key, vigenere_alphabet))
+                     + "\n")
+
+    bigram_maximizer = vigenere_decoder.get_max_bigram_state(encryption, upper_bigrams_distribution, key_length,
+                                                             vigenere_alphabet)
+
+    efficiency.write("BIGRAM ACCURACY: " + str(consistency(bigram_maximizer[0], decoding_key, vigenere_alphabet))
+                     + "\n")
+    print(key_length)
+
+efficiency.close()

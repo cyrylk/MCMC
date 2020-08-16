@@ -1,13 +1,6 @@
 import decryption_problem.alphabetic.alphabetic as alphabetic
 
 
-## @brief package containing functions for encrypting and decrypting texts with Vigenere cipher
-
-
-## @brief function for encrypting/decrypting single letter in Vigenere cipher
-# @param letter – letter to be encrypted/decrypted
-# @param shift – how many places letter is to be shifted in the alphabetic
-# alphabetic - alphabetic used
 def encrypt_decrypt_single(letter, shift, alphabet):
     if letter not in alphabet:
         return letter
@@ -20,10 +13,7 @@ def create_stripped_encryption_decryption(text, encryption_decryption, alphabet)
     result.set_stripped_part(text.stripped_part)
     return result
 
-## @brief function for coding/decoding text in given Vigenere cipher
-# @param text – text to be coded/decoded
-# @param code - code used for coding/decoding
-# alphabetic - alphabetic used
+
 def encrypt_decrypt_text(text, shift_key, alphabet):
     key_length = len(shift_key)
     current_key_ptr = 0
