@@ -11,75 +11,47 @@ from timeit import default_timer as time
 import random
 from decryption_problem.common.common import consistency
 
-random.seed(time())
 
-alphabet = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-standard2 = data_generator.get_log_distribution_from_json("../data/bigram_log_distributions_uppercase.json")
-standard1 = data_generator.get_log_distribution_from_json("../data/monogram_log_distributions_uppercase.json")
-standard3 = data_generator.get_log_distribution_from_json("../data/trigram_log_distributions_uppercase.json")
-# standard4 = data_generator.get_log_distribution_from_json("../data/quadrigram_log_distributions_uppercase.json")
+upper_bigrams_distribution = data_generator.get_log_distribution_from_json\
+    ("../data/bigram_log_distributions_uppercase.json")
+upper_monograms_distribution = data_generator.get_log_distribution_from_json\
+    ("../data/monogram_log_distributions_uppercase.json")
+upper_trigrams_distribution = data_generator.get_log_distribution_from_json\
+    ("../data/trigram_log_distributions_uppercase.json")
+full_bigrams_distribution = data_generator.get_log_distribution_from_json("../data/bigram_log_distributions.json")
+full_monograms_distribution = data_generator.get_log_distribution_from_json("../data/monogram_log_distributions.json")
+full_trigrams_distribution = data_generator.get_log_distribution_from_json("../data/trigram_log_distributions.json")
 
-print(standard1)
+vigenere_alphabet = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+alpha_qwerty_alphabet = alphabetic.Alphabet('''abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`~!@#$''' +
+                                            '''%^&*()_-=+{}[]|;:"<>,.?/''')
 
-plain = alphabetic.StrippedText('''   IF YOUTH, THROUGHOUT ALL HISTORY, HAD HAD A CHAMPION TO STAND UP FOR IT; 
-TO SHOW A DOUBTING WORLD THAT A CHILD CAN THINK; AND, POSSIBLY, DO IT PRACTICALLY; YOU WOULDN’T CONSTANTLY 
-RUN ACROSS FOLKS TODAY WHO CLAIM THAT “A CHILD DON’T KNOW ANYTHING.” A CHILD’S BRAIN STARTS FUNCTIONING AT BIRTH; 
-AND HAS, AMONGST ITS MANY INFANT CONVOLUTIONS, THOUSANDS OF DORMANT ATOMS, INTO WHICH GOD HAS PUT A MYSTIC 
-POSSIBILITY FOR NOTICING AN ADULT’S ACT, AND FIGURING OUT ITS PURPORT.
-UP TO ABOUT ITS PRIMARY SCHOOL DAYS A CHILD THINKS, NATURALLY, ONLY OF PLAY. BUT MANY A 
-FORM OF PLAY CONTAINS DISCIPLINARY FACTORS. “YOU CAN’T DO THIS,” OR “THAT PUTS YOU OUT,” 
-SHOWS A CHILD THAT IT MUST THINK, PRACTICALLY, OR FAIL. NOW, IF, THROUGHOUT CHILDHOOD, 
-A BRAIN HAS NO OPPOSITION, IT IS PLAIN THAT IT WILL ATTAIN A POSITION OF “STATUS QUO,” AS WITH OUR ORDINARY ANIMALS. 
-MAN KNOWS NOT WHY A COW, DOG OR LION WAS NOT BORN WITH A BRAIN ON A PAR WITH OURS; WHY SUCH ANIMALS CANNOT ADD, SUBTRACT, 
-OR OBTAIN FROM BOOKS AND SCHOOLING, THAT PARAMOUNT POSITION WHICH MAN HOLDS TODAY.''', alphabet)
-
-print(common.get_bigrams_in_coords(plain, 0))
-
-code = data_generator.generate_random_extended_key_fixed(alphabet, 40)
-
-print(len(code))
-print(len(plain))
-coprimes = extended.get_coprimes(alphabet.length)
-coprimes_mapping = extended.get_coprimes_mapping(coprimes)
-encryption = extended.encrypt_decrypt_text(plain, code, alphabet, coprimes)
-x = extended_decoder.get_max_monogram_state(encryption, standard1, len(code), alphabet)
-print(extended.encrypt_decrypt_text(encryption, x, alphabet, coprimes).get_non_stripped_text())
-# print([- i % alphabet.length for i in code])
-print(consistency(x, [extended.reverse_key(i, alphabet, coprimes, coprimes_mapping)
-                                        for i in code], alphabet))
-res = extended_decoder.break_fixed_length_code_with_mcmc(encryption, alphabet,
-                                                         x,
-                                                         [2], [1.0],
-                                                         [standard2],
-                                                         10000)
+code = data_generator.generate_random_vigenere_key_fixed(alpha_qwerty_alphabet, 245)
+coded = autokey.encrypt_text(alphabetic.StrippedText
+                                      (data_generator.get_string_cleared(
+    data_generator.generate_random_excerpt("../data/1984.txt", 1000)),
+                                       alpha_qwerty_alphabet),
+                                      code,
+                                      alpha_qwerty_alphabet)
 
 
-maxx_state = res[0]
-maxx_weight = res[1]
+print("ORIGINAL")
+print(coded.get_non_stripped_text())
+x = autokey_decoder.get_max_monogram_state(coded, full_monograms_distribution, 245, alpha_qwerty_alphabet)
+print("MAX MONOGRAM")
+print(autokey.decrypt_text(coded, x[0], alpha_qwerty_alphabet).get_non_stripped_text(), x[1])
+print("MONOGRAM CONSISTENCY")
+print(consistency(x[0], autokey.reverse_key(code, alpha_qwerty_alphabet), alpha_qwerty_alphabet))
 
-print(maxx_weight)
-print(consistency(maxx_state, [extended.reverse_key(i, alphabet, coprimes, coprimes_mapping)
-                                        for i in code], alphabet))
-decrypted1 = extended.encrypt_decrypt_text(encryption, maxx_state, alphabet, coprimes)
 
-decrypted2 = plain
-state_function = 0
-frequencies = common.calculate_n_gram_frequencies(decrypted2, 2)
-state_function += common.calculate_n_gram_log_weight(frequencies, standard2)
-print(state_function)
+result = autokey_decoder.break_bounded_length_code_with_mcmc_monogram_criteria(coded, alpha_qwerty_alphabet,
+                                                   [2], [1.0], [full_bigrams_distribution], 100000, 250,
+                                                                               full_monograms_distribution)
 
-print(decrypted1.get_non_stripped_text())
-print()
-print(decrypted2.get_non_stripped_text())
+print(len(result[0]))
+print("MAX BIGRAM")
+print(autokey.decrypt_text(coded, result[0], alpha_qwerty_alphabet).get_non_stripped_text())
+print("BIGRAM CONSISTENCY")
+print(consistency(result[0], autokey.reverse_key(code, alpha_qwerty_alphabet), alpha_qwerty_alphabet))
 
-maximizer = extended_decoder.get_max_bigram_state(encryption, standard2, len(code), alphabet)[0]
-decrypted3 = extended.encrypt_decrypt_text(encryption, maximizer,
-                                           alphabet, coprimes)
-frequencies = common.calculate_n_gram_frequencies(decrypted3, 2)
-state_function = common.calculate_n_gram_log_weight(frequencies, standard2)
-print(decrypted3.get_non_stripped_text())
-print(state_function)
-print(maximizer)
-print(consistency(maximizer, [extended.reverse_key(i, alphabet, coprimes, coprimes_mapping)
-                                        for i in code], alphabet))
 

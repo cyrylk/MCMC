@@ -3,7 +3,7 @@ import decryption_problem.alphabetic.alphabetic as alphabetic
 import decryption_problem.ciphers.vigenere as vigenere
 
 
-class MyTestCase(unittest.TestCase):
+class VigenereTest(unittest.TestCase):
     def setUp(self):
         self.alphabet = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 

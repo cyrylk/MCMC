@@ -16,12 +16,18 @@ def get_max_monogram_state_coord(encryption, coordinate, monogram_log_distributi
         if weight > max_weight:
             max_state = j
             max_weight = weight
-    return max_state
+    return max_state, max_weight
 
 
 def get_max_monogram_state(encryption, monogram_log_distribution, key_length, alphabet):
-    return [get_max_monogram_state_coord(encryption, coordinate, monogram_log_distribution, key_length, alphabet)
-            for coordinate in range(key_length)]
+    max_monogram_key = []
+    max_weight = 0
+    for coordinate in range(key_length):
+        max_coord = get_max_monogram_state_coord(encryption, coordinate, monogram_log_distribution,
+                                                 key_length, alphabet)
+        max_monogram_key.append(max_coord[0])
+        max_weight += max_coord[1]
+    return max_monogram_key, max_weight
 
 
 def get_bigram_part_weight(encryption, part, coord, key_length, bigram_log_distribution, alphabet):
@@ -114,7 +120,9 @@ def generate_frequency_and_weight_change(current_state, candidate, n_list, coefs
 
 
 def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_list, coefs, log_distributions, steps,
-                                      true_decrypting_code=[], consistency_threshold=1.0):
+                                      true_decrypting_code=[], consistency_thresholds=[]):
+    consistency_index = 0
+    consistency_list = []
     current_state = starting_state
     current_decryption = cipher.encrypt_decrypt_text(encryption, current_state, alphabet)
     start = generate_frequencies_and_state_weight(current_decryption, n_list, coefs, log_distributions)
@@ -143,9 +151,13 @@ def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_li
                 max_state = candidate
                 max_weight = current_state_weight
                 if true_decrypting_code and \
-                        common.consistency(current_state, true_decrypting_code, alphabet) > consistency_threshold:
-                    return max_state, max_weight, step
-    return max_state, max_weight
+                        common.consistency(current_state, true_decrypting_code, alphabet) >= \
+                        consistency_thresholds[consistency_index]:
+                    consistency_index += 1
+                    consistency_list.append(step)
+                    if consistency_index >= len(consistency_thresholds):
+                        return max_state, max_weight, consistency_list
+    return max_state, max_weight, consistency_list
 
 
 def break_bounded_length_code_with_mcmc(encryption, alphabet, n_list, coefs, distributions, steps, boundary,
@@ -153,7 +165,7 @@ def break_bounded_length_code_with_mcmc(encryption, alphabet, n_list, coefs, dis
     max_weight = float("-inf")
     max_state = [cipher.get_zero_mono_key()]
     for length in range(1, boundary+1):
-        start = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)
+        start = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)[0]
         break_attempt = break_fixed_length_code_with_mcmc(encryption, alphabet, start, n_list, coefs,
                                                           distributions, steps)
         if break_attempt[1] > max_weight:
@@ -166,8 +178,9 @@ def break_bounded_length_code_with_mcmc_optimized(encryption, alphabet, n_list, 
                                                   boundary, monogram_log_distribution):
     max_weight = float("-inf")
     max_state = [cipher.get_zero_mono_key()]
+    steps = steps//20
     for length in range(1, boundary+1):
-        start = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)
+        start = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)[0]
         optimized_steps = int(length/boundary * steps)
         break_attempt = break_fixed_length_code_with_mcmc(encryption, alphabet, start, n_list, coefs,
                                                           log_distributions, optimized_steps)
@@ -176,7 +189,7 @@ def break_bounded_length_code_with_mcmc_optimized(encryption, alphabet, n_list, 
             max_weight = break_attempt[1]
 
     return break_fixed_length_code_with_mcmc(encryption, alphabet, max_state, n_list, coefs,
-                                             log_distributions, 2 * steps)
+                                             log_distributions, 20*steps)
 
 
 def break_bounded_length_code_with_mcmc_monogram_criteria(encryption, alphabet, n_list, coefs, log_distributions, steps,
@@ -184,11 +197,11 @@ def break_bounded_length_code_with_mcmc_monogram_criteria(encryption, alphabet, 
     max_weight = float("-inf")
     max_state = [cipher.get_zero_mono_key()]
     for length in range(1, boundary+1):
-        state = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)
-        current_decryption = cipher.encrypt_decrypt_text(encryption, state, alphabet)
-        weight = generate_frequencies_and_state_weight(current_decryption, n_list, coefs, log_distributions)
+        max_monogram = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)
+        state = max_monogram[0]
+        weight = max_monogram[1]
         if weight > max_weight:
             max_weight = weight
             max_state = state
     return break_fixed_length_code_with_mcmc(encryption, alphabet, max_state, n_list, coefs,
-                                             log_distributions, 2 * steps)
+                                             log_distributions, steps)

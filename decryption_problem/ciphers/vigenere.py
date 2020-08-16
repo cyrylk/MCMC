@@ -41,6 +41,10 @@ def update_decryption_by_key_index(decryption, changed_index, shift, key_length,
         decryption[index] = encrypt_decrypt_single(decryption[index], shift, alphabet)
 
 
+def reverse_key(key, alphabet):
+    return [(-a) % alphabet.length for a in key]
+
+
 def get_zero_mono_key():
     return 0
 

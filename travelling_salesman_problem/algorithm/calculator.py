@@ -51,12 +51,12 @@ def update_state_reverse_swap(current_state, swap):
         current_state[(swap[0] + i) % len(current_state)] = current_state[(swap[1] - i) % len(current_state)]
         current_state[(swap[1] - i) % len(current_state)] = aux
 
-
-state = [0, 1, 2, 3, 4, 5]
-update_state_reverse_swap(state, (3, 0))
-update_state_reverse_swap(state, (3, 0))
-update_state_reverse_swap(state, (3, 0))
-print(state)
+#
+# state = [0, 1, 2, 3, 4, 5]
+# update_state_reverse_swap(state, (3, 0))
+# update_state_reverse_swap(state, (3, 0))
+# update_state_reverse_swap(state, (3, 0))
+# print(state)
 
 
 def calculate_distance(state, distances):

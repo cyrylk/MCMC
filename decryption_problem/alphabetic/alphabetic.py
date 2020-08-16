@@ -103,3 +103,5 @@ def n_gram_dict(alphabet, n):
     for i in range(n):
         result = alphabets_product(alphabet, result)
     return result
+
+

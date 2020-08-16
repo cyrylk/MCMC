@@ -230,3 +230,10 @@ def consistency(guessed_key, real_key, alphabet):
         return consistency_vigenere(guessed_key, real_key, alphabet)
     except TypeError:
         return consistency_vigenere_extended(guessed_key, real_key, alphabet)
+
+
+def get_piece_on_i_coordinate(text, i, key_length):
+    piece = []
+    for coord in range(i, len(text), key_length):
+        piece.append(text[coord])
+    return piece
