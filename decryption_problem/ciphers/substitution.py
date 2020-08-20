@@ -66,11 +66,15 @@ def generate_random_permutation(alphabet):
 
 def get_random_swapp(ordered):
     proposition = randint(0, len(ordered) - 2)
+    los = randint(0,1)
+    if not los or proposition == len(ordered) - 2:
+        return proposition, proposition + 1
+    return proposition, proposition + 2
     # to_change = randint(proposition+1, len(ordered) - 1)
-
-    return proposition, proposition+1
     # elif los == 1 or proposition == len(ordered) - 3:
     #     return proposition, proposition + 2
+
+
     # return proposition, proposition + 3
 
 
@@ -211,9 +215,9 @@ def break_mcmc(encryption, alphabet, extended_alphabet, log_distribution, steps,
             swap_permutation_and_update_decryption(current_decryption, current_decoding_key, swap)
             common.update_frequency(current_frequencies, frequency_change)
             current_dist += dist_change
-            # aux = current_order[swapp[0]]
-            # current_order[swapp[0]] = current_order[swapp[1]]
-            # current_order[swapp[1]] = aux
+            aux = current_order[swapp[0]]
+            current_order[swapp[0]] = current_order[swapp[1]]
+            current_order[swapp[1]] = aux
 
             if current_dist > max_dist:
                 max_dist = current_dist
@@ -268,7 +272,7 @@ def break_mcmc_double(encryption, alphabet, steps, length,
 alphabett = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 plain = alphabetic.StrippedText(
     data_generator.get_string_cleared
-    (data_generator.generate_random_excerpt("../data/1984.txt", 20000)).upper(),
+    (data_generator.generate_random_excerpt("../data/1984.txt", 2000)).upper(),
                                 alphabett)
 
 standard2 = data_generator.get_log_distribution_from_json("../data/bigram_log_distributions_uppercase.json")
@@ -301,25 +305,25 @@ encryption = encrypt_decrypt_text(plain, alphabett, permuted_alphabet)
 #         D[i] = 1
 # print(sorted(D, key=lambda i: D[i] if i in D else -1))
 #
-code = data_generator.generate_random_vigenere_key_fixed(permuted_alphabet, 100)
-print(code)
-encryption = cipher.encrypt_decrypt_text(plain, code,
-                                         permuted_alphabet)
+# code = data_generator.generate_random_vigenere_key_fixed(permuted_alphabet, 100)
+# print(code)
+# encryption = cipher.encrypt_decrypt_text(plain, code,
+#                                          permuted_alphabet)
 # print(cipher.encrypt_decrypt_text(encryption, decoder.get_max_monogram_state(encryption, standard1, 2, permuted_alphabet)[0], permuted_alphabet)
 #       .get_non_stripped_text())
 
 
-x = break_mcmc_double(encryption, alphabett, 20000, 100, standard1, standard2, upper_alphabet)
+x = break_mcmc(encryption, alphabett, upper_alphabet,  standard2,  3000, standard1)
 
 # decrypted = cipher.encrypt_decrypt_text(encryption, x[1], x[0])
 # print(decrypted.get_non_stripped_text())
 # print(get_reverse_permutation(alphabett, permuted_alphabet).alphabet)
 # x = break_mcmc(encryption, alphabett, upper_alphabet, standard2, 5000, standard1)
-for i in range(10):
-    freqs = common.calculate_n_gram_frequencies(common.get_piece_on_i_coordinate(plain, i, 10), 1)
-    print(max(freqs, key=lambda l: freqs[l]))
+# for i in range(10):
+#     freqs = common.calculate_n_gram_frequencies(common.get_piece_on_i_coordinate(plain, i, 10), 1)
+#     print(max(freqs, key=lambda l: freqs[l]))
     # print(min(freqs, key=lambda l: freqs[l]))
-# print(encrypt_decrypt_text(encryption, alphabett, x).get_non_stripped_text())
+print(encrypt_decrypt_text(encryption, alphabett, x).get_non_stripped_text())
 # freqs = common.calculate_n_gram_frequencies(encrypt_decrypt_text(encryption, alphabett, x), 2)
 # print(common.calculate_n_gram_log_weight(freqs, standard2))
 # print(plain.get_non_stripped_text())

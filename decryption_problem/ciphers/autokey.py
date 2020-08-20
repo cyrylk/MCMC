@@ -14,6 +14,7 @@ def create_stripped_encryption_decryption(text, encryption_decryption, alphabet)
     return result
 
 
+# by assumption stripped text has to be an argument here
 def encrypt_text(text, shift_key, alphabet):
     current_key_ptr = 0
     encrypted_decrypted = []
