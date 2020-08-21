@@ -49,7 +49,7 @@ i problemu komiwojażera}}\\
 \tableofcontents
 \newpage
 \section{Wstęp}
-W swojej pracy zaprezentuję stosunkowo nowe podejście do dekodowania zaszyfrowanych wiadomości tekstowych przy użyciu próbkowania Monte Carlo łańcuchami Markowa. Podejście opisane najpierw przez Diaconisa, zostało rozwinięte w \cite{Connor}, a następnie jeszcze rozszerzone w \cite{Chen&Rosenthal}. Moim celem jest zastosowanie podejścia MCMC do dekodowania szyfrów z rodziny, dla której to podejście do tej pory nie było wykorzystywane, ponadto oszacować istotne parametry algorytmu deszyfrującego – tempo zbieżności, złożoność pamięciową i czasową, jak bliski jest oczekiwany wynik od \textit{optymalnego} (w pewnym sensie), wpływ różnych modyfikacji algorytmu na jego działanie oraz co zyskujemy wraz z takim podejściem.
+W swojej pracy zaprezentuję stosunkowo nowe podejście do dekodowania zaszyfrowanych wiadomości tekstowych przy użyciu próbkowania Monte Carlo łańcuchami Markowa. Podejście opisane najpierw przez Diaconisa, zostało rozwinięte w \cite{Connor}, a następnie jeszcze rozszerzone w \cite{Chen&Rosenthal}. Moim celem jest zastosowanie podejścia MCMC do dekodowania szyfrów z rodziny, dla której to podejście do tej pory nie było wykorzystywane. Najpierw zaprezentuję algorytm deterministyczny rozwiązujący problem w postawionej przeze mnie wersji, następnie pokazuję, że  ponadto oszacować istotne parametry algorytmu deszyfrującego – tempo zbieżności, złożoność pamięciową i czasową.
 
 W drugiej części użyję podobnego podejścia do rozwiązania symetrycznego problemu komiwojażera. Tak jak poprzednio, oszacuję wartości najważniejszych parametrów algorytmu: prędkość zbieżności, złożoność, a także o ile gorszego rozwiązania niż optymalne powinniśmy oczekiwać oraz za pomocą symulacji pokażę, jakie wyniki otrzymujemy w praktyce. Do symulacji użyję benchmarkowego zbioru danych wejściowych dla problemu komiwojażera z \cite{benchmark}.\\
 
@@ -799,7 +799,7 @@ p_{i_1 i_0} \pi_{i_1}  p_{i_1 i_2} ... p_{i_{n-1} i_n} = ... \\ &=p_{i_1 i_0} p_
 &=P(X_n = i_0, X_{n-1} = i_1, ... X_0 = i_n)
 \end{align*}
 co oznacza, że łańcuch jest odwracalny. \qed
-\\\\
+\newpage
 \section{Metody Monte Carlo}
 W rozdziale tym zajmę się metodami generowania łańcuchów Markowa o zadanych własnościach, a także spróbuję przybliżyć własności w ten sposób wygenerowanych łańcuchów.
 \\
@@ -897,14 +897,14 @@ Zacznij w dowolnie wybranym stanie $X_0 := i \in S$\;
 \quad \Else{}{
 \quad\quad $X_{n+1} := X_n$\;}}
 \end{algorithm}
-Również łatwo sprawdzamy, że otrzymujemy w ten sposób łańcuch zadany macierzą $\mathbb{P}$ z równania.\\
+Również łatwo sprawdzamy, że otrzymujemy w ten sposób łańcuch zadany macierzą $\mathbb{P}$ z równania. Uwaga: zauważmy, że do nieokresowości łańcucha wynikowego jest wystarczająca, ale nie jest konieczna nieokresowość macierzy $\mathbb{Q}$, więc zwykle w zastosowaniach przejmujemy się tylko nieokresowością $\mathbb{P}$. Dowody nieredukowalności i spełniania równań balansu nie zależą od nieokresowości, tak więc w praktyce $\mathbb{Q}$ może nie być nieokresowa. \\
 Zwróćmy uwagę, że proces przejścia naturalnie rozdziela się na wybór kandydata (przy pomocy \textit{macierzy generującej}), a następnie akceptację lub odrzucenie i pozostanie przy aktualnym stanie. Można zatem zdefiniować \textit{prawdopodobieństwo akceptacji} $\alpha_{ij}$, czyli prawdopodobieństwo przejścia z $i$ do $j$ ($i \neq j$) pod warunkiem, że $j$ został wylosowany jako kandydat. Dla algorytmu Metropolisa mamy:
 $$\alpha_{ij} = \min(1, \frac{\pi_j}{\pi_i})$$
 Natomiast dla uogólnienia Metropolisa-Hastingsa (tam, gdzie $q_{ij} \neq 0$, w przeciwnym razie przyjmujemy $\alpha_{ij} = 1$):
 $$\alpha_{ij} = \min(1, \frac{\pi_j q_{ji}}{\pi_i q_{ij}})$$
 \\
 I prawdopodobieństwo przejścia $p_{ij} = q_{ij}\alpha_{ij}$ gdy $i \neq j$ oraz $p_{ii} = 1 - \sum\limits_{j \in S, j \neq i} p_{ij}$\\\\
-Ogólnie za [Hastings-Peskun] możemy wprowadzić pewną rodzinę algorytmów, czyli równoważnie stochastycznych, nieredukowalnych i nieokresowych macierzy przejść $\mathbb{P}$ o stacjonarnym rozkładzie $\pi$ wyprowadzonych na podstawie $\mathbb{Q}$ o założeniach jak w algorytmie Metropolisa-Hastingsa. Sprowadza się to do ustalenia warunków na $(\alpha_{ij})_{i,j \in S, i \neq j}$, gdzie $0 < \alpha_{ij} \leq 1$ (chcemy, żeby każdy wylosowany \textit{kandydat} miał niezerowe szanse na zostanie stanem w następnym kroku). Mamy więc  $$p_{ij} = q_{ij}\alpha_{ij}$$
+Ogólnie za [Hastings-Peskun] możemy wprowadzić pewną rodzinę algorytmów, czyli równoważnie stochastycznych, nieredukowalnych i nieokresowych macierzy przejść $\mathbb{P}$ o stacjonarnym rozkładzie $\pi$ wyprowadzonych na podstawie $\mathbb{Q}$ o założeniach jak w algorytmie Metropolisa-Hastingsa (zgodnie z uwagą możemy pominąć nieokresowość). Sprowadza się to do ustalenia warunków na $(\alpha_{ij})_{i,j \in S, i \neq j}$, gdzie $0 < \alpha_{ij} \leq 1$ (chcemy, żeby każdy wylosowany \textit{kandydat} miał niezerowe szanse na zostanie stanem w następnym kroku). Mamy więc  $$p_{ij} = q_{ij}\alpha_{ij}$$
 I ustalamy:
 $$ 0 \leq \alpha_{ij} = \frac{s_{ij}}{1+t_{ij}} \leq 1$$
 gdzie  $s_{ij}$ są zadane pewną symetryczną funkcją ($s_{ij} = s_{ji}$) $S \times S \to \mathbb{R}_{\geq 0}$, natomiast $$t_{ij} = \frac{\pi_i q_{ij}}{\pi_j q_{ji}}$$
@@ -941,8 +941,7 @@ Teraz podamy bez dowodu twierdzenie [dowód w: Peskun, Optimum Monte-Carlo sampl
 Niech $\mathbb{P}^{(1)} = (p_{ij}^{(1)})_{i,j \in S}$, $\mathbb{P}^{(2)}= (p_{ij}^{(2)})_{i,j \in S}$ będą dwiema ergodycznymi macierzami o stacjonarnym rozkładzie $\pi$ spełniającymi ponadto \textit{detailed balance equations}. Jeśli dla wszystkich wyrazów leżących poza diagonalą zachodzi $p_{ij}^{(1)} \geq p_{ij}^{(2)}$, to dla dowolnej $f: S \to \mathbb{R}$,  $\mathbb{P}^{(1)}$ ma mniejszą lub równą wariancję asymptotyczną, czyli:
 $$Var_f(\mathbb{P}^{(1)}) \leq Var_f(\mathbb{P}^{(2)})$$
 \\\\
-Z poprzedniego rodziału wiemy, że mówienie o wariancji asymptotycznej ma sens. Z wcześniejszych rozważań wiemy natomiast, że dla dowolnych $i \neq j \in S$ macierz z algorytmu Metropolisa-Hastingsa maksymalizuje $p_{ij}$ w obrębie rodziny $\mathcal{R}$, a więc również minimalizuje asymptotyczną wariancję w tej rodzinie. Zatem w odpowiednio długim przedziale czasowym, najlepiej symuluje docelowy rozkład, z tego powodu ten algorytm jest wyborem do rozwiązania postawionych w tej pracy problemów.\\\\
- Z teorii zostają jeszcze: na pewno mixing time przy okazji analizy zbieżności, wtedy może też się pojawić odwracalność łańcucha i CFTP, doopisać uzasadnienie użycia MCMC - o metodach gradientowych, teoria niejednorodnych ŁM i symulowane wyżarzanie. Ponadto jeśli chodzi o background - dodać historyjkę o więźniach - nazwisko Diaconis powinno się tam pojawić, przy okazji problemu komiwojażera opowiedzieć o P/NP, element nt. Markowa, który badał odstępy między samogłoskami w wojnie i pokoju. Dodać bibliografię -> źródła którymi się inspirowałem w dowodach teorii Markowa.
+Z poprzedniego rodziału wiemy, że mówienie o wariancji asymptotycznej ma sens. Z wcześniejszych rozważań wiemy natomiast, że dla dowolnych $i \neq j \in S$ macierz z algorytmu Metropolisa-Hastingsa maksymalizuje $p_{ij}$ w obrębie rodziny $\mathcal{R}$, a więc również minimalizuje asymptotyczną wariancję w tej rodzinie. Zatem w odpowiednio długim przedziale czasowym, najlepiej symuluje docelowy rozkład, z tego powodu ten algorytm jest wyborem do rozwiązania postawionych w tej pracy problemów. \newpage
 
 \section{Dekodowanie zaszyfrowanego tekstu}
 Zajmę się w tym rozdziale zastosowaniem MCMC do dekodowania zaszyfrowanego tekstu. Opowiem zarówno o swoich \textit{udanych} jak i \textit{nieudanych} (przynajmniej do momentu oddania tej pracy) próbach rozwiązania tego problemu dla różnych typów szyfrów.
@@ -1156,7 +1155,7 @@ $i$-tym $n$-gramem tekstu $T = t_0...t_n$ nazwiemy $t_it_{i+1}...t_{n-1}$ i bedz
 $$w_n(k) = \prod\limits_{i=0}^{n-i+1} f_n(d_i^k(n))$$
 Można wprowadzić \textit{wagę mieszaną} ze współczynnikami $p_n$, tj.
 $$w(k) = \prod\limits_{n=1}^{\infty} (w_n(k))^{p_n}$$
-W praktyce – choć przeprowadzałem początkowo pewne doświadczenia z powyższą mieszaną wagą, jej zastosowanie nie poprawiało w żaden sposób jakości ataku (choć można przeprowadzić dalsze badania na ten temat). Ostatecznie więc używałem wszędzie 'czystych' $n$-gramowych wag dla różnych $n$ – podobnie użycie współczynnika $p_n$ różnego od 1 dla $n$-gramowych wag nie przyniosło istotnej poprawy, więc dalej będą stosowane po prostu czyste $n$-gramowe wagi.\\\\
+W praktyce – choć przeprowadzałem początkowo pewne doświadczenia z powyższą mieszaną wagą, jej zastosowanie nie poprawiało w żaden sposób jakości ataku (choć można przeprowadzić dalsze badania na ten temat, bo prawdopodobnie nie został on wyczerpany). Ostatecznie więc używałem wszędzie 'czystych' $n$-gramowych wag dla różnych $n$ – podobnie użycie współczynnika $p_n$ różnego od 1 dla $n$-gramowych wag nie przyniosło istotnej poprawy, więc dalej będą stosowane po prostu czyste $n$-gramowe wagi.\\\\
 Dalej możemy wprowadzić równoważną definicję $n$-gramowej wagi. Dla wszystkich możliwych $n$-gramów g nad użytym zbiorem znaków $S$ – niech zadają one zbiór $G$ – dla potencjalnie zdekodowanego szyfrogramu $D$ oznaczmy przez $r_D(g)$ liczbę wystąpień $g$ w $D$. Wtedy:
 $$w_n(k) = \prod\limits_{g \in G} f_n(g)^{r_D(g)}$$
 Intuicyjnie, waga jest tym większa im bardziej tekst jest bliski językowi angielskiemu – a więc rzeczywistej wiadomości – bowiem wtedy popularne $n$-gramy występują często, a te niepopularne rzadko. Użyliśmy tu wagi jak w [Chen\&Rosenthal]. Można użyć również ciut innego podejścia[Connors, Diaconis], które – mimo że odrobinę mniej wygodne – ma ładne Markowowskie uzasadnienie.\\\\
@@ -1306,7 +1305,7 @@ Teraz możemy się jeszcze zastanowić, jak uogólnić ideę algorytmu bigramowe
 W zakończonym podrozdziale zaprezentowałem deterministyczne podejście do ataku na szyfry z omówionych wcześniej trzech rodzin – zaprezentowałem działanie tego podejścia na krótkim napisie. Głównym wkładem tych rozważań jest jednak to, że możemy dzięki deterministycznemu algorytmowi znajdowania $\argmax$ sprawdzić to podejście doświadczalnie, czym zajmę się w następnym podrozdziale.\\
 \subsection{Ocena skuteczności metody n-gramowej}
 Chcemy sprawdzić, kiedy rozważane uprzednio podejście ma w ogóle sens. Można intuicyjnie wyczuć, że im większa długość szyfru w stosunku do długości szyfrowanego tekstu, tym szyfrowanie jest bezpieczniejsze. Rzeczywiście, wtedy szyfr coraz bardziej zbliża się do szyfru Vernama – który jest \textit{szyfrem nie do złamania} – jeśli tylko szyfrowane są wszystkie znaki i klucz jest generowany losowo. Szyfr Vernama to odmiana szyfru Vigenere'a – klucz jednak ma długość taką jak oryginalna wiadomość, przez co, jeśli klucz jest wygenerowany zgodnie z rozkładem jednostajnym, nie jesteśmy w stanie odczytać poprawnie żadnych zależności statystycznych z szyfrogramu – każda litera wiadomości jest przesunięta o losową wylosowaną jednostajnie wartość – więc samą literę szyfrogramu można traktować jako wylosowaną z alfabetu z rozkładem jednostajnym! Każda sekwencja liter jest więc tak samo prawdopodobna niezależnie od rzeczywistego tekstu. W bardzo małym stopniu jest możliwe zaatakować ten szyfr, jeśli występują znaki niekodowane, np. załóżmy, że mamy niekodowaną spację i zakodowany szyfrem Vernama tekst ABC DEF. Możemy wtedy badać najbardziej prawdopodobne sekwencje dwóch słów w angielskim – jednak bez dodatkowej znajomości kontekstu jest to w zasadzie dalej niemożliwe, tzn. HEY BOY jest praktycznie tak samo prawdopodobne jak YES SIR, jeśli nie wiemy np., że to list dziewczyny do chłopaka albo odwrotnie – fragment scenariusza do filmu wojennego. Bez znajomości kontekstu natomiast, przy użyciu zautomatyzowanych metod, szyfr nadal pozostaje \textit{praktycznie} nie do złamania.\\
-Skupiamy się nadal na metodach $n$-gramowych. Dzięki wyprowadzeniu algorytmów deterministycznych możemy zaimplementować je i sprawdzić, kiedy poziom odszyfrowania otrzymany w ten sposób jest zadowalający. Zwróćmy uwagę, że dla 1000-elementowego zaszyfrowanego tekstu przy kluczu długości 1000 (szyfr Vernama) i niekodowanych (bądź ich braku) znakach w tych samych miejscach algorytmy deterministyczne dadzą zawsze (muszą dać!) ten sam wynik, po prostu najbardziej prawdopodobną (względem przyjętego rozkładu znormalizowanych $w$) sekwencję znaków w języku angielskim – skoro szyfr jest nie do złamania, to jak mielibyśmy go złamać? Do pewnego momentu jednak jesteśmy w stanie taki szyfr całkiem skutecznie zaatakować. Jednak klasycznie opisywana metoda analizy części zaszyfrowanych monoalfabetycznie – nie zetknąłem się z innymi – wg częstości pojedynczych liter przeważnie – dla długiego klucza – wtedy zawodzi. Już we wcześniejszym rozdziale na podstawie krótkiego napisu pokazaliśmy, że jeśli ciągi zaszyfrowane monoalfabetycznie są krótkie – to w bardzo nikłym stopniu wyrażają się tam statystyczne zależności. Nawet jeśli uda się poprawnie zdekodować któryś z monoalfabetycznych ciągów, to ponieważ liczba pól do zdekodowania jest duża niewiele nas to porusza do przodu. Powiedzmy, że klucz ma 1/4 długości tekstu – monoalfabetyczne ciągi mają długość 4 – to bardzo mało (daje to niski \textit{indeks koincydencji} [wiki]). Jeśliby nawet podobnie jak dla szyfru Cezara założyć, że na każdym z tych ciągów najczęściej występowała jedna z czterech najpopularniejszych liter alfabetu, nadal jest do sprawdzenia wykładniczo wiele wartości ($4^{m/4}$, $m$ – długość tekstu). Pomocą są tu wyprowadzone metody, które poza samymi monoalfabetycznie zaszyfrowanymi ciągami biorą też pod uwagę zależności między nimi. \\\\
+Skupiamy się nadal na metodach $n$-gramowych. Dzięki wyprowadzeniu algorytmów deterministycznych możemy zaimplementować je i sprawdzić, kiedy poziom odszyfrowania otrzymany w ten sposób jest zadowalający, innymi sprawdzić górne ograniczenia tej metody i wszystkich opartych na tym schemacie. Zwróćmy uwagę, że dla 1000-elementowego zaszyfrowanego tekstu przy kluczu długości 1000 (szyfr Vernama) i niekodowanych (bądź ich braku) znakach w tych samych miejscach algorytmy deterministyczne dadzą zawsze (muszą dać!) ten sam wynik, po prostu najbardziej prawdopodobną (względem przyjętego rozkładu znormalizowanych $w$) sekwencję znaków w języku angielskim – skoro szyfr jest nie do złamania, to jak mielibyśmy go złamać? Do pewnego momentu jednak jesteśmy w stanie taki szyfr całkiem skutecznie zaatakować. Jednak klasycznie opisywana metoda analizy części zaszyfrowanych monoalfabetycznie – nie zetknąłem się z innymi – wg częstości pojedynczych liter przeważnie – dla długiego klucza – wtedy zawodzi. Już we wcześniejszym rozdziale na podstawie krótkiego napisu pokazaliśmy, że jeśli ciągi zaszyfrowane monoalfabetycznie są krótkie – to w bardzo nikłym stopniu wyrażają się tam statystyczne zależności. Nawet jeśli uda się poprawnie zdekodować któryś z monoalfabetycznych ciągów, to ponieważ liczba pól do zdekodowania jest duża niewiele nas to porusza do przodu. Powiedzmy, że klucz ma 1/4 długości tekstu – monoalfabetyczne ciągi mają długość 4 – to bardzo mało (daje to niski \textit{indeks koincydencji} [wiki]). Jeśliby nawet podobnie jak dla szyfru Cezara założyć, że na każdym z tych ciągów najczęściej występowała jedna z czterech najpopularniejszych liter alfabetu, nadal jest do sprawdzenia wykładniczo wiele wartości ($4^{m/4}$, $m$ – długość tekstu). Pomocą są tu wyprowadzone metody, które poza samymi monoalfabetycznie zaszyfrowanymi ciągami biorą też pod uwagę zależności między nimi. \\\\
 Przeprowadziłem testy dla szyfru Vigenere'a, żeby to zobrazować, a także, żeby dać pewne wyobrażenie o granicach skuteczności metody. Testy będą przeprowadzane przy użyciu alfabetu Vigenere'a (duże angielskie litery), szyfrując i deszyfrując, zachowujemy niekodowane znaki – jak w klasycznym opisie szyfru Vigenere'a, który znajdziemy na wikipediach. Słownik log-częstości uni- (mono-) bi- (di-) i trigramów wygenerowałem na podstawie trzech książek (w języku angielskim) \textit{Duma i uprzedzenie} Jane Austen, \textit{Oliver Twist} Karola Dickensa oraz \textit{Wojna i pokój} Lwa Tołstoja.[Gutenberg project] Klucze szyfrujące generujemy losowo (przy użyciu metod z biblioteki \textit{random} w Pythonie – po prostu losowo generujemy każdą kolejną współrzędną). Test przeprowadzamy na losowo wybranych fragmentach długości $m$ książki \textit{Rok 1984} George'a Orwella (gdzie oczywiście małe litery są wcześniej skonwertowane na wielkie, podobnie tekst jest wcześniej oczyszczony z podwójnych spacji itd. – mogłaby to być równie dobrze część działania algorytmu dekodującego, nie robi to różnicy). Skuteczność dekodowania jest dana stosunkiem zaszyfrowanych pól, które udało się odszyfrować poprawnie do wszystkich zaszyfrowanych pól. I tak dla długości tekstu 20 dostajemy skuteczności:\\
 \begin{center}\begin{tabular}{
 |c|c|c|}
@@ -1621,15 +1620,15 @@ I na koniec dla tekstu o długości 10000 znaków:
  & 0.17 & 0.27\\ \hline
 \end{tabular}\end{center}
 
-Wyniki są powtarzalne – metoda bigramowa daje znacznie lepsze rezultaty niż monogramowa. Począwszy od kluczy długości ok. 1/10 - 1/8 długości tekstu są to już wyniki ok. 2 razy lepsze. Bigramowa metoda zachowuje skuteczność na poziomie średnio >50\% zachowuje do kluczy o długości ok. 0,3 - 1/3  długości tekstu. W ewentualnej kontynuacji można by się pokusić o bardziej systematyczne testy statystyczne, tutaj przede wszystkim prezentuję ideę, więc zostajemy na razie przy tych zgrubnych oszacowaniach, które dają nam jednak wystarczającą wiedzę do naszych celów. Jedno jest pewne, metoda bigramowa jest skuteczna dla znacznie większego zbioru długości kluczy, więc to ona powinna być bazą naszego ataku.\\
-Niestety ze względu na dużą złożoność czasową, jak opisałem w poprzednim podrozdziale, nie było możliwości przetestowania metody trigramowej (ani dla większych $n$). Również testy metody bigramowej zajmowały – zwłaszcza dla tekstów o długości większej niż 1000 – bardzo dużo czasu. Załóżmy teraz, że tego czasu nie mamy, potrzebujemy zdekodować wiadomość \textit{szybko} i \textit{dostatecznie} dobrze. Jest parę powodów, dla których możemy tego potrzebować, czasem potencjalna złożoność czasowa problemu może być tak duża, że realizacja tego algorytmu nie jest realna na komputerze, który mamy do dyspozycji: rozszerzony szyfr Vigenere'a dla alfabetu 92-symbolowego, na którym później również (poza klasycznym o dł. 26) będziemy pracować, zadaje na pojedynczej współrzędnej 4048 możliwości! Złożoność czasowa algorytmu bigramowego dla tekstu długości 1000 jest więc rzędu: $6.6380929649 × 10^{13}$, ponadto dodatkową potrzebną pamięć można oszacować na 4.9158912 GB. Tak naprawdę na komputerze, na którym pracowałem, już obliczenia dla 26-elementowego alfabetu zajmowały bardzo długo (testy dla klucza o długości 2000 zajęły kilka godzin – zauważmy, że stała oznaczająca czas wewnątrz iteracji, również nie jest aż tak mała (choć jest pewne pole do optymalizacji, jeśli zrezygnować z używania generycznych funkcji). Nie jest to dobre również wtedy, kiedy szybko chcemy sprawdzić, czy próba takiego ataku ma w ogóle szansę – gdy nie wiemy, jakim szyfrem tekst został zakodowany i chcemy wypróbować tę możliwość, ale nie tracić na nią niepotrzebnie zbyt dużo czasu i zasobów. Możemy też po prostu lubić szybkość – powodów jest wiele.\\\\
+Wyniki są powtarzalne – metoda bigramowa daje znacznie lepsze rezultaty niż monogramowa. Począwszy od kluczy długości ok. 1/10 - 1/8 długości tekstu są to już wyniki ok. 2 razy lepsze. Bigramowa metoda zachowuje skuteczność na poziomie średnio >50\% zachowuje do kluczy o długości ok. 1/4 - 1/3  długości tekstu. W ewentualnej kontynuacji można by się pokusić o bardziej systematyczne testy diagnostyczne, tutaj przede wszystkim prezentuję ideę, więc zostajemy na razie przy tych zgrubnych oszacowaniach, które dają nam jednak wystarczającą wiedzę do naszych celów. Jedno jest pewne, metoda bigramowa jest skuteczna dla znacznie większego zbioru długości kluczy, więc to ona (albo 'większa') powinna być bazą naszego ataku.\\
+Niestety ze względu na dużą złożoność czasową, jak opisałem w poprzednim podrozdziale, nie było możliwości przetestowania metody trigramowej (ani dla większych $n$). Również testy metody bigramowej zajmowały – zwłaszcza dla tekstów o długości większej niż 1000 – bardzo dużo czasu. Załóżmy teraz, że tego czasu nie mamy, potrzebujemy zdekodować wiadomość \textit{szybko} i \textit{dostatecznie} dobrze. Jest parę powodów, dla których możemy tego potrzebować, czasem potencjalna złożoność czasowa problemu może być tak duża, że realizacja tego algorytmu nie jest realna na komputerze, który mamy do dyspozycji: rozszerzony szyfr Vigenere'a dla alfabetu 92-symbolowego, na którym później również (poza klasycznym o dł. 26) będziemy pracować, zadaje na pojedynczej współrzędnej 4048 możliwości! Złożoność czasowa algorytmu bigramowego dla tekstu długości 1000 jest więc rzędu: $6.6380929649 × 10^{13}$, ponadto dodatkową potrzebną pamięć można oszacować na 4.9158912 GB. Tak naprawdę na komputerze, na którym pracowałem, już obliczenia dla 26-elementowego alfabetu zajmowały bardzo długo (testy dla klucza o długości 2000 zajęły kilka godzin – zauważmy, że stała oznaczająca czas wewnątrz iteracji, również nie jest aż tak mała (choć jest pewne pole do optymalizacji, jeśli zrezygnować z używania generycznych funkcji). Nie jest to dobre również wtedy, kiedy szybko chcemy sprawdzić, czy próba takiego ataku ma w ogóle szansę – gdy nie wiemy, jakim szyfrem tekst został zakodowany i chcemy wypróbować tę możliwość, ale nie tracić na nią niepotrzebnie zbyt dużo czasu i zasobów. Może być też po prostu, że szybko tracimy cierpliwość – powodów jest wiele.\\\\
 Tak więc podsumowując, metoda monogramowa szybko przestaje działać, metoda bigramowa i dalsze (intuicyjnie) dłużej zachowują skuteczność, ale mogą okazać się za wolne. Jak zachować dobre wyniki, jednocześnie przyspieszając algorytm? Odpowiedź dają metody Monte Carlo Markov Chains.
 \\
 \subsection{Algorytmy MCMC}
-Zanim zaczniemy rozwijać opis algorytmu przydatne będzie przedstawienie idei MCMC w postaci grafu (sam graf pojawi się jeszcze wprost jako centrum problemu komiwojażera), zakładam, że to pojęcie jest znane, przypomnę tylko parę koncepcji, które się później przydadzą. Odległością między wierzchołkami nazwiemy długość (liczbę krawędzi na) najkrótszej drogi (przechodzącej przez jak najmniej krawędzi) między tymi wierzchołkami. Odległość wierzchołka do samego siebie to zero, do wierzchołków połączonych z nim krawędzią to jeden itd. Średnicą w grafie nazwiemy maksymalną odległość w grafie.\\
+Zanim zaczniemy rozwijać opis algorytmu przydatne będzie przedstawienie idei MCMC w postaci grafu (sam graf pojawi się jeszcze wprost jako centrum problemu komiwojażera) odpowiodającego macierzy generującej kandydatów. Zakładam, że to pojęcie jest znane, przypomnę tylko parę koncepcji, które się później jeszcze przydadzą przy okazji analizy \textit{mixing time}. Odległością między wierzchołkami nazwiemy długość (liczbę krawędzi na) najkrótszej drogi (przechodzącej przez jak najmniej krawędzi) między tymi wierzchołkami. Odległość wierzchołka do samego siebie to zero, do wierzchołków połączonych z nim krawędzią to jeden itd. Średnicą w grafie nazwiemy maksymalną odległość w grafie.\\
 Wracamy więc do problemu dekodowania. Jak poprzednio, zaprezentuję podejście dla algorytmu Vigenere'a w wersji standardowej, koncept naturalnie rozszerza się na pozostałe warianty. \\\\
 Przypomnijmy sobie, że szyfr (kodujący czy dekodujący) Vigenere'a i opisanych szyfrów pochodnych długości $n_k$ przedstawia się za pomocą $n_k$ szyfrów pojedynczych (konkretnie $n_k$ elementów $\mathbb{Z}_l$). Chcemy poszukać $\argmax$ dla $n$-gramowej wagi, ale metoda deterministyczna – przynajmniej ta, którą znamy – jest dla nas za wolna. Metody gradientowe czy numeryczne szukania maksimów nie posłużą nam tu, bo nie za bardzo da się oczekiwać, żeby nasza \textit{waga} zachowywała się jakkolwiek regularnie. Przechodzimy więc do metod probabilistycznych. Będziemy chcieli więc symulować jakoś rozkład \textit{a posteriori} (znormalizowane $w$) na zbiorze kluczy, tak że po pewnym czasie powinniśmy trafić w nasze poszukiwane maksimum. Oczywiście mamy do czynienia z sytuacją taką jak opisaną we wcześniejszym rozdziale. Rozkład jest skomplikowany, nieznany \textit{wprost} – mamy tylko informację jak go obliczać i że ma być proporcjonalny do \textit{wagi} $n$-gramowej (gra słowna waga-gram nie była moim zamierzeniem – powstała przez przypadek).  Nie jest to dla nas problemem dzięki temu, że dysponujemy pięknym algorytmem Metropolisa-Hastingsa.\\\\
-Żeby być w stanie go zastosować musimy najpierw opisać jak będziemy próbowali wędrować po zbiorze kluczy dekodujących, czyli opisać macierz generującą kandydatów $\mathbb{Q}$. Macierz powinna mieć możliwie prostą postać – kolejne przejścia Pomysł jest prosty i przypomina błądzenie po $n_k$-wymiarowej kostce. Mianowicie, przypomnijmy sobie, ze nasze klucze przedstawia się po prostu jako $n_k$ 'kluczowych' współrzędnych. Możemy więc po prostu próbować zmieniać jedną współrzędną w jednym kroku – wybór współrzędnej i zmiany zgodnie z rozkładem jednostajnym – i akceptować bądź odrzucać zmianę zgodnie z funkcją \textit{wagi}. Przykładowo, poniżej można zobaczyć wybór kandydatów dla stanu $(0,0)$ przy kluczu Vigenere'a o długości 2 i alfabecie długości 3  \\\\
+Żeby być w stanie go zastosować musimy najpierw opisać jak będziemy próbowali wędrować po zbiorze kluczy dekodujących, czyli opisać macierz generującą kandydatów $\mathbb{Q}$. Macierz powinna mieć możliwie prostą postać – kolejne przejścia powinny być szybkie! Pomysł jest prosty i przypomina błądzenie po $n_k$-wymiarowej kostce. Mianowicie, przypomnijmy sobie, ze nasze klucze przedstawia się po prostu jako $n_k$ 'kluczowych' współrzędnych. Możemy więc po prostu próbować zmieniać jedną współrzędną w jednym kroku – wybór współrzędnej i zmiany zgodnie z rozkładem jednostajnym – i akceptować bądź odrzucać zmianę zgodnie z funkcją \textit{wagi}. Przykładowo, poniżej można zobaczyć wybór kandydatów dla stanu $(0,0)$ przy kluczu Vigenere'a o długości 2 i alfabecie długości 3  \\\\
 \begin{center}
 \tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt
 
@@ -1682,7 +1681,7 @@ q_{ij} = \begin{cases}
   0 \,\, \text{w przeciwnym razie}
 \end{cases}
 \end{align*}
-Zanim przejdziemy dalej wypada (1) zauważyć, że macierz jest nieredukowalna – rzeczywiście aby dojść z jednego stanu (klucza) do drugiego po prostu kolejno zmieniamy różniące się między stanami współrzędne – zapewnia nam to nieredukowalność wynikowego łańcucha Metropolisa; (2) łańcuch Metropolisa będzie nieokresowy – klucz odpowiadający maksymalnej wadze będzie z niezerowym prawdopodobieństwem odrzucał kandydata.
+Zanim przejdziemy dalej wypada (1) zauważyć, że macierz jest nieredukowalna – rzeczywiście aby dojść z jednego stanu (klucza) do drugiego po prostu kolejno zmieniamy różniące się między stanami współrzędne – zapewnia nam to nieredukowalność wynikowego łańcucha Metropolisa; (2) łańcuch Metropolisa będzie nieokresowy – klucz odpowiadający maksymalnej wadze będzie z niezerowym prawdopodobieństwem odrzucał kandydata (jeśli tylko rozkład stacjonarny nie jest
 Następnie postępujemy zgodnie z algorytmem Metropolisa-Hastingsa – a w zasadzie Metropolisa, zwróćmy bowiem uwagę, że macierz generująca jest symetryczna. Ponadto przypomnijmy sobie, że obliczanie maksymalnego klucza ze względu na monogramy jest szybkie, a może on być dobrym punktem startowym, bowiem prawdopodobnie część pól klucza (nawet jeśli niewielka) jest wtedy odgadnięta poprawnie. Ogólnie uznajemy, że stan startowy podlega wyborowi według ustalonego przez nas kryterium – dla algorytmu bigramowego będziemy przyjmować kryterium maksymalnego klucza ze względu na monogramy, dla trigramowego – opiszę to przy okazji rozdziału z wynikami. Wtedy algorytm ma postać:\\
 \begin{algorithm}[H]
 \caption{Algorytm n-gramowy MCMC}
@@ -1710,7 +1709,7 @@ maks\_log\_waga := aktualna\_log\_waga := log\_waga(stan\_aktualny)\;
 }
 \Return{maks\_stan}
 \end{algorithm}
-Omówmy teraz nieco dokładniej implementację poszczególnych kroków. By móc skutecznie i szybko obliczać \textit{log-wagi} ($n$-gramowe) trzymamy w słowniku $n$-gramów aktualne informacje: ile razy $n$-gram wystąpił w danym odszyfrowaniu (za pomocą aktualnego stanu/klucza). Korzystając z tego i drugiego wzoru na \textit{wagę} ($\log w_n(k) =\sum\limits_{g \in G}  {r_D(g)} f_n(g)$ jesteśmy w stanie najpierw obliczyć log-wagę stanu początkowego ($r$ bierzemy z właśnie wspomnianego słownika). Następnie, gdy dostajemy kandydata generujemy różnicę log-wag. Korzystamy tu z faktu, że zmieniamy klucz tylko na jednej współrzędnej, więc zgodnie z rozważaniami z poprzedniego rozdziału możemy brać pod uwagę tylko te $n$-gramy, które mają w sobie pozycję równą modulo zmienianej pozycji klucza. (w każdej grupie kolejnych $n_k$ znaków będzie tylko 1 taki monogram, 2 takie bigramy itd.). Na ich podstawie wyliczamy słownik różnic wystąpień $n$-gramów między aktualnym odszyfrowaniem, a potencjalnym odszyfrowaniem przez kandydata. Na tej podstawie możemy wyliczyć też różnicę wag, jeśli liczba wystąpień $g$ zmieniła się o $c(g)$, różnica log-wag będzie wynosić $\Delta_{w_n}(i,j) = \sum\limits_{\text{zmienione } g}  {c(g)} f_n(g)$. Iterujemy oczywiście tylko po \textit{gramach} powiązanych ze zmienioną współrzędną kandydata (tylko te należą do słownika różnic wystąpień). Następnie, zgodnie z algorytmem Metropolisa (po nałożeniu na obie strony nierówności logarytmu) przechodzimy z aktualnego stanu (klucza) $i$ do stanu kandydata $j$, jeśli $\Delta_{w_n}(i,j) =\log(w_n(j)) - \log(w_n(i)) > log(U)$, gdzie $U$ jest oczywiście z rozkładu jednostajnego $[0,1]$. Aktualizujemy następnie aktualną wagę i aktualny słownik (dodajemy do wpisów słownika wystąpień wpisy ze słownika różnic). Jeśli nowa waga jest większa niż największa dotychczas aktualizujemy maksymalną wagę i maksymalizujący klucz. Na koniec zwracamy klucz dekodujący, który zmaksymalizował wartość wagi w trakcie wędrówki łańcucha – widać, że nie bierzemy tu ostatniego odwiedzonego \textit{stanu}, tylko najlepszy – pomysł przejęty od [ChenRosenthal]. W ten sposób nie musimy się martwić o kryteria zbieżności – arbitralnie po prostu ustalamy liczbę kroków i mamy nadzieję, że w tym czasie łańcuch zbiegnie – oczywiście liczba ta jest ustalana wg pewnej heurystyki. W praktyce można wprowadzać 'zbieżnościowe' rozwiązania, aby łańcuch nie kontynuował niepotrzebnie swojego przebiegu, takie jak procent odrzucanych kandydatów (gdy kandydaci są odrzucani bardzo często albo wręcz cały czas, to znak, że łańcuch osiągnął stabilność – trafił na maksimum lokalne (możemy mieć nadzieję, że również globalne)), można też oczekiwać pewnej wartości funkcji stanu (log-wagi), przy której jesteśmy zadowoleni itd. Po spełnieniu pewnego kryterium 'zatrzymujemy łańcuch'. W części pracy dotyczącej dekodowania jednak nie będę się na tym skupiał – skupiam się raczej na przedstawieniu ogólnej idei zastosowania MCMC do ulepszenia rozwiązania. Nieco więcej będzie wspomniane na ten temat przy okazji problemu komiwojażera – symulowane wyżarzanie, które często się tam stosuje można stosować dla uzyskania \textit{warunku stopu} w ograniczonym czasie.
+Omówmy teraz nieco dokładniej implementację poszczególnych kroków. By móc skutecznie i szybko obliczać \textit{log-wagi} ($n$-gramowe) trzymamy w słowniku $n$-gramów aktualne informacje: ile razy $n$-gram wystąpił w danym odszyfrowaniu (za pomocą aktualnego stanu/klucza). Korzystając z tego i drugiego wzoru na \textit{wagę} ($\log w_n(k) =\sum\limits_{g \in G}  {r_D(g)} f_n(g)$ jesteśmy w stanie najpierw obliczyć log-wagę stanu początkowego ($r$ bierzemy z właśnie wspomnianego słownika). Następnie, gdy dostajemy kandydata generujemy różnicę log-wag. Korzystamy tu z faktu, że zmieniamy klucz tylko na jednej współrzędnej, więc zgodnie z rozważaniami z poprzedniego rozdziału możemy brać pod uwagę tylko te $n$-gramy, które mają w sobie pozycję równą modulo zmienianej pozycji klucza. (w każdej grupie kolejnych $n_k$ znaków będzie tylko 1 taki monogram, 2 takie bigramy itd.). Na ich podstawie wyliczamy słownik różnic wystąpień $n$-gramów między aktualnym odszyfrowaniem, a potencjalnym odszyfrowaniem przez kandydata. Na tej podstawie możemy wyliczyć też różnicę wag, jeśli liczba wystąpień $g$ zmieniła się o $c(g)$, różnica log-wag będzie wynosić $\Delta_{w_n}(i,j) = \sum\limits_{\text{zmienione } g}  {c(g)} f_n(g)$. Iterujemy oczywiście tylko po \textit{gramach} powiązanych ze zmienioną współrzędną kandydata (tylko te należą do słownika różnic wystąpień). Następnie, zgodnie z algorytmem Metropolisa (po nałożeniu na obie strony nierówności logarytmu) przechodzimy z aktualnego stanu (klucza) $i$ do stanu kandydata $j$, jeśli $\Delta_{w_n}(i,j) =\log(w_n(j)) - \log(w_n(i)) > log(U)$, gdzie $U$ jest oczywiście z rozkładu jednostajnego $[0,1]$. Aktualizujemy następnie aktualną wagę i aktualny słownik (dodajemy do wpisów słownika wystąpień wpisy ze słownika różnic). Jeśli nowa waga jest większa niż największa dotychczas aktualizujemy maksymalną wagę i maksymalizujący klucz. Na koniec zwracamy klucz dekodujący, który zmaksymalizował wartość wagi w trakcie wędrówki łańcucha – widać, że nie bierzemy tu ostatniego odwiedzonego \textit{stanu}, tylko najlepszy – pomysł przejęty od [ChenRosenthal]. W ten sposób nie musimy się martwić o kryteria zbieżności – arbitralnie po prostu ustalamy liczbę kroków i mamy nadzieję, że w tym czasie łańcuch odwiedzi maksymalizujący klucz – oczywiście liczba ta jest ustalana wg pewnej heurystyki. W praktyce można wprowadzać 'zbieżnościowe' rozwiązania, aby łańcuch nie kontynuował niepotrzebnie swojego przebiegu, takie jak procent odrzucanych kandydatów (gdy kandydaci są odrzucani bardzo często albo wręcz cały czas, to znak, że łańcuch osiągnął stabilność – trafił na maksimum lokalne (możemy mieć nadzieję, że również globalne)), można też oczekiwać pewnej wartości funkcji stanu (log-wagi), która nas satysfakcjonuje itd. W wersji zbieżnościowej po spełnieniu pewnego kryterium 'zatrzymujemy łańcuch'. W części pracy dotyczącej dekodowania jednak nie będę się na tym skupiał – skupiam się raczej na przedstawieniu ogólnej idei zastosowania MCMC do ulepszenia dekodowania. Nieco więcej będzie wspomniane na ten temat przy okazji problemu komiwojażera – stosowane tam symulowane wyżarzanie jest metodą, która bardziej skupia się na zbieżności (sama z siebie ogranicza też 'ruchliwość' łańcucha wraz z upływem czasu).
 \\
 Możemy więc oszacować złożoność czasową – najpierw kroku początkowego: tu musimy odkodować tekst ($O(m)$ – $m$ długość tekstu), wyliczyć słownik i wagę (również  $O(m)$, bo tyle jest $n$-gramów). Następnie krok: wyliczenie różnicy to $O(m/n_k)$ – zakładamy, że $n$ (od $n$-gramów) jest małe, co najwyżej 3, więc może być potraktowane jako stała. Podobnie wyliczenie \textit{update'u} wagi i potencjalny \textit{update} odszyfrowania potrwają $O(m/n_k)$, pozostałe części kroku mają stałą złożoność. Ogólnie więc mamy złożoność $O(m)$ dodać $O(m/n_k \cdot steps)$, przy czym liczba kroków jest raczej większa niż $n_k$, więc drugi składnik oczywiście dominuje.\\
 Odnośnie złożoności pamięciowej, wygląda to z grubsza tak, że potrzebujemy kopii szyfrogramu (którą próbujemy dekodować) i trzech kluczy: najlepszego, aktualnego i kandydata (również tutaj da się przeprowadzić pewną optymalizację, ale raczej jest to optymalizacja rzędu epsilonowego, więc nie ma co sobie nią zaprzątać głowy). Dodatkowa pamięć jest więc zdominowana przez kopię szyfrogramu czyli $O(m)$.\\\\
@@ -1720,7 +1719,7 @@ Chcielibyśmy wiedzieć, jak szybko zostanie osiągnięty stan (klucz) maksymali
 $$d(t) = \max_{i \in S} \|\delta_i \mathbb{P}^t - \pi \mathbb{P}^t\|_{TV}$$
 jest ograniczona z góry przez ciąg dążący do zera. Tak więc można zdefiniować:
 $$ t_{mix}(\varepsilon) = \inf_t \forall i \in S\,\, d(t) < \varepsilon$$
-Co nazwiemy \textit{mixing time} na poziomie epsilon. Mówi nam on, że po tym właśnie czasy dwa rozkłady są sobie bliższe niż $\epsilon$. Dla zobrazowania pewnej idei, a także z tego powodu, że dowód jest po prostu ładny, pokażemy górne ograniczenie na $d(t)$ na takiej samej $s$-hiperkostce wymiaru $n_k$, tyle tylko że ze spacerem losowym wg rozkładu jednostajnego (zapominamy na chwilę o naszych wagach). Najpierw zauważmy, że:
+Co nazwiemy \textit{mixing time} na poziomie epsilon. Mówi nam on, że po tym właśnie czasie niezależnie od rozkładu startowego dwa JŁM o macierzy przejścia $\mathbb{P}$ są sobie bliższe wg rozkładu niż $\epsilon$. Dla zobrazowania pewnej idei, a także z tego powodu, że dowód jest po prostu ładny, pokażemy górne ograniczenie na $d(t)$ na takiej samej $s$-hiperkostce wymiaru $n_k$, tyle tylko że ze spacerem losowym wg rozkładu jednostajnego (zapominamy na chwilę o naszych wagach). Najpierw zauważmy, że:
 $$d(t) \leq \max_{i,j \in S} \|\delta_i \mathbb{P}^t - \delta_j \mathbb{P}^t \|_{TV}$$
 Nierówność łatwo dowodzimy podobnie jak w rozdziale z dowodem twierdzenia ergodycznego $\pi\mathbb{P}^t$ – rozkład stacjonarny możemy zapisać jako ważoną sumę $\delta_k \mathbb{P}^t$. Dalej korzystamy z nierówności trójkąta, zakładając, że $k$ był elementem, który zadawał $\max$ w równaniu na $d(t)$ dostając:
 \begin{align*}
@@ -1744,57 +1743,31 @@ Tak więc $d(n_k \log n_k + cn_k) < e^{-c}$, jak również ostatecznie $t_{mix}(
 $P(\tau_{max} > C(n_k \log n_k + cn_k)) < e^{-\frac{c}{s}}$, czyli
 $P(\tau_{max} > Cs(n_k \log n_k + cn_k) < e^{-c}$, gdzie $C$ jest pewną stałą związaną zwłaszcza z początkowym 'błądzeniem' łańcucha – zanim zaczął trafiać w kolejne współrzędne. Jeśliby ta heurystyczna analiza miała pokrycie w rzeczywistości – pamiętając, że dla tekstu o długości $m$ i klucza długości $n_k$ krok iteracyjny miał złożoność $O(m/n_k)$ – dostaniemy zbieżność (gdzie kolejne przedziały czasowe tej długości niosą wykładniczą poprawę zbieżności) w $O(m \cdot s \cdot \log n_k)$ co oczywiście jest znaczącą poprawą w porównaniu z algorytmem deterministycznym.
 \subsection{Odgadywanie długości klucza}
-Jest to problem nieco poboczny względem głównych punktów zainteresowania, jednak może warto go poruszyć. Rozważaliśmy do tej pory szyfrogram zakodowany kluczem o znanej długości – choć nie jest to głównym celem tego rozdziału (najważniejszym jest pokazanie szybkiej metody dekodowania dla \textit{długich} ustalonej długości kluczy), często najważniejszym elementem złamania szyfru typu Vigenere'a jest odgadnięcie długości klucza. Zostało opracowanych szereg metod dla rozwiązania tego zagadnienia (Kasiski, Friedman), jednak zamierzałem zastosować w jakiś prosty sposób rozwijane tu metody $n$-gramowe. Pierwszym moim pomysłem było założyć pewne ograniczenie długości klucza – z tego powodu, że po prostu, co pokazały wyniki z jednego z poprzednich podrozdziałów zbyt duża długość klucza w stosunku do długości tekstu implikuje praktyczną nierozwiązywalność problemu. Następnie myślałem o skonstruowaniu łańcucha od razu dekodującego całość szyfrogramu bez znajomości długości klucza, który poruszałby się po takiej przestrzeni – pomysłów na macierz generującą było kilka – zawsze częścią macierzy były elementy różniące się z aktualnym stanem na jednej współrzędnej (jak przy ustalonej długości), jednak należało również dodać kandydatów zmieniających długość klucza. Próbowałem robić to na różne sposoby, dodając/usuwając nową współrzędną na koniec/współrzędną końcową itd. Nie udało się jednak osiągnąć dobrych wyników, łańcuch miał tendencję do wpadania w maksima lokalne.\\
-Następnie więc zauważyłem, że choć metoda monogramowa nie daje bardzo dobrych wyników w samym dekodowaniu, jeśli klucz jest długi, ale jest szybka i jest zwykle dobrym indykatorem jego długości. Stąd można wyprowadzić pierwszą wersję algorytmu opartego na takim podejściu:\\\\
-\begin{algorithm}[H]
-\caption{Algorytm znajdowania długości klucza I}
-\SetKwInput{For}{dla}
-\SetKwInput{If}{jeśli}
-\SetKwInput{Else}{w przeciwnym razie}
-\SetKwInput{Return}{zwróć}
-\For{$n=0,1,2,3...m$}{
-\quad max[n] = $\max_{k \in K(n)}  \log w_1(k)$\;
-}
-\Return{$\argmax_n max[n]$}
-\end{algorithm}
-Gdzie $K(n)$ jest zbiorem kluczy długości $n$, a $m$ przyjętym ograniczeniem. $m$ powinno być w granicach $1/3$ długości tekstu – wtedy jeszcze umiemy odszyfrować tekst na poziomie $>50\%$. W tym miejscu pokażę jeszcze fragment tekstu (zdekodowany na poziomie 50\%), aby uwydatnić, że jest to jeszcze niezły poziom dekodowania, który zazwyczaj możemy 'dodekodować' do końca:\\
+Jest to problem nieco poboczny względem głównych punktów zainteresowania, jednak może warto go poruszyć. Rozważaliśmy do tej pory szyfrogram zakodowany kluczem o znanej długości – choć nie jest to głównym celem tego rozdziału (najważniejszym jest pokazanie szybkiej metody dekodowania dla \textit{długich} ustalonej długości kluczy), często najważniejszym elementem złamania szyfru typu Vigenere'a jest właśnie odgadnięcie długości klucza. Zostało opracowanych szereg metod dla rozwiązania tego zagadnienia (Kasiski, Friedman), jednak zamierzałem zastosować w jakiś prosty sposób rozwijane tu metody $n$-gramowe. Pierwszym moim pomysłem było założyć pewne ograniczenie długości klucza – z tego powodu, że po prostu, co pokazały wyniki z jednego z poprzednich podrozdziałów, zbyt duża długość klucza w stosunku do długości tekstu implikuje praktyczną nierozwiązywalność problemu. Następnie myślałem o skonstruowaniu łańcucha od razu dekodującego całość szyfrogramu bez znajomości długości klucza, który poruszałby się po takiej przestrzeni – pomysłów na macierz generującą było kilka – zawsze częścią macierzy były elementy różniące się z aktualnym stanem na jednej współrzędnej (jak przy ustalonej długości), jednak należało również dodać kandydatów zmieniających długość klucza. Próbowałem robić to na różne sposoby, dodając/usuwając nową współrzędną na koniec/współrzędną końcową itd. Nie udało się jednak osiągnąć dobrych wyników, łańcuch miał tendencję do wpadania w maksima lokalne. Możliwe jednak, że da się skonstruować taki łańcuch. Choć na ten moment wydaje mi się to mało prawdopodobne, byłoby to najbardziej eleganckie i najbardziej w duchu MCMC rozwiązanie problemu. \\
+Można jednak też praktycznie wprost zastosować metodę $n$-gramów. Do pewnego progu $p$ dobrze działa metoda monogramów. Tak więc do tego progu próbujemy kolejno dla wszystkich mniejszych lub równych długości tego progu. Jeśli do tego momentu nie udało się uzyskać dobrego rozwiązania (kryterium może być np. liczba/procent poprawnych słów w zdekodowanym tekście) dalej próbujemy metody bigramowej. Zwróćmy uwagę, że jeśli chcielibyśmy wykonać dla największej rozważanej długości klucza (powiedzmy $q$),  $t$ kroków, to zgodnie z heurystyką dla klucza $u$ razy krótszego wystarczy $ t(\frac{\log \frac{q}{u} + \frac{cq}{u}}{\log q + cq})$ kroków. $q$ powinno być w granicach $1/4$ długości tekstu – wtedy jeszcze zdarza się względnie często, że umiemy odszyfrować tekst na poziomie $>50\%$, dalej metoda zawodzi (co więcej produkuje fałszywie dobre rozwiązania - im więcej dowolności, im dłuższy klucz, tym większą wagę można wyprodukować), więc należy ją w odpowiednim momencie zatrzymać. W tym miejscu pokażę jeszcze fragment tekstu (zdekodowany na poziomie 50\%), aby uwydatnić, że jest to jeszcze niezły poziom dekodowania, który zazwyczaj możemy 'dodekodować' do końca:\\
 A CLOCE RTOOO AND THOUGIT HA IPE WNTTTT-ALIETY WHAN REAFLD CU HAS NOUGHT FIFOF-ITLIIE OI ALE SOLLOSING MIRSCOR. BUT HE DID OOS WGGEXV INE OOSUTHT FUNTHER. CT BUT YOT INTERETTHUS.
 \\
 Jeszcze lepiej sprawa wygląda dla 75\%:\\
 HE EDGE OF THE LONDED WOOT AND ADYR ITT TISIC INTO NOTHINGNESS? HE WNGIERET WHEEWIR AFULF ALL THERE WAS A MICROPHOND ANDDED SOMPLLERE OLOR. HE AND JULIA HAD SPOKEN OMED IN LEW WHTHTERS, BUR IT WOULD
 \\
-Widać, że w obu przypadkach tworzą się znajome ciągi, które możemy następnie pouzupełniać. Dla 25\% już wiele nie widać – stąd użycie $n>1$-gramów jest tak istotne:\\
+Widać, że w obu przypadkach tworzą się znajome ciągi, które możemy następnie pouzupełniać. Dla 25\% już wiele nie widać – stąd użycie ($n>1$)-gramów jest tak istotne:\\
 R PQHONQ, WYSM AO L HKANW OF NISN DMVD ZEZS ONXXQWRGSP TNRBHKH MHA MPWY TO A BTLE. COEZLOV 6 PT BAX WKHORBQD GT YNWT. MHA PYIEHCED XYTSHKO ZKH JOGE. UAV ZHF ZUFK\\
-Doświadczenia ukazały jednak jeszcze jeden problem. Gdy zaczynamy operować na kluczach naprawdę dużej długości, może nastąpić ryzyko swego rodzaju przeuczenia. Tzn. im dłuższy klucz, tym mniej znaki ze sobą związane, tym bardziej zbliżamy się do - po prostu - zwracania maksymalizującego wagę ciągu znaków o danej długości, który przy danej długości tekstu jest zawsze taki sam, niezależny od szyfrogramu. Wtedy algorytm, mimo że rzeczywistym rozwiązaniem jest krótki klucz, może dostać dużą wagę dla długiego klucza i przyjąć to za dobrą monetę. Natura tych błędów skłania do modyfikacji algorytmu, podzielić zbiór możliwych długości na dwie (lub więcej nawet więcej) części jak poniżej:\\\\
-\begin{algorithm}[H]
-\caption{Algorytm znajdowania długości klucza I}
-\SetKwInput{For}{dla}
-\SetKwInput{If}{jeśli}
-\SetKwInput{Else}{w przeciwnym razie}
-\SetKwInput{Return}{zwróć}
-\For{$n=0,1,2,3...m/2$}{
-\quad max1[n] = $\max_{k \in K(n)}  \log w_1(k)$\;
-}
-\For{$n=m/2+1,m/2+2...m$}{
-\quad max2[n] = $\max_{k \in K(n)}  \log w_1(k)$\;
-}
-$l_1 = \argmax_n max1[n]$\;
-$l_2 = \argmax_n max2[n]$\;
-zdekoduj tekst przy ustalonych długościach, kolejno $l_1$ i $l_2$. wybierz wynik, który zawiera więcej poprawnych angielskich słów\;
-\end{algorithm}
-Chodzi o to, abyśmy potencjalne 'przeuczenia' rozpatrywali osobno – w praktyce, najlepszy rzekomo wynik, który by pochodził z takiego zbioru ostatecznie jesteśmy w stanie odrzucić jeśli nie nie ma on sensu. \\
-Opowiem pokrótce o wynikach tego algorytmu w następnym – dotyczącym testów – podrozdziale.
+Można więc zastosować takie podejście: biorąc pod uwagę heurystyczną optymalizację uzyskamy złożoność rzędu $p \cdot s \cdot m $, gdzie $m$ długość tekstu, jeśli udało się osiągnąć wymaganą poprawność szyfrowania dla $n_k<p$ a w przeciwnym wypadku, zakładając, że $t$ jest zgodne z heurystyką, dostajemy $O(s \cdot m \cdot \log^2 n_k)$, bowiem dzielimy kolejne liczby kroków przez stosunek długości odpowiadającego klucza do maksymalnego rozważanego (powstaje liczba harmoniczna, a nawet coś mniejszego, bo dzielimy jeszcze dodatkowo przez logarytm, ale takie oszacowanie nam wystarczy).\\\\
+
 \subsection{Wyniki, wnioski i podsumowanie rozdziału}
-Testy na razie (później możliwe uzupełnienie) przeprowadzimy na wygenerowanych losowych fragmentach \textit{Roku 1984}. Będziemy pracować na dwóch alfabetach:\\
+Testy na razie (później możliwe uzupełnienie) przeprowadzimy na wygenerowanych losowych 2000-znakowych fragmentach \textit{Roku 1984}. Będziemy pracować na dwóch alfabetach:\\
 (1) klasycznym ABCDEFGHIJKLMNOPQRSTUVWXYZ\\
 (2) rozszerzonym o spację alfabecie 'alpha' z pracy\\ https://pdfs.semanticscholar.org/0493/34ae844024f02bc0f3f854811de5f83096eb.pdf – jest tu opisany nowy algorytm szyfrowania oparty na schemacie Vigenere'a – z punktu widzenia naszej pracy nie różni się niczym od algorytmu Vigenere'a tak jak my go rozumiemy (przypomnijmy, że definiowaliśmy go na dowolnym alfabecie). Dodatkowym elementem szyfrowania jest tu jeszcze permutacja (szyfr podstawieniowy monoalfabetyczny) zastosowany po schemacie Vigenere'a – ale ponieważ permutacja (podstawienie) jest znane, więc wystarczy najpierw zastosować na szyfrogramie permutację odwrotną, a następnie zastosować nasze zwykłe algorytmy. Permutacja ta jest utrudnieniem tylko gdy nie wiemy, że został użyty opisany szyfr, w przeciwnym wypadku nie ma na nic wpływu. Rozszerzenie o spację zapewnia, że zakodowane będą wszystkie znaki (czyścimy wcześniej tekst ze znaków nowej linii tabulatorów – białych znaków innych niż spacja). Alfabet ma postać:\\
-\textit{abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`~!@#\$\%\^&*()\_-=+{}[]|;:"<>,.?/ }\\\\
-Ostatecznie decydujemy się na następujące podejście: deterministycznie wybieramy stan maksymalizujący log-wagę monogramową i z niego zaczynamy bigramową wędrówkę MCMC przez (może to się zmienić) proporcjonalną do długości klucza (ze względu na heurystykę, możliwe, że powinniśmy zawrzeć jeszcze logarytm) kroków – w trakcie wędrówki zbieramy dane o kolejno osiąganych progach dokładności odkodowania. Dekodowanie jest wynikiem tej wędrówki. Wędrówkę można jeszcze przedłużyć o wędrówkę na trigramach. Testy przeprowadzamy dla kolejno: zwykłego szyfru Vigenere'a, szyfru z autokluczem i \textit{rozszerzonego} dla kluczy o długościach zmieniających się co 50 – dla obu alfabetów. Dla alfabetu nr 1 z oczywistych powodów małe litery są przekształcane na wielkie.\\
+\begin{center}
+\textit{abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\\
+`~!@#\$\%\^&*()\_-=+{}[]|;:"<>,.?/ +spacja }\\\\
+\end{center}
+Ostatecznie decydujemy się na następujące podejście: deterministycznie wybieramy stan maksymalizujący log-wagę monogramową i z niego zaczynamy bigramową wędrówkę MCMC przez (może to się zmienić) proporcjonalną do długości klucza (ze względu na heurystykę, możliwe, że powinniśmy zawrzeć jeszcze logarytm) kroków – w trakcie wędrówki zbieramy dane o kolejno osiąganych progach dokładności odkodowania. Dekodowanie bigramowe jest wynikiem tej wędrówki. Wędrówkę można jeszcze następnie przedłużyć o wędrówkę na trigramach. Testy przeprowadzamy dla kolejno: zwykłego szyfru Vigenere'a, szyfru z autokluczem i \textit{rozszerzonego} dla kluczy o długościach zmieniających się co 50 – dla obu alfabetów. Dla alfabetu nr 1 z oczywistych powodów małe litery są przekształcane na wielkie.\\
 Następnie przeprowadzimy pokazowy test prezentujący szybkość podejścia MCMC w porównaniu z opisanym podejściem deterministycznym.
 Na końcu zaprezentujemy działanie algorytmu deszyfrującego na również wygenerowanym tekście długości 2000, ale zaszyfrowanego kluczami o nieznanej długości (alfabet (1), zwykły szyfr Vigenere'a).
 \\\\
-MIEJSCE NA WYNIKI
-część pierwsza – tekst 2000, alfabet (1), szyfr Vigenere'a, na razie kopiuj-wklej – do uporządkowania\\:
+MIEJSCE NA WYNIKI - DODAĆ TABELE PO WEEKENDZIE
+część pierwsza – tekst 2000, alfabet (1), szyfr Vigenere'a, na razie kopiuj-wklej – do uporządkowania po lewej lista progów dokładności, po prawej kolejno kroki, w których dokładność została osiągnięta\\:
 50\\
 MONOGRAM ACCURACY: 1.0\\
 BIGRAM ACCURACY: 1.0\\
@@ -1844,46 +1817,177 @@ MONOGRAM ACCURACY: 0.2733333333333333\\
 BIGRAM ACCURACY: 0.41833333333333333\\
 BIGRAM THRESHOLDS [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] IN STEPS : [19604, 185319]\\\\
 \\\\
-Zbieżności – dopóki są – są zgodne z analizą heurystyczną.
-Tekst dł. 2000, 26-znakowy alfabet\\
+Zbieżności – dopóki są – wyglądają na do pewnego stopnia zgodne z analizą heurystyczną, trzeba pamiętać, że dla dużych wartości $n_k$ $\maxarg$ nie pokrywa się już stuprocentowo z rozwiązaniem, więc zbieżność do rozwiązania nie pokrywa się wtedy ze zbieżnością łańcucha. Po weekendzie dodać też testy w odniesieniu do zbieżności bigram-argmax.
+Tekst dł. 2000, 26-znakowy alfabet. Przykładowe czasy trwania i trafność obydwu metod\\
 wynik MCMC:\\
-trafność: 1.0
-czas: 5.520573318994138s
+trafność: 0.98
+czas: 0.8443115279951598s\\
 Deterministyczny bigramowy:
 trafność: 1.0
-czas: 186.7930165709986 \\
+czas: 190.3957754939911 \\
 \\
 długość klucza – działa\\
 
-Poza zaprezentowanymi rozwiązaniami próbowałem również problemu dekodowania, który miał postać złożenia permutacji i szyfru Vigenere'a, co można rozumieć jako szyfr Vigenere'a, ale gdy znamy tylko zbiór znaków alfabetu bez znajomości ich uporządkowania. Niestety nie udało mi się osiągnąć znaczących sukcesów Rozwiązanie szyfru podstawieniowego zostało zaprezentowane w [Diaconis][Connor][ChenRosenthal]. W pracy  Diaconisa została opisana sytuacja, gdzie metody MCMC (wędrówka po permutacjach) zostały użyte do złamania szyfru, którym w listach posługiwali się więźniowie, mającego postać jak na obrazku poniżej.\\
+Poza zaprezentowanymi rozwiązaniami próbowałem również problemu dekodowania, który miał postać złożenia permutacji i szyfru Vigenere'a, co można rozumieć jako szyfr Vigenere'a, ale gdy znamy tylko zbiór znaków alfabetu bez znajomości ich uporządkowania. Niestety nie udało mi się osiągnąć znaczących sukcesów Rozwiązanie szyfru podstawieniowego zostało zaprezentowane w [Diaconis][Connor][ChenRosenthal]. M.in. w pracy Diaconisa została opisana sytuacja, gdzie metody MCMC (wędrówka po permutacjach) zostały użyte do złamania szyfru podstawieniowego, którym w listach posługiwali się więźniowie, mającego postać jak na obrazku poniżej.\\
 \begin{center}
 \includegraphics[scale=0.1]{diaconis.png}
 \end{center}
-Do złamania samego szyfru permutacyjnego z powodzeniem zastosowałem opisane wcześniej w wymienionych pracach metody, jednak konieczne było rozwinięcie tych metod. Testowałem kilka pomysłów – najbardziej obiecującym wydawał mi się oparty na wagach monogramowych – tj. wędrujemy po permutacjach, funkcją permutacji jest maksymalna monogramowa waga, którą można na tej permutacji alfabetu osiągnąć. Niestety podejście to zawiodło. Drugim podejściem była próba przyspieszenia zbieżności przez odpowiedni stan startowy i kroki. Zauważyć można, że jeśli zaczniemy od stanu, który jest zgodny z częstościami występowania pojedynczych liter, powinniśmy robić raczej krótkie transpozycje (tj. np. 'E' nie powinna być najrzadziej występującą literą, raczej powinna być dość blisko pierwszego miejsca). Mimo że na problemie samych permutacji dawało to nieco szybszą zbieżność (choć z gorszym parametrem), to nie udało się w żaden sensowny sposób wpleść tego do algorytmu Vigenere+permutacja. Możliwe, że jest możliwość zastosowania podejścia MCMC do tego problemu, niestety w obrębie tej pracy nie udało się to.
+Do złamania samego szyfru permutacyjnego z powodzeniem zastosowałem opisane wcześniej w wymienionych pracach metody, jednak konieczne było rozwinięcie tych metod. Testowałem kilka pomysłów – najbardziej obiecującym wydawał mi się oparty na wagach monogramowych – tj. wędrujemy po permutacjach, funkcją permutacji (proporcjonalną do rozkładu stacjonarnego) jest maksymalna monogramowa waga, którą można na tej permutacji alfabetu osiągnąć. Niestety podejście to zawiodło – przynajmniej przy zadanych ograniczeniach czasowych (nie można było wykonać aż tak wielu kroków jak w dekodowaniu szyfru Vigenere'a czy podstawieniowego, bo każdy krok tutaj miał większą złożoność czasową ($O(s \cdot m)$ jak już wcześniej policzyliśmy). Drugim podejściem była próba przyspieszenia zbieżności przez odpowiedni stan startowy i kroki. Zauważyć można, że jeśli zaczniemy od stanu, który jest zgodny z częstościami występowania pojedynczych liter, powinniśmy robić raczej krótkie transpozycje (tj. np. 'E' nie powinna być w tekście najrzadziej występującą literą, raczej powinna być dość blisko pierwszego miejsca). Mimo że na problemie samych permutacji dawało to nieco szybszą zbieżność (choć mniej dokładną), to nie udało się w żaden sensowny sposób wpleść tego do algorytmu Vigenere+permutacja. Możliwe, że jest możliwość zastosowania podejścia MCMC do tego problemu, niestety w obrębie tej pracy nie udało się to - być może zajmę się tym jeszcze w przyszłości.
 \\
 Mimo wszystko udało się w tym rozdziale skutecznie zastosować MCMC do szyfrów z rodziny Vigenere'a i pochodnych i przyspieszyć dzięki temu podejściu rozwiązanie w porównaniu z algorytmami deterministycznymi, co było celem tej sekcji.
+\newpage
 \section{Problem komiwojażera}
+W rozdziale tym omówię podejście MCMC do rozwiązania problemu komiwojażera. Następnie zaprezentuję jego wyniki na benchmarkowym zbiorze instancji problemu.
 \subsection{Wprowadzenie, opis problemu}
-Wracamy do pojęcia grafu.
--> rysunek i trudność
-\subsection{Niejednorodne łańcuchy Markowa. Symulowane wyżarzanie}
--> do czego symulowane wyżarzanie? do szybszej zbieżności.
--> na czym to polega
-\subsection{Algorytmy}
--> prawdopdobnie brak sensownego algorytmu deterministycznego (są jakieś rzędu $4^n$), bo P $\neq$ NP
-\subsection{Analiza}
--> pokrótce tylko wspomnieć o card shufflingu, dla tempa zbieżności \\
--> zbieżność, twierdzenie Hajka \\
--> złożoność czasowa kroków, złożoność pamięciowa
-\subsection{Symulacje i wyniki}
--> w testach dla podkreślenia
-\subsection{Inne możliwe podejścia}
--> mrówkowe, ewolucyjne deterministyczne wykładnicze
--> kwantowe symulowane wyżarzanie
-\section{O programie}
-repo MCMC
-\section{Podsumowanie}
+Wróćmy do grafu – ważonego – i zobaczmy jego przykład jak poniżej:\\
 
+\begin{center}
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,534); %set diagram left start at 0, and has height of 534
+%Flowchart: Connector [id:dp39489242406379743]
+\draw   (479,166.5) .. controls (479,154.97) and (488.63,145.63) .. (500.5,145.63) .. controls (512.37,145.63) and (522,154.97) .. (522,166.5) .. controls (522,178.03) and (512.37,187.38) .. (500.5,187.38) .. controls (488.63,187.38) and (479,178.03) .. (479,166.5) -- cycle ;
+%Flowchart: Connector [id:dp6285514868405493]
+\draw   (241,95.5) .. controls (241,83.97) and (250.63,74.63) .. (262.5,74.63) .. controls (274.37,74.63) and (284,83.97) .. (284,95.5) .. controls (284,107.03) and (274.37,116.38) .. (262.5,116.38) .. controls (250.63,116.38) and (241,107.03) .. (241,95.5) -- cycle ;
+%Flowchart: Connector [id:dp5872942312966463]
+\draw   (393,385.5) .. controls (393,373.97) and (402.63,364.63) .. (414.5,364.63) .. controls (426.37,364.63) and (436,373.97) .. (436,385.5) .. controls (436,397.03) and (426.37,406.38) .. (414.5,406.38) .. controls (402.63,406.38) and (393,397.03) .. (393,385.5) -- cycle ;
+%Flowchart: Connector [id:dp44540060370743495]
+\draw   (149,302.5) .. controls (149,290.97) and (158.63,281.63) .. (170.5,281.63) .. controls (182.37,281.63) and (192,290.97) .. (192,302.5) .. controls (192,314.03) and (182.37,323.38) .. (170.5,323.38) .. controls (158.63,323.38) and (149,314.03) .. (149,302.5) -- cycle ;
+%Straight Lines [id:da9934555309292514]
+\draw    (262.5,116.38) -- (170.5,281.63) ;
+%Straight Lines [id:da631810373801815]
+\draw    (479,166.5) -- (284,95.5) ;
+%Straight Lines [id:da6556019952944867]
+\draw    (505.5,187) -- (414.5,364.63) ;
+%Straight Lines [id:da7925665059125937]
+\draw    (393,385.5) -- (192,302.5) ;
+%Straight Lines [id:da07207873423061018]
+\draw    (479,166.5) -- (183.5,286) ;
+%Curve Lines [id:da3400699458616012]
+\draw    (282.5,85) .. controls (866.5,-48) and (374.5,394.63) .. (414.5,364.63) ;
+
+% Text Node
+\draw (382,106) node [anchor=north west][inner sep=0.75pt]   [align=left] {1};
+% Text Node
+\draw (281,348) node [anchor=north west][inner sep=0.75pt]   [align=left] {3};
+% Text Node
+\draw (197,181) node [anchor=north west][inner sep=0.75pt]   [align=left] {2};
+% Text Node
+\draw (456,241) node [anchor=north west][inner sep=0.75pt]   [align=left] {4};
+% Text Node
+\draw (316,198) node [anchor=north west][inner sep=0.75pt]   [align=left] {5};
+% Text Node
+\draw (582,81) node [anchor=north west][inner sep=0.75pt]   [align=left] {6};
+% Text Node
+\draw (257,88) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{A}};
+% Text Node
+\draw (165,294) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{B}};
+% Text Node
+\draw (409,377) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{C}};
+% Text Node
+\draw (496,158) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{D}};
+
+\end{tikzpicture}
+\end{center}
+Liczby nad krawędziami nazywamy ich wagami grafu i możemy o nich myśleć jako o odległościach między miastami (wierzchołkami) między którymi biegną krawędzie (A,B,C,D). Wyobraźmy sobie teraz, że jesteśmy tytułowym komiwojażerem, chcemy przedstawić naszą ofertę we wszystkich miastach w jak najkrótszym czasie (czas to pieniądz!), startując z naszego rodzinnego miasta A, przechodząc przez pozostałe miasta tylko raz i na koniec wracając do A. Innymi słowy, chcemy zminimalizować sumę odległości na drodze przez wszystkie miasta (przez każde miasto przechodząc dokładnie raz), na końcu wracając do miasta startowego. Taka 'podróż' nazywana jest cyklem Hamiltona. Chcemy więc znaleźć cykl Hamiltona o najmniejszej długości, oczywiście wybór miasta początkowego nie ma znaczenia – jak to w cyklu. W powyższym wypadku odpowiedź jest łatwa do sprawdzenia – zbiór możliwych cykli jest mały ($\frac{4!}{4} = 3! = 6$). Ponadto rozwiązanie 'widać' cykl ABCD zawiera 4 krawędzie o najmniejszych wagach, więc w oczywisty sposób jest rozwiązaniem problemu. Jednak już dla grafu poniżej z zamienionymi wagami krawędzi rozwiązanie nie rzuca się już aż tak w oczy:
+
+
+
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,534); %set diagram left start at 0, and has height of 534
+
+%Flowchart: Connector [id:dp39489242406379743]
+\draw   (479,166.5) .. controls (479,154.97) and (488.63,145.63) .. (500.5,145.63) .. controls (512.37,145.63) and (522,154.97) .. (522,166.5) .. controls (522,178.03) and (512.37,187.38) .. (500.5,187.38) .. controls (488.63,187.38) and (479,178.03) .. (479,166.5) -- cycle ;
+%Flowchart: Connector [id:dp6285514868405493]
+\draw   (241,95.5) .. controls (241,83.97) and (250.63,74.63) .. (262.5,74.63) .. controls (274.37,74.63) and (284,83.97) .. (284,95.5) .. controls (284,107.03) and (274.37,116.38) .. (262.5,116.38) .. controls (250.63,116.38) and (241,107.03) .. (241,95.5) -- cycle ;
+%Flowchart: Connector [id:dp5872942312966463]
+\draw   (393,385.5) .. controls (393,373.97) and (402.63,364.63) .. (414.5,364.63) .. controls (426.37,364.63) and (436,373.97) .. (436,385.5) .. controls (436,397.03) and (426.37,406.38) .. (414.5,406.38) .. controls (402.63,406.38) and (393,397.03) .. (393,385.5) -- cycle ;
+%Flowchart: Connector [id:dp44540060370743495]
+\draw   (149,302.5) .. controls (149,290.97) and (158.63,281.63) .. (170.5,281.63) .. controls (182.37,281.63) and (192,290.97) .. (192,302.5) .. controls (192,314.03) and (182.37,323.38) .. (170.5,323.38) .. controls (158.63,323.38) and (149,314.03) .. (149,302.5) -- cycle ;
+%Straight Lines [id:da9934555309292514]
+\draw    (262.5,116.38) -- (170.5,281.63) ;
+%Straight Lines [id:da631810373801815]
+\draw    (479,166.5) -- (284,95.5) ;
+%Straight Lines [id:da6556019952944867]
+\draw    (505.5,187) -- (414.5,364.63) ;
+%Straight Lines [id:da7925665059125937]
+\draw    (393,385.5) -- (192,302.5) ;
+%Straight Lines [id:da07207873423061018]
+\draw    (479,166.5) -- (183.5,286) ;
+%Curve Lines [id:da3400699458616012]
+\draw    (282.5,85) .. controls (866.5,-48) and (374.5,394.63) .. (414.5,364.63) ;
+
+% Text Node
+\draw (309,194) node [anchor=north west][inner sep=0.75pt]   [align=left] {1};
+% Text Node
+\draw (279,345) node [anchor=north west][inner sep=0.75pt]   [align=left] {3};
+% Text Node
+\draw (195,178) node [anchor=north west][inner sep=0.75pt]   [align=left] {2};
+% Text Node
+\draw (454,238) node [anchor=north west][inner sep=0.75pt]   [align=left] {4};
+% Text Node
+\draw (392,102) node [anchor=north west][inner sep=0.75pt]   [align=left] {5};
+% Text Node
+\draw (580,78) node [anchor=north west][inner sep=0.75pt]   [align=left] {6};
+% Text Node
+\draw (255,85) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{A}};
+% Text Node
+\draw (163,291) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{B}};
+% Text Node
+\draw (407,374) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{C}};
+% Text Node
+\draw (494,155) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{D}};
+\end{tikzpicture}
+Tym razem będzie to DBAC. Zanim przejdziemy do dalszych rozważań sformalizujemy pojęcia grafu (choć intuicyjnie jest ono jasne) i cyklu Hamiltona. Zakładamy, że grafy, na których pracujemy, są pełne – jeśli nie byłoby krawędzi między pewnymi wierzchołkami to przyjmujemy po prostu, że ma ona wagę $\infty$.\\
+\\
+\textbf{Definicja 5.1.1.}\\
+Grafem ważonym nazwiemy zbiór wierzchołków $V$, $|V| = n$ i krawędzi $E \subseteq V \times V$, tak że każdej krawędzi $e$ jest przypisana długość (waga) $w_e \in \mathbb{R} \cup \{+\infty\}$. \\
+\\
+W obecnych rozważaniach przyjmujemy, że nie ma krawędzi między wierzchołkiem a tym samym wierzchołkiem, ponadto graf jest symetryczny, więc krawędź $ij$ utożsamiamy z $ji$, podobnie ich wagi. Zadaniem w problemie komiwojażera jest odnalezienie permutacji $\sigma$ wierzchołków (dalej przyjmujemy ich numerację $1,...n$), takiej że $\sum\limits_{i = 1}^n w_{\sigma(i)\sigma(i+1)}$ ma wartość minimalną przy czym przyjmujemy $n+1 := n$. Szukamy więc dla danego grafu:
+$$ \sigma_{min} = \argmin_{\sigma \in S_n} \sum\limits_{i=1}^n w_{\sigma(i)\sigma(i+1)}$$
+Teraz, problem ten jest \textit{trudny}. Konkretnie $NP$-trudny, to znaczy, że każdy problem z klasy $NP$ (problemów, dla których rozwiązanie jest weryfikowalne w wielomianowym czasie) daje się do niego sprowadzić również wielomianową transformacją. Z tego powodu, nawet gdyby, co mało prawdopodobne, okazało się, że $P=NP$ (czyli że problemy z wielomianową weryfikacją mają też wielomianowe rozwiązanie), nie daje to nam pewności, że problem komiwojażera da się rozwiązać w wielomianowym czasie. Jeśliby się natomiast dało, wtedy byłoby $P=NP$, co jest warte milion dolarów. Tak więc, nie są znane deterministyczne algorytmy o wielomianowej złożoności czasowej rozwiązujące postawiony problem – w przeciwieństwie do problemu dekodowania szyfru Vigenere'a w postawionej przeze mnie wersji, gdzie takie rozwiązania istniały, jednak były \textit{tylko} nieoptymalne czasowo. Użyjemy więc znowu metod Monte Carlo Markov Chains. Tym razem jednak, jak już wcześniej wspomnieliśmy, poza klasycznym rozwiązaniem z użyciem JŁM sprawdzimy też jedno z klasycznych rozwiązań prezentujących podejście zbieżnościowe – by 'zwiększyć' zbieżność – i osiągnąć zatrzymanie języka w jakimś do pewnego stopnia optymalnym stanie – musimy zrezygnować z jednorodności. Podejście to nosi nazwę symulowanego wyżarzania.
+
+\subsection{Niejednorodne łańcuchy Markowa. Symulowane wyżarzanie}
+Pomysł, który jest zastosowany do osiągnięcia zbieżności, ma swoje źródła w fizyce statystycznej. Możemy myśleć o naszych permutacjach (czyli potencjalnych rozwiązaniach) jako o pewnych stanach energetycznych, które są do obsadzenia przez chaotycznie poruszającą się cząstkę (cząstki). Cząstka zajmuje dany stan z prawdopodobieństwem związanym z poziomem energetycznym tego stanu – im wyższa energia stanu, tym mniejsze prawdopodobieństwo, konkretnie: stosunek prawdopodobieństw obsadzenia dwóch stanów energetycznych $\sigma_i$ $\sigma_j$ o energiach $E_i$ oraz $E_j$ odpowiednio wynosi:
+$$\frac{e_i}{e_j} = e_{ij} = \exp(\frac{E_j - E_i}{kT})$$
+gdzie $k>0$ jest pewną stałą (stała Boltzmanna) a $T\geq0$ – temperaturą układu. Widać pewne zależności: generalnie im energia niższa tym prawdopodobieństwo wyższe, przy $T$ dążącym do nieskończoności każdy stan staje się jednakowo prawdopodobny, natomiast przy $T=0$ całe prawdopodobieństwo skupia się w stanie o minimalnej energii (skoro temperatura jest zerowa, to układ, a więc i cząstka ma minimalną energię). Ma to oczywiście swoje odzwierciedlenie w rzeczywistości – rzeczywiście im temperatura wyższa, tym cząstki są bardziej ruchliwe – w zerze absolutnym cząstka zastyga.\\
+Tak jak więc zostało wspomniane, możemy myśleć o naszych permutacjach jako o stanach energetycznych do obsadzenia przez cząstkę. Możemy więc myśleć, że prawdopodbieństwo przejścia z jednego stanu do drugiego odpowiada rozkładowi Boltzmanna, czyli:
+$$p_{ij} = e_{ji} = \exp(\frac{E_i - E_j}{kT})$$
+Chcemy zdefiniować problem tak, aby przy temperaturze dążącej do zera, poszukiwane przez nas rozwiązanie minimalizujące odległość, było właśnie stanem, który zajmie cząstka. Tak więc wiążemy sumę odległości w cyklu Hamiltona z energią (tj. suma odległości w danej permutacji, jest energią tej permutacji). Dostajemy więc taki łańcuch na bazie algorytmu Metropolisa-Hastingsa:\\
+\begin{algorithm}[H]
+\caption{Symulowane wyżarzanie}
+\SetKwInput{For}{dla}
+\SetKwInput{If}{jeśli}
+\SetKwInput{Else}{w przeciwnym razie}
+Zacznij w dowolnie wybranym stanie (może być ustalony lub np. wylosowany jednostajnie) $X_0 := \sigma_0 \in S$\\
+\For{$n=0,1,2,3...$}{
+\quad wylosuj Z – kandydata na nowy stan zgodnie z  pewnym rozkładem $q_{X_i  \cdot}$ (nieredukowalna macierz generująca kandydatów, tak by )\;
+\quad wylosuj $V \sim U[0,1]$\;
+\quad $p_{ZX_n} = \exp(\frac{E_{Z} - E_{X_n}}{t_n})$\;
+\quad \If{$V \leq \min(1, p_{X_nZ})$}{
+\quad\quad $X_{n+1} := Z$\;}
+\quad \Else{}{
+\quad\quad $X_{n+1} := X_n$\;}}
+\end{algorithm}
+$t_n$ – jest parametrem wyżarzania (wychładzania) (\textit{annealing scheduling}) – temperaturą w czasie $n$, tj. jak zmieniamy temperaturę w czasie. Zwróćmy uwagę, że gdybyśmy przyjęli $t_n \equiv const$, dostajemy wtedy zwykły JŁM o rozkładzie stacjonarnym odpowiadającym rozkładowi Boltzmanna. W $t_n$ ukryta jest oczywiście też stała $k$. \\
+Oczywiście w idei tej metody zawarte jest założenie $t_n \to 0$ – cały proces przypomina \textit{wyżarzanie} metalu, stąd nazwa.
+Można zastanawiać się, kiedy w istocie zajdzie zbieżność do globalnego minimum względem długości cyklu Hamiltona odpowiadającego permutacji. Łatwo udowodnić, że przynajmniej dla minimum lokalnego zbieżność zachodzi prawie na pewno. Jak uzyskiwać zbieżność do pewnego stopnia pokazał Hajek [Hajek] – warto rozważać $t_n$ postaci $t_n = \frac{c}{\log(n)+1}$ dla pewnej stałej $c>0$, która powiązana jest z pewnymi szczególnymi własnościami rozważanego grafu. Będę więc sprawdzał wyniki dla różnych $c$, ponadto sprawdzę też jakie rozwiązania da się uzyskać stosując podejście JŁM – jak przy okazji dekodowania – czyli przyjmując $t_n = const$. Pozostaje krótko opisać użyte macierze generujące kandydatów, co uczynimy w następnym podrozdziale.
+\subsection{Macierze generujące}
+Dwa rodzaje 'swapowania' permutacji do omówienia
+\subsection{Symulacje i omówienie wyników}
+Dodać tabele z wynikami po weekendzie i przedstawić omówienie
+\subsection{Inne możliwe rozwiązania}
+-> mrówkowe;
+-> ewolucyjne
+-> deterministyczne wykładnicze
+-> suboptymalne wielomianowe
+-> kwantowe symulowane wyżarzanie, wiązanie kilku rozwiązań w jedno, może będzie można tego spróbować?
+\section{O programie}
+Link do repo, zwięzła dokumentacja kodu
+\section{Podsumowanie}
+Podsumowanie pracy i wyników, podziękowania.
 
 \newpage
 \begin{thebibliography}{9}

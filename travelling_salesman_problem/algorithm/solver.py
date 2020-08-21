@@ -11,7 +11,7 @@ def annealing1(i):
 
 
 def annealing2(i):
-    return log(i)
+    return 3/log(i)
 
 
 def annealing3(i):
@@ -30,7 +30,7 @@ def procedure(filename, steps):
         swap = get_random_swap2(size)
         update = calculator.get_state_function_update2(distances, current_state, swap)
         u = log(random.random())
-        if u < update / annealing1(i):
+        if u < update / annealing2(i):
             calculator.update_state_reverse_swap(current_state, swap)
             current_state_func -= update
             if current_state_func < best_func:
@@ -41,4 +41,4 @@ def procedure(filename, steps):
 
 
 random.seed(time())
-procedure("../data/burma14.xml", 100000)
+procedure("../data/eil76.xml", 100000)

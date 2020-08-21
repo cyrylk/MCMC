@@ -63,41 +63,41 @@ encoding_key = data_generator.generate_random_vigenere_key_fixed(vigenere_alphab
 decoding_key = vigenere.reverse_key(encoding_key, vigenere_alphabet)
 encryption = vigenere.encrypt_decrypt_text(plain_text, encoding_key, vigenere_alphabet)
 
-opt1 = vigenere_decoder.break_bounded_length_code_with_mcmc_monogram_criteria(encryption, vigenere_alphabet,
-                                                                       [2], [1.0], [upper_bigrams_distribution],
-                                                                       20000, 1, 100, upper_monograms_distribution)
-
-opt2 = vigenere_decoder.break_bounded_length_code_with_mcmc_monogram_criteria(encryption, vigenere_alphabet,
-                                                                       [2], [1.0], [upper_bigrams_distribution],
-                                                                       20000, 100, 500,
-                                                                              upper_monograms_distribution)
-
-split1 = re.split('[^a-zA-Z]', vigenere.encrypt_decrypt_text(encryption, opt1[0],
-                                                             vigenere_alphabet).get_non_stripped_text())
-split2 = re.split('[^a-zA-Z]', vigenere.encrypt_decrypt_text(encryption, opt2[0],
-                                                             vigenere_alphabet).get_non_stripped_text())
-i1 = 0
-i2 = 0
-for i in range(len(split1)):
-    if split1[i] in scrabble:
-        i1+=1
-    if split2[i] in scrabble:
-        i2+=1
-
-if i1 >= i2:
-    print(len(opt1[0]))
-
-else:
-    print(len(opt2[0]))
-
-print(consistency(opt1[0], decoding_key, vigenere_alphabet))
-print(consistency(opt2[0], decoding_key, vigenere_alphabet))
+# opt1 = vigenere_decoder.break_bounded_length_code_with_mcmc_monogram_criteria(encryption, vigenere_alphabet,
+#                                                                        [2], [1.0], [upper_bigrams_distribution],
+#                                                                        20000, 1, 100, upper_monograms_distribution)
+#
+# opt2 = vigenere_decoder.break_bounded_length_code_with_mcmc_monogram_criteria(encryption, vigenere_alphabet,
+#                                                                        [2], [1.0], [upper_bigrams_distribution],
+#                                                                        20000, 100, 500,
+#                                                                               upper_monograms_distribution)
+#
+# split1 = re.split('[^a-zA-Z]', vigenere.encrypt_decrypt_text(encryption, opt1[0],
+#                                                              vigenere_alphabet).get_non_stripped_text())
+# split2 = re.split('[^a-zA-Z]', vigenere.encrypt_decrypt_text(encryption, opt2[0],
+#                                                              vigenere_alphabet).get_non_stripped_text())
+# i1 = 0
+# i2 = 0
+# for i in range(len(split1)):
+#     if split1[i] in scrabble:
+#         i1+=1
+#     if split2[i] in scrabble:
+#         i2+=1
+#
+# if i1 >= i2:
+#     print(len(opt1[0]))
+#
+# else:
+#     print(len(opt2[0]))
+#
+# print(consistency(opt1[0], decoding_key, vigenere_alphabet))
+# print(consistency(opt2[0], decoding_key, vigenere_alphabet))
 
 time1 = time()
 monogram_maximizer = vigenere_decoder.get_max_monogram_state(encryption, upper_monograms_distribution,
                                                              150, vigenere_alphabet)
 decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, monogram_maximizer[0],
-                                                            [2], [1.0], [upper_bigrams_distribution], 30000)
+                                                            [2], [1.0], [upper_bigrams_distribution], 5000)
 print(common.consistency(decode[0], decoding_key, vigenere_alphabet))
 time2 = time()
 print(time2 - time1)
