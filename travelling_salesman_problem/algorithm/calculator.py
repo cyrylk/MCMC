@@ -1,6 +1,6 @@
 
 
-def get_function_update1(distances, current_state, swap):
+def get_state_function_update1(distances, current_state, swap):
     size = len(current_state)
     update = 0
 
@@ -21,7 +21,7 @@ def get_function_update1(distances, current_state, swap):
     return update
 
 
-def get_function_update2(distances, current_state, swap):
+def get_state_function_update2(distances, current_state, swap):
     size = len(current_state)
     update = 0
 
@@ -51,18 +51,9 @@ def update_state_reverse_swap(current_state, swap):
         current_state[(swap[0] + i) % len(current_state)] = current_state[(swap[1] - i) % len(current_state)]
         current_state[(swap[1] - i) % len(current_state)] = aux
 
-state = [0,1,2,3,4,5]
-update_state_reverse_swap(state, (3, 0))
-update_state_reverse_swap(state, (3, 0))
-update_state_reverse_swap(state, (3, 0))
-print(state)
-
-
-
 
 def calculate_distance(state, distances):
     dist = 0
     for j in range(len(state)):
         dist += distances[state[j]][state[(j+1) % len(state)]]
     return dist
-

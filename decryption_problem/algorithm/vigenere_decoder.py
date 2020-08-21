@@ -1,251 +1,207 @@
-import decryption_problem.alphabetic.alphabetic as alphabetic
 import decryption_problem.common.common as common
-import decryption_problem.ciphers.vigenere as vigenere
+import decryption_problem.ciphers.vigenere as cipher
 import decryption_problem.algorithm.vigenere_neighbours as neighbours
 import decryption_problem.algorithm.vigenere_calculator as calculator
 import random
 from math import log
 
 
-def get_max_monogram_state_coord(text, coordinate, monogram_dist, key_length, alphabet):
-    max_state = 0
-    max_func = 0
-    for j in range(len(monogram_dist)):
-        func = 0
-        for i in range(coordinate, len(text), key_length):
-            func += monogram_dist[vigenere.encrypt_decrypt_single(text[i], j, alphabet)]
-        if func > max_func:
+def get_max_monogram_state_coord(encryption, coordinate, monogram_log_distribution, key_length, alphabet):
+    max_state = cipher.get_zero_mono_key()
+    max_weight = float("-inf")
+    for j in cipher.get_all_mono_keys(alphabet):
+        weight = 0
+        for i in range(coordinate, len(encryption), key_length):
+            weight += monogram_log_distribution[cipher.encrypt_decrypt_single(encryption[i], j, alphabet)]
+        if weight > max_weight:
             max_state = j
-            max_func = func
-    return max_state
+            max_weight = weight
+    return max_state, max_weight
 
 
-def get_max_monogram_state(text, monogram_dist, key_length, alphabet):
-    return [get_max_monogram_state_coord(text, coordinate, monogram_dist, key_length, alphabet) for coordinate in
-            range(key_length)]
+def get_max_monogram_state(encryption, monogram_log_distribution, key_length, alphabet):
+    max_monogram_key = []
+    max_weight = 0
+    for coordinate in range(key_length):
+        max_coord = get_max_monogram_state_coord(encryption, coordinate, monogram_log_distribution,
+                                                 key_length, alphabet)
+        max_monogram_key.append(max_coord[0])
+        max_weight += max_coord[1]
+    return max_monogram_key, max_weight
 
 
-def get_bigram_weight(text, bigram, coord, key_length, bigram_dist, alphabet):
+def get_bigram_part_weight(encryption, part, coord, key_length, bigram_log_distribution, alphabet):
     weight = 0
-    for i in range(coord, len(text) - 1, key_length):
-        text[i] = vigenere.encrypt_decrypt_single(text[i], bigram[0], alphabet)
-        text[i+1] = vigenere.encrypt_decrypt_single(text[i+1], bigram[1], alphabet)
-        gram = common.get_n_gram_at_i(text, 2, i, alphabet)
-        try:
-            weight += bigram_dist[gram]
-        except KeyError:
-            pass
-        text[i] = vigenere.encrypt_decrypt_single(text[i], -bigram[0], alphabet)
-        text[i + 1] = vigenere.encrypt_decrypt_single(text[i + 1], -bigram[1], alphabet)
+    for i in range(coord, len(encryption) - 1, key_length):
+        encryption[i] = cipher.encrypt_decrypt_single(encryption[i], part[0], alphabet)
+        encryption[i + 1] = cipher.encrypt_decrypt_single(encryption[i + 1], part[1], alphabet)
+        grams = common.get_bigrams_in_coords(encryption, i)
+        for gram in grams:
+            try:
+                weight += bigram_log_distribution[gram]
+            except KeyError:
+                pass
+        encryption[i] = cipher.encrypt_decrypt_single(encryption[i], -part[0], alphabet)
+        encryption[i + 1] = cipher.encrypt_decrypt_single(encryption[i + 1], -part[1], alphabet)
     return weight
 
 
-def get_max_bigram_state(text, bigram_dist, key_length, alphabet):
-    codes = [[[0 for i in range(key_length-1)] for a in range(alphabet.length)] for b in range(alphabet.length)]
-    values = [[get_bigram_weight(text, (a, b), 0, key_length, bigram_dist, alphabet) for b in range(alphabet.length)]
-              for a in range(alphabet.length)]
-    new_values = [[0 for b in range(alphabet.length)] for a in range(alphabet.length)]
-    for r in range(1, key_length):
-        for i in range(len(codes)):
-            for j in range(len(codes[i])):
-                max_func = values[i][0] + get_bigram_weight(text, (0, j), r, key_length, bigram_dist, alphabet)
-                max_val = 0
-                for k in range(len(codes[i])):
-                    func = values[i][k] + get_bigram_weight(text, (k, j), r, key_length, bigram_dist, alphabet)
-                    if func > max_func:
-                        max_func = func
-                        max_val = k
-                new_values[i][j] = max_func
-                codes[i][j][r-1] = max_val
-
-        aux = values
-        values = new_values
-        new_values = aux
-
-    maxi = values[0][0]
-    max_state = 0
-    for i in range(len(values)):
-        if values[i][i] > maxi:
-            maxi = values[i][i]
+def get_max_bigram_key_and_weight(values, codes, all_mono_keys):
+    max_bigram_weight_value = -float("inf")
+    max_state = cipher.get_zero_mono_key()
+    for i in all_mono_keys:
+        if values[i][i] > max_bigram_weight_value:
+            max_bigram_weight_value = values[i][i]
             max_state = i
-
-    print("MAXIMIZADO", maxi)
-    res = []
+    bigram_maximizer = []
     t = len(codes[max_state][max_state]) - 1
     current = max_state
     for i in range(len(codes[max_state][max_state])):
         current = codes[max_state][current][t]
-        res.append(current)
+        bigram_maximizer.append(current)
         t -= 1
-    res.append(max_state)
-    res.reverse()
-    return res
+    bigram_maximizer.append(max_state)
+    bigram_maximizer.reverse()
+    return bigram_maximizer, max_bigram_weight_value
 
 
-def fixed_procedure(text, distributions, starting_state, n_list, steps, alphabet, coefs):
-    current_state = starting_state
-    current_decryption = vigenere.encrypt_decrypt_text(text, current_state, alphabet)
-    current_frequencies = []
-    current_state_function = 0
+def get_max_bigram_state(encryption, bigram_log_distribution, key_length, alphabet):
+    all_mono_keys = cipher.get_all_mono_keys(alphabet)
+    codes = {a: {b: [cipher.get_zero_mono_key() for i in range(key_length - 1)] for b in all_mono_keys}
+             for a in all_mono_keys}
+    values = {a: {b: get_bigram_part_weight(encryption, (a, b), 0, key_length, bigram_log_distribution, alphabet)
+                  for b in all_mono_keys} for a in all_mono_keys}
+    new_values = {a: {b: 0 for b in all_mono_keys} for a in all_mono_keys}
+    for r in range(1, key_length):
+        for i in all_mono_keys:
+            for j in codes[i]:
+                max_func = float("-inf")
+                max_arg = cipher.get_zero_mono_key()
+                for k in codes[i]:
+                    func = values[i][k] + get_bigram_part_weight(encryption, (k, j), r, key_length,
+                                                                 bigram_log_distribution, alphabet)
+                    if func > max_func:
+                        max_func = func
+                        max_arg = k
+                new_values[i][j] = max_func
+                codes[i][j][r - 1] = max_arg
+        aux = values
+        values = new_values
+        new_values = aux
+
+    return get_max_bigram_key_and_weight(values, codes, all_mono_keys)
+
+
+def generate_frequencies_and_state_weight(decryption, n_list, coefs, log_distributions):
+    frequencies = []
+    state_weight = 0
     index = 0
     for n in n_list:
-        freqs = common.calculate_n_gram_frequencies(current_decryption, n, alphabet)
-        current_frequencies.append(freqs)
-        current_state_function += common.calculate_log_n_gram_function(freqs, distributions[index])*coefs[index]
+        partial_frequencies = common.calculate_n_gram_frequencies(decryption, n)
+        frequencies.append(partial_frequencies)
+        state_weight += common.calculate_n_gram_log_weight(partial_frequencies, log_distributions[index]) * coefs[index]
         index += 1
 
-    max_function = current_state_function
+    return frequencies, state_weight
+
+
+def generate_frequency_and_weight_change(current_state, candidate, n_list, coefs, log_distributions, decryption,
+                                         alphabet):
+    frequencies_change = []
+    weight_change = 0
+    index = 0
+    for n in n_list:
+        freq_change = calculator.get_frequency_change_fixed_key_length(current_state, candidate, n,
+                                                                       decryption, alphabet)
+        frequencies_change.append(freq_change)
+        weight_change += common.calculate_log_weight_change(freq_change, log_distributions[index]) * coefs[index]
+        index += 1
+    return frequencies_change, weight_change
+
+
+def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_list, coefs, log_distributions, steps,
+                                      true_decrypting_code=[], consistency_thresholds=[]):
+    consistency_index = 0
+    consistency_list = []
+    current_state = starting_state
+    current_decryption = cipher.encrypt_decrypt_text(encryption, current_state, alphabet)
+    start = generate_frequencies_and_state_weight(current_decryption, n_list, coefs, log_distributions)
+    current_frequencies = start[0]
+    current_state_weight = start[1]
+    max_weight = current_state_weight
     max_state = current_state
-
-    for i in range(steps):
-        candidate = neighbours.get_candidate_fixed(current_state, alphabet)
-        frequencies_change = []
-        dist_change = 0
-        index = 0
-        for n in n_list:
-            freq_change = calculator.get_frequency_change_fixed_key_length(current_state, candidate, n,
-                                                                   current_decryption, alphabet)
-            frequencies_change.append(freq_change)
-
-            dist_change += common.calculate_log_function_change(freq_change, distributions[index])*coefs[index]
-            index += 1
-        changed_index = calculator.find_change_in_key(current_state, candidate)
+    for step in range(steps):
+        candidate = neighbours.get_candidate(current_state, alphabet)
+        frequency_and_weight_change = generate_frequency_and_weight_change(current_state, candidate, n_list, coefs,
+                                                                           log_distributions, current_decryption,
+                                                                           alphabet)
+        frequencies_change = frequency_and_weight_change[0]
+        weight_change = frequency_and_weight_change[1]
+        changed_index = common.find_change_in_key(current_state, candidate)
         shift = candidate[changed_index] - current_state[changed_index]
         u = random.random()
-        if log(u) < dist_change:
-            vigenere.update_decryption_by_key_index(current_decryption, changed_index, shift, len(current_state),
-                                                    alphabet)
+        if log(u) < weight_change:
+            cipher.update_decryption_by_key_index(current_decryption, changed_index, shift, len(current_state),
+                                                  alphabet)
             current_state = candidate
             for f in range(len(frequencies_change)):
                 common.update_frequency(current_frequencies[f], frequencies_change[f])
-            current_state_function += dist_change
-            if current_state_function > max_function:
+            current_state_weight += weight_change
+            if current_state_weight > max_weight:
                 max_state = candidate
-                max_function = current_state_function
-    return max_state, max_function
+                max_weight = current_state_weight
+                if true_decrypting_code and \
+                        common.consistency(current_state, true_decrypting_code, alphabet) >= \
+                        consistency_thresholds[consistency_index]:
+                    consistency_index += 1
+                    consistency_list.append(step)
+                    if consistency_index >= len(consistency_thresholds):
+                        return max_state, max_weight, consistency_list
+    return max_state, max_weight, consistency_list
 
 
-def bounded_procedure(text, distribution, starting_state, n, steps, alphabet, boundary):
-    current_state = starting_state
-    current_decryption = vigenere.encrypt_decrypt_text(text, current_state, alphabet)
-    current_frequencies = common.calculate_n_gram_frequencies(current_decryption, n, alphabet)
-    current_state_function = common.calculate_log_n_gram_function(current_frequencies, distribution)
-
-    max_function = current_state_function
-    max_state = current_state
-    for i in range(steps):
-        candidate = neighbours.get_candidate_bounded2(current_state, boundary, alphabet)
-        if len(candidate) == len(current_state):
-            frequency_change = calculator.get_frequency_change_fixed_key_length(current_state, candidate, n,
-                                                                                current_decryption, alphabet)
-            dist_change = common.calculate_log_function_change(frequency_change, distribution)
-            changed_index = calculator.find_change_in_key(current_state, candidate)
-            shift = candidate[changed_index] - current_state[changed_index]
-            u = random.random()
-            if log(u) < dist_change:
-                vigenere.update_decryption_by_key_index(current_decryption, changed_index, shift, len(current_state),
-                                                        alphabet)
-                current_state = candidate
-                common.update_frequency(current_frequencies, frequency_change)
-                current_state_function *= dist_change
-                if current_state_function > max_function:
-                    max_state = candidate
-                    max_function = current_state_function
-            continue
-
-        new_decryption = vigenere.encrypt_decrypt_text(text, candidate, alphabet)
-        new_frequencies = common.calculate_n_gram_frequencies(new_decryption, n, alphabet)
-        new_function = common.calculate_log_n_gram_function(new_frequencies, distribution)
-        u = random.random()
-        diff = new_function - current_state_function
-        if log(u) < diff:
-            current_state = candidate
-            current_state_function = new_function
-            current_decryption = new_decryption
-            if current_state_function > max_function:
-                max_state = candidate
-                max_function = current_state_function
-
-    text.set_non_stripped_part(vigenere.encrypt_decrypt_text(encrypted, max_state, alphabeto).non_stripped_part)
-    print(text.get_non_stripped_text())
-    print(max_state)
+def break_bounded_length_code_with_mcmc(encryption, alphabet, n_list, coefs, distributions, steps, boundary,
+                                        monogram_log_distribution):
+    max_weight = float("-inf")
+    max_state = [cipher.get_zero_mono_key()]
+    for length in range(1, boundary+1):
+        start = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)[0]
+        break_attempt = break_fixed_length_code_with_mcmc(encryption, alphabet, start, n_list, coefs,
+                                                          distributions, steps)
+        if break_attempt[1] > max_weight:
+            max_state = break_attempt[0]
+            max_weight = break_attempt[1]
+    return max_state, max_weight
 
 
-from decryption_problem.algorithm.distribution_generator import generate_from_file_log
+def break_bounded_length_code_with_mcmc_optimized(encryption, alphabet, n_list, coefs, log_distributions, steps,
+                                                  boundary, monogram_log_distribution):
+    max_weight = float("-inf")
+    max_state = [cipher.get_zero_mono_key()]
+    steps = steps//20
+    for length in range(1, boundary+1):
+        start = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)[0]
+        optimized_steps = int(length/boundary * steps)
+        break_attempt = break_fixed_length_code_with_mcmc(encryption, alphabet, start, n_list, coefs,
+                                                          log_distributions, optimized_steps)
+        if break_attempt[1] > max_weight:
+            max_state = break_attempt[0]
+            max_weight = break_attempt[1]
+
+    return break_fixed_length_code_with_mcmc(encryption, alphabet, max_state, n_list, coefs,
+                                             log_distributions, 20*steps)
 
 
-from timeit import default_timer as time
-random.seed(time())
-
-alphabeto = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-plain = alphabetic.StrippedText('''IF YOUTH, THROUGHOUT ALL HISTORY, HAD HAD A CHAMPION TO STAND UP FOR IT; 
-TO SHOW A DOUBTING WORLD THAT A CHILD CAN THINK; AND, POSSIBLY, DO IT PRACTICALLY; YOU WOULDN’T CONSTANTLY 
-RUN ACROSS FOLKS TODAY WHO CLAIM THAT “A CHILD DON’T KNOW ANYTHING.” A CHILD’S BRAIN STARTS FUNCTIONING AT BIRTH; 
-AND HAS, AMONGST ITS MANY INFANT CONVOLUTIONS, THOUSANDS OF DORMANT ATOMS, INTO WHICH GOD HAS PUT A MYSTIC 
-POSSIBILITY FOR NOTICING AN ADULT’S ACT, AND FIGURING OUT ITS PURPORT.
-
-UP TO ABOUT ITS PRIMARY SCHOOL DAYS A CHILD THINKS, NATURALLY, ONLY OF PLAY. BUT MANY A 
-FORM OF PLAY CONTAINS DISCIPLINARY FACTORS. “YOU CAN’T DO THIS,” OR “THAT PUTS YOU OUT,” 
-SHOWS A CHILD THAT IT MUST THINK, PRACTICALLY, OR FAIL. NOW, IF, THROUGHOUT CHILDHOOD, 
-A BRAIN HAS NO OPPOSITION, IT IS PLAIN THAT IT WILL ATTAIN A POSITION OF “STATUS QUO,” AS WITH OUR ORDINARY ANIMALS. 
-MAN KNOWS NOT WHY A COW, DOG OR LION WAS NOT BORN WITH A BRAIN ON A PAR WITH OURS; WHY SUCH ANIMALS CANNOT ADD, SUBTRACT, 
-OR OBTAIN FROM BOOKS AND SCHOOLING, THAT PARAMOUNT POSITION WHICH MAN HOLDS TODAY.''', alphabeto)
-
-
-standard3 = generate_from_file_log("../data/english_trigrams.txt", alphabeto, 3)
-standard2 = generate_from_file_log("../data/english_bigrams.txt", alphabeto, 2)
-standard1 = generate_from_file_log("../data/english_monograms.txt", alphabeto, 1)
-
-code = neighbours.get_starting_state_fixed(alphabeto, int(len(plain)/12))
-print(len(code))
-
-encrypted = vigenere.encrypt_decrypt_text(plain, code, alphabeto)
-res = fixed_procedure(encrypted, [standard2], get_max_monogram_state(encrypted, standard1, len(code), alphabeto),
-                             [2], 15000, alphabeto, [1.0])
-maxx_state = res[0]
-maxx_function = res[1]
-# bounded_procedure(encrypted, standard2, neighbours.get_starting_state_bounded(alphabeto, 20), 2, 10000, alphabeto, 20)
-
-# maxx_state = []
-# maxx_function = 0
-#
-# for proc in range(1, 21):
-#     curr = fixed_procedure(encrypted, standard, neighbours.get_starting_state_fixed(alphabeto, proc), 2,
-#                            900, alphabeto)
-#     if curr[1] > maxx_function:
-#         maxx_state = curr[0]
-#         maxx_function = curr[1]
-#
-print(maxx_function)
-decrypted1 = vigenere.encrypt_decrypt_text(encrypted, maxx_state, alphabeto)
-
-decrypted2 = vigenere.encrypt_decrypt_text(encrypted, [-i for i in code], alphabeto)
-frequencies = common.calculate_n_gram_frequencies(decrypted2, 2, alphabeto)
-state_function = common.calculate_log_n_gram_function(frequencies, standard2)
-print(state_function)
-
-print(decrypted1.get_non_stripped_text())
-print()
-print(decrypted2.get_non_stripped_text())
-print()
-
-print("TESTTTTTTTT")
-maximizer = get_max_bigram_state(encrypted, standard2, len(code), alphabeto)
-decrypted3 = vigenere.encrypt_decrypt_text(encrypted, maximizer,
-                                           alphabeto)
-frequencies = common.calculate_n_gram_frequencies(decrypted3, 2, alphabeto)
-state_function = common.calculate_log_n_gram_function(frequencies, standard2)
-print(decrypted3.get_non_stripped_text())
-print(state_function)
-print([(-i) % 26 for i in code])
-print(maximizer)
-
-# e = 0
-# sol = [-i for i in code]
-# for i in range(len(sol) - 1):
-#     e += get_bigram_weigth(encrypted, (sol[i], sol[i+1]), i, len(sol), standard2, alphabeto)
-#
-# print(e)
-
-
+def break_bounded_length_code_with_mcmc_monogram_criteria(encryption, alphabet, n_list, coefs, log_distributions, steps,
+                                                          lower_bound, upper_bound, monogram_log_distribution):
+    max_weight = float("-inf")
+    max_state = [cipher.get_zero_mono_key()]
+    for length in range(lower_bound, upper_bound+1):
+        max_monogram = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)
+        state = max_monogram[0]
+        weight = max_monogram[1]
+        if weight > max_weight:
+            max_weight = weight
+            max_state = state
+    return break_fixed_length_code_with_mcmc(encryption, alphabet, max_state, n_list, coefs,
+                                             log_distributions, steps)

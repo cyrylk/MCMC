@@ -3,7 +3,7 @@ import decryption_problem.alphabetic.alphabetic as alphabetic
 import decryption_problem.ciphers.autokey as autokey
 
 
-class MyTestCase(unittest.TestCase):
+class AutokeyTest(unittest.TestCase):
     def setUp(self):
         self.alphabet = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 

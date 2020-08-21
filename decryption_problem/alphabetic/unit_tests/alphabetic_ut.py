@@ -16,19 +16,24 @@ class AlphabetTest(unittest.TestCase):
         self.assertFalse("D" in alphabetic.Alphabet("ABC"))
 
     def test_stripped_text_properties(self):
-        stripped_text1 = alphabetic.StrippedText("LET US GO! IT IS TIME. ", alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+        stripped_text1 = alphabetic.StrippedText("LET US GO! IT IS TIME. ",
+                                                 alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
         self.assertEqual(stripped_text1.ends_of_words, {2: 0, 4: 1, 6: 2, 8: 3, 10: 4, 14: 5})
         self.assertEqual(stripped_text1.stripped_part, [" ", " ", "! ", " ", " ", ". ", ""])
         self.assertEqual(stripped_text1.get_non_stripped_text(), "LET US GO! IT IS TIME. ")
+        self.assertEqual(stripped_text1.positions["L"], set([0]))
+        self.assertEqual(stripped_text1.positions["E"], set([1, 14]))
         stripped_text2 = alphabetic.StrippedText("  LET US GO! IT IS TIME",
                                                  alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
         self.assertEqual(stripped_text2.ends_of_words, {-1: 0, 2: 1, 4: 2, 6: 3, 8: 4, 10: 5, 14: 6})
         self.assertEqual(stripped_text2.stripped_part, ["  ", " ", " ", "! ", " ", " ", ""])
         self.assertEqual(stripped_text2.get_non_stripped_text(), "  LET US GO! IT IS TIME")
-        stripped_text2[0] = "A"
-        self.assertEqual(stripped_text2[0], "A")
+        stripped_text2[3] = "F"
+        self.assertEqual(stripped_text2[3], "F")
+        self.assertEqual(stripped_text2.positions["F"], set([3]))
 
 
 
 if __name__ == '__main__':
     unittest.main()
+

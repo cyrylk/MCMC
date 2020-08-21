@@ -1,18 +1,10 @@
-## @brief package containing alphabetic class definition
-# and related "alphabetic" functions
 
+class Alphabet(object):
 
-## @brief class containing information about the alphabet used
-class Alphabet:
     def __init__(self, alphabet_in_iterable):
-        ## @brief alphabet used
-        self.alphabet = list(alphabet_in_iterable)
-        ## @brief mapping of letters to their positions
+        self.alphabet = {i: alphabet_in_iterable[i] for i in range(len(alphabet_in_iterable))}
         self.letters_to_position = {self.alphabet[i]: i for i in range(len(self.alphabet))}
-        ## @brief length of the alphabet
         self.length = len(self.alphabet)
-        ## @brief number of different letters, than given one, in alphabet
-        # (equiv number of shifts that will change a letter)
         self.max_shift_length = self.length - 1
 
     def __getitem__(self, key):
@@ -21,21 +13,27 @@ class Alphabet:
     def __contains__(self, item):
         return item in self.letters_to_position
 
+    def __len__(self):
+        return self.length
 
-## @brief class containing the input text stripped of non-alphabetic characters
-# alongside with all the information needed to recreate the original text
-class StrippedText:
+    def letters(self):
+        return self.alphabet.values()
+
+
+class StrippedText(object):
     def __init__(self, text, alphabet):
         length = len(text)
         self.non_stripped_part = []
         self.stripped_part = []
         self.ends_of_words = {}
+        self.positions = {letter: set() for letter in alphabet.letters()}
         end_of_word = 0
         word_number = 0
         stripped = ""
         for i in range(length):
             if text[i] in alphabet:
                 self.non_stripped_part.append(text[i])
+                self.positions[text[i]].add(end_of_word)
                 if stripped:
                     self.stripped_part.append(stripped)
                     stripped = ""
@@ -58,7 +56,9 @@ class StrippedText:
         return self.non_stripped_part[key]
 
     def __setitem__(self, key, value):
+        self.positions[self.non_stripped_part[key]].remove(key)
         self.non_stripped_part[key] = value
+        self.positions[value].add(key)
 
     def __len__(self, ):
         return len(self.non_stripped_part)
@@ -84,14 +84,15 @@ class StrippedText:
 
 
 def alphabets_product(alphabet1, alphabet2):
+    if not alphabet2:
+        return {i: 0 for i in alphabet1}
     return {i + j: 0 for i in alphabet1 for j in alphabet2}
 
 
-## @brief function generating a dictionary of all n-grams of given alphabetic
-# to frequencies - initially all frequencies set to zero
 def n_gram_dict(alphabet, n):
     result = [""]
     for i in range(n):
         result = alphabets_product(alphabet, result)
     return result
+
 

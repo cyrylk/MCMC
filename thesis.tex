@@ -11,11 +11,15 @@
 \usepackage{amsthm}
 \usepackage{graphicx}
 \usepackage{bbm}
+\usepackage{tikz}
 % \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \usepackage{hyperref}
 \usepackage[ruled,linesnumbered]{algorithm2e}
-
+\usepackage{tabularx}
+\usepackage{longtable}
 \newcommand\eqwithdef{\stackrel{\mathclap{\normalfont\mbox{def}}}{=}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
 
 \begin{document}
 
@@ -45,7 +49,7 @@ i problemu komiwojażera}}\\
 \tableofcontents
 \newpage
 \section{Wstęp}
-W swojej pracy zaprezentuję stosunkowo nowe podejście do dekodowania zaszyfrowanych wiadomości tekstowych przy użyciu próbkowania Monte Carlo łańcuchami Markowa. Podejście opisane najpierw w  \cite{Connor}, następnie rozszerzone w \cite{Chen&Rosenthal} na większą rodzinę szyfrów. Postaram się wprowadzić ulepszenia do dotychczas zaproponowanych rozwiązań, zastosować podejście MCMC na jeszcze większej rodzinie szyfrów, ponadto oszacować istotne parametry algorytmu deszyfrującego – tempo zbieżności, złożoność pamięciową i czasową, jak bliski jest oczekiwany wynik od \textit{optymalnego} (w pewnym sensie), wpływ różnych modyfikacji algorytmu na jego działanie.
+W swojej pracy zaprezentuję stosunkowo nowe podejście do dekodowania zaszyfrowanych wiadomości tekstowych przy użyciu próbkowania Monte Carlo łańcuchami Markowa. Podejście opisane najpierw przez Diaconisa, zostało rozwinięte w \cite{Connor}, a następnie jeszcze rozszerzone w \cite{Chen&Rosenthal}. Moim celem jest zastosowanie podejścia MCMC do dekodowania szyfrów z rodziny, dla której to podejście do tej pory nie było wykorzystywane. Najpierw zaprezentuję algorytm deterministyczny rozwiązujący problem w postawionej przeze mnie wersji, następnie pokazuję, że  ponadto oszacować istotne parametry algorytmu deszyfrującego – tempo zbieżności, złożoność pamięciową i czasową.
 
 W drugiej części użyję podobnego podejścia do rozwiązania symetrycznego problemu komiwojażera. Tak jak poprzednio, oszacuję wartości najważniejszych parametrów algorytmu: prędkość zbieżności, złożoność, a także o ile gorszego rozwiązania niż optymalne powinniśmy oczekiwać oraz za pomocą symulacji pokażę, jakie wyniki otrzymujemy w praktyce. Do symulacji użyję benchmarkowego zbioru danych wejściowych dla problemu komiwojażera z \cite{benchmark}.\\
 
@@ -53,12 +57,12 @@ Pierwsze rozdziały pracy będą poświęcone wprowadzeniu do teorii łańcuchó
 W następnym rozdziale przejdę do szczegółowego opisu podejścia MCMC przyjętego do rozwiązania problemu komiwojażera. Tak jak przy okazji deszyfrowania tekstu oszacuję parametry algorytmu i podam jego własności. W kolejnym rozdziale zaprezentuję wyniki uzyskane przez algorytm na benchmarkowym zbiorze danych wejściowych.\\
 Ostatni rozdział będzie podsumowaniem pracy.\\
 
-Implementacja algorytmów i symulacji została napisana w języku Python3. Zastosowałem podejście \textit{test-driven development} (TDD) – działanie najważniejszych fragmentów kodu jest pokryte testami jednostkowymi. W tym celu użyłem biblioteki \textit{unittest} z tego języka.
+Implementacja algorytmów i symulacji została napisana w języku Python3. Część kodu odpowiadająca za szyfrowanie tekstu została pokryta testami jednostkowymi przy użyciu biblioteki unittest z tego języka.
 
 \newpage
 
 \section{Łańcuchy Markowa}
-Przypomnę w tym rozdziale podstawowe zagadnienia z teorii łańcuchów Markowa. Będę zajmował się tylko łańcuchami Markowa (czyli procesami Markowa w czasie dyskretnym) w skończonej przestrzeni stanów – właśnie takie bowiem łańcuchy będą modelowane w celu rozwiązania postawionych problemów. Zajmuję się tutaj przede wszystkim pokazaniem teorii łańcuchów Markowa w ogólności, ze szczególnym naciskiem na zachowanie łańcuchów w nieskończoności (zbieżności wg rozkładu, prawa wielkich liczb) – na razie przede wszystkim jednorodnych łańcuchów Markowa. Treści przedstawione w tym rozdziale będą następnie uzupełniane i rozwijane w następnych rozdziałach, zwłaszcza przy okazji opisu teoretycznej analizy i uzasadniania motywacji przedstawianych w tej pracy algorytmów. W szczególności teoria niejednorodnych łańcuchów Markowa będzie szerzej przedstawiona przy okazji prezentacji algorytmów stosujących mechanizm \textit{symulowanego wyżarzania}\\ 
+Przypomnę w tym rozdziale podstawowe zagadnienia z teorii łańcuchów Markowa. Będę zajmował się tylko łańcuchami Markowa (czyli procesami Markowa w czasie dyskretnym) w skończonej przestrzeni stanów – właśnie takie bowiem łańcuchy będą modelowane w celu rozwiązania postawionych problemów. Zajmuję się tutaj przede wszystkim pokazaniem teorii łańcuchów Markowa w ogólności, ze szczególnym naciskiem na zachowanie łańcuchów w nieskończoności (zbieżności wg rozkładu, prawa wielkich liczb) – na razie przede wszystkim jednorodnych łańcuchów Markowa. Treści przedstawione w tym rozdziale będą następnie uzupełniane i rozwijane w następnych rozdziałach, zwłaszcza przy okazji opisu teoretycznej analizy i uzasadniania motywacji przedstawianych w tej pracy algorytmów. W szczególności teoria niejednorodnych łańcuchów Markowa będzie szerzej przedstawiona przy okazji prezentacji algorytmów stosujących mechanizm \textit{symulowanego wyżarzania}\\
 \subsection{Definicje i podstawowe własności}
 \textbf{Definicja 2.1.1}\\
 \textit{Łańcuchem Markowa} (ŁM) nazywamy ciąg zmiennych losowych $X = \{X_n\}_{n \in \{0,1,2...\}}$ określonych na wspólnej przestrzeni probabilistycznej $\{\Omega, \mathcal{F}, P\}$ przyjmujących wartości z przestrzeni stanów $S$ mający następującą własność (Markowa):\\
@@ -67,7 +71,7 @@ jeśli tylko powyższe prawdopodobieństwa warunkowe są dobrze zdefiniowane –
 \\Tak jak ustaliliśmy, przyjmujemy $|S| <\infty$. Wartość przyjętą przez $X_k$ będziemy nazywać stanem łańcucha $X_n$ w \textit{k}-tym kroku. Z powyższej definicji wynika, że stan w $(k+1)$-szym kroku zależy tylko od stanu w $k$-tym kroku i nie zależy od stanów we wcześniejszych krokach. Ponieważ przestrzeń stanów jest skończona, więc możemy o niej myśleć jako $S = \{1,2,3,4...|S|\}$.
 \\\\
 \textbf{Fakt 2.1.2}
-Niech $0 \geq t_0 < t_1 < ... < t_k < n$ oraz $i_0, i_1, ... i_k, i_n, j \in S$. Dla łańcucha Markowa $X_n$ zachodzi:
+Niech $0 \leq t_0 < t_1 < ... < t_k < n$ oraz $i_0, i_1, ... i_k, i_n, j \in S$. Dla łańcucha Markowa $X_n$ zachodzi:
 $$P(X_{n+1} = j | X_n = i_n, X_{t_{k}} = i_k, ... X_{t_0} = i_0) = P(X_{n+1} = j| X_{n} = i_n)$$
 Dowód: Wystarczy skorzystać ze wzoru na prawdopodobieństwo całkowite: rozbić zbiór $\{X_n = i_n, X_{t_{k}} = i_k, ... X_{t_0} = i_0\}$ ze względu na wartości $X_t$, tych że $t \notin \{t_0, ... t_k\}$. Korzystając następnie z własności Markowa dla każdego elementu takiego rozbicia, dostajemy tezę. \qed
 \\\\
@@ -139,7 +143,7 @@ Powyższe fakty pokazują, że jeśli w ŁM znamy konkretny stan w teraźniejszo
 \textbf{Definicja 2.1.2}\\
 \textit{Rozkładem początkowym}  łańcucha Markowa $\{X_n\}_{n \in \{0,1,2...\}}$ nazywamy $\nu = (\nu_i)_{i \in S}: \nu^T \in \mathbb{R}^S$ nazywamy rozkład prawdopodobieństwa zmiennej losowej $X_0$, a więc stanu zerowego, czyli $\nu_i = P(X_0 = i)$. Oczywiście $\forall i \in S: \nu_i \geq 0$ i $\sum\limits_{i \in S}\nu_i = 1$. Myślimy o $\nu$ jako o wektorze poziomym, w którym na \textit{i}-tej współrzędnej przechowujemy prawdopodobieństwo wystartowania ze stanu $i$.
 \\\\\textbf{Definicja 2.1.3}\\
-Macierz kwadratową $M = (m_{ij})_{i,j \in S} \in \mathbb{R}^{S \times S}$, taką że $\forall i, j \in S: m_{ij} \geq 0$ oraz $\forall i \in S: \sum\limits_{j \in S} m_{ij} = 1$ nazywamy \textit{macierzą stochastyczną}. 
+Macierz kwadratową $M = (m_{ij})_{i,j \in S} \in \mathbb{R}^{S \times S}$, taką że $\forall i, j \in S: m_{ij} \geq 0$ oraz $\forall i \in S: \sum\limits_{j \in S} m_{ij} = 1$ nazywamy \textit{macierzą stochastyczną}.
 \\\\
 \textbf{Lemat 2.1.4}\\
 Iloczyn macierzy stochastycznych jest macierzą stochastyczną.\\
@@ -181,7 +185,7 @@ gdzie ostatnia równość wynika z definicji mnożenia macierzy.\qed
 Z powyższych rozważań oraz z twierdzenia (2.1.2). Jeśli $X_n$ jest JŁM o macierzy przejścia $\mathbb{P}$, to dla $t \in \mathbb{N}$ ciąg $X_{tn}$ także jest JŁM o macierzy $\mathbb{P}(t)$. Podobnie $X_{k}, X_{k+1}, X_{k+2}...$ jest JŁM o tej samej macierzy przejścia.
 \\\\
 \textbf{Definicja 2.1.10}\\
-Dla JŁM $\{X_n\}$ stany $i,j \in S$ nazwiemy \textit{komunikującymi się ze sobą} jeśli dla pewnych $m,n \geq 0$: $p_{ij}(m) > 0$ i $p_{ji}(n) > 0$. 
+Dla JŁM $\{X_n\}$ stany $i,j \in S$ nazwiemy \textit{komunikującymi się ze sobą} jeśli dla pewnych $m,n \geq 0$: $p_{ij}(m) > 0$ i $p_{ji}(n) > 0$.
 Oznacza to, że będąc w dowolnym $i$ z niezerowym prawdopodobieństwem trafimy kiedyś do $j$ i na odwrót.
 \\\\
 \textbf{Definicja 2.1.11}\\
@@ -223,7 +227,7 @@ JŁM, który w każdym kroku ma ten sam rozkład (czyli startuje z rozkładu sta
 \\ (1) $X_n$ ma dokładnie jeden rozkład stacjonarny $\pi$, ponadto $\forall j \in S$ $\pi_j > 0$.
 \\ (2) Dla $i,j \in S$: $$\lim\limits_{n \to \infty} p_{ij}(n) = \pi_j$$ oraz dla dowolnego rozkładu początkowego $\nu$ przyjmując wcześniejsze oznaczenia mamy $$\lim\limits_{n \to \infty} \nu_j(n) = \pi_j$$ (łańcuch, w którym zachodzi opisana zbieżność do rozkładu stacjonarnego, nazywamy ergodycznym).
 \\
-(3) Dla stanu $j \in S$ zdefiniujmy zmienną losową $$W_{j,n}: \Omega \rightarrow S: W_{j,n} :=  \frac{1}{n} \sum\limits_{i = 0}^{n-1} \mathbbm{1}_{\{X_i = j\}}$$ 
+(3) Dla stanu $j \in S$ zdefiniujmy zmienną losową $$W_{j,n}: \Omega \rightarrow S: W_{j,n} :=  \frac{1}{n} \sum\limits_{i = 0}^{n-1} \mathbbm{1}_{\{X_i = j\}}$$
 Wówczas niezależnie od rozkładu początkowego $\forall j \in S: W_{j,n} \xrightarrow{{n \rightarrow \infty}} \pi_j$ prawie na pewno.
 \\\\Do dowodu (1) i (2) użyjemy techniki \textit{couplingu}. Pozwoli nam ona nie tylko na udowodnienie twierdzenia, ale także da wstępne wyobrażenie na temat tempa zbieżności algorytmów bazujących na JŁM. Do dowodu (3) będziemy musieli udowodnić i użyć własności tzw. \textit{czasów $n$-tej wizyty w stanie $s$}. Da się pokazać, że zachodzenie (2) implikuje nieokresowość i nieredukowalność JŁM (dla tej pracy nie jest to istotne, więc nie będziemy tego robić). Tak więc można przyjąć: ergodyczność=nieredukowalność+nieokresowość – nieredukowalną i nieokresową macierz stochastyczną będziemy więc nazywać ergodyczną.
 \\
@@ -257,12 +261,12 @@ Odległością $TV$ między rozkładami prawdopodobieństwa $\nu$ i $\mu$ na $S$
 Odległością w normie $L_1$ między rozkładami prawdopodobieństwa $\nu$ i $\mu$ na $S$ nazwiemy:
 $$\|\nu - \mu\|_{L_1} = \sum\limits_{\substack{j \in S}} |\mu_j - \nu_j|$$
 \\
-Jest znanym faktem, że metryka $L_1$ na $\mathbb{R}^S$ zadaje metrykę równoważną z metryką euklidesową – dla dowodu twierdzenia ergodycznego możemy zatem skupić się na badaniu zbieżności w $L_1$. Jako równoważna z euklidesową przestrzeń indukowana przez tę metrykę jest zupełna. Ponadto zbiór rozkładów tj. 
-$$\{\nu \in \mathbb{R}^S:\, \nu_i \geq 0, \, \sum\limits_{i \in S} \nu_i = 1\}$$ 
+Jest znanym faktem, że metryka $L_1$ na $\mathbb{R}^S$ zadaje metrykę równoważną z metryką euklidesową – dla dowodu twierdzenia ergodycznego możemy zatem skupić się na badaniu zbieżności w $L_1$. Jako równoważna z euklidesową przestrzeń indukowana przez tę metrykę jest zupełna. Ponadto zbiór rozkładów tj.
+$$\{\nu \in \mathbb{R}^S:\, \nu_i \geq 0, \, \sum\limits_{i \in S} \nu_i = 1\}$$
 jest zbiorem domkniętym tej przestrzeni, a więc również jest przestrzenią zupełną w tej metryce. Poniższy lemat pokazuje równoważność metryk $L_1$ i $TV$.
 \\\\
 \textbf{Lemat 2.3.2}
-Zachodzi: 
+Zachodzi:
 $$\|\nu - \mu\|_{TV} = \frac{1}{2}\|\nu - \mu\|_{L_1} = \sum\limits_{\substack{j \in S:\\ \nu_j > \mu_j}} (\nu_j - \mu_j) = \sum\limits_{\substack{j \in S:\\ \mu_j > \nu_j}} (\mu_j - \nu_j)$$
 \\
 Dowód: Oznaczmy kolejno: \begin{align*}
@@ -303,13 +307,13 @@ Teraz przejdziemy do dowodu punktów (1) i (2) twierdzenia ergodycznego przy pom
 \\\\
 Skonstruujmy dwa jednorodne łańcuchy Markowa $X_n$ i $Y_n$ o tej samej macierzy przejścia $\mathbb{P}$ (nieredukowalnej i nieokresowej) o rozkładach początkowych $\delta_i$ i $\delta_j$ odpowiednio, takich że każdy z nich jest skupiony w jednym stanie, i.e. $(\delta_i)_i = 1, (\delta_i)_k = 0 \, \forall k \neq i$ oraz $(\delta_j)_j = 1, (\delta_j)_k = 0 \, \forall k \neq j$ (może być $i=j$ lub $i\neq j$). Używamy konstrukcji z podrozdziału 2.3. Dopóki $X_n \neq Y_n$, do generowania kolejnych stanów używamy niezależnych wzajemnie ciągów i.i.d. $U_n^{(X)}, U_n^{(Y)} \sim U[0,1]$, od pierwszego $N$ zaś, przy którym $X_N = Y_N$, kolejne stany generujemy obu łańcuchów na podstawie tego samego ciągu i.i.d. zm. losowych $U_{N+1}, U_{N+2} ... \sim U[0,1]$. Dla każdej zmiennej używamy tej samej funkcji update'u $\varphi_{\mathbb{P}}$. Różne są funkcje generujące $X_0$ i $Y_0$, mianowicie $X_0 = \varphi_{\delta_i}(U_0^{(X)}) = i$ oraz $Y_0 = \varphi_{\delta_j}(U_0^{(Y)}) = j$.\\
 Konstrukcja taka jest dla obu łańcuchów zgodna z założeniami konstrukcji z podrozdziału (2.3), zatem oba ciągi $X_n$ i $Y_n$ są łańcuchami Markowa, $X_n$ o rozkładzie początkowym $\delta_i$, $Y_n$ – $\delta_j$. Zatem w dowolnym momencie $n$ ich rozkłady to $\delta_i\mathbb{P}^n$ i $\delta_j\mathbb{P}^n$ odpowiednio. Zwróćmy teraz uwagę, że łańcuchy są skonstruowane tak, że jeśli $N$ będzie najmniejszym takim $N$, że $X_N = Y_N$, to dla $n \leq N$ $X_n$ i $Y_n$ są niezależne, natomiast $\forall n \geq N \, X_n = Y_n$. Dlatego też taką konstrukcję nazywamy \textit{couplingiem}.\\
-Ogólnie \textit{coupling} to dwa łańcuchy (dwie 'kopie') o tej samej macierzy przejścia startujące z pewnych rozkładów początkowych, do momentu spotkania biegnące niezależnie, a po pierwszym spotkaniu biegnące już razem. Stąd nazwa – od pewnego momentu bowiem łańcuchy są ''sparowane'' ze sobą. 
+Ogólnie \textit{coupling} to dwa łańcuchy (dwie 'kopie') o tej samej macierzy przejścia startujące z pewnych rozkładów początkowych, do momentu spotkania biegnące niezależnie, a po pierwszym spotkaniu biegnące już razem. Stąd nazwa – od pewnego momentu bowiem łańcuchy są ''sparowane'' ze sobą.
 \\
 \\
 \textbf{Lemat 2.3.4}\\
 Dla powyżej zdefiniowanych łańcuchów $X_n$, $Y_n$: $\lim\limits_{n \to \infty} P(X_n \neq Y_n) = 0$\\
 Dowód: Jeśli $i = j$, to ciąg $q_n = P(X_n \neq Y_n)$ jest stale równy zero, więc lemat zachodzi. Załóżmy więc, że $i \neq j$. Ponieważ łańcuch jest nieredukowalny i nieokresowy, a przestrzeń stanów skończona, z (2.1.15) istnieje takie $N$, $k \in S$, że $p_{sk}(N) > 0$ dla każdego $s \in S$.\\\\
-Oznaczmy $\varepsilon := \sqrt{min(s \in S: p_{sk}(N))} > 0$ Wtedy: 
+Oznaczmy $\varepsilon := \sqrt{min(s \in S: p_{sk}(N))} > 0$ Wtedy:
 \begin{align*}
 P(X_N \neq Y_N) &\leq 1 - P(X_N = k, Y_N = k) \\
 &= 1 - P(X_n = k)P(Y_n = k) && \text{z niezależności, dopóki $X_n \neq Y_n$} \\
@@ -317,7 +321,7 @@ P(X_N \neq Y_N) &\leq 1 - P(X_N = k, Y_N = k) \\
 &= 1 - p_{ik}p_{jk} \leq 1 - \sqrt{\varepsilon^2} = 1 - \varepsilon < 1
 \end{align*}
 \\
-Pokażemy teraz, że $P(X_{tN} \neq Y_{tN}) \leq (1-\varepsilon)^t$ dla $t=1,2,3...$ (*). Przeprowadzimy argument indukcyjny. Dla $t = 1$ jak pokazaliśmy, jest to prawda. Przy założeniu, że twierdzenie jest prawdziwe dla wszystkich $t \geq T \geq 0$, dla $T+1$ mamy 
+Pokażemy teraz, że $P(X_{tN} \neq Y_{tN}) \leq (1-\varepsilon)^t$ dla $t=1,2,3...$ (*). Przeprowadzimy argument indukcyjny. Dla $t = 1$ jak pokazaliśmy, jest to prawda. Przy założeniu, że twierdzenie jest prawdziwe dla wszystkich $t \geq T \geq 0$, dla $T+1$ mamy
 \begin{align*}
     &P(X_{(T+1)N} \neq Y_{(T+1)N}) = P(X_{(T+1)N} \neq Y_{(T+1)N} \land X_{TN} \neq Y_{TN})
     &\text{z konstrukcji łańcuchów:}\\\\
@@ -346,14 +350,14 @@ z (2.3.4) $q_n \to 0$, więc korzystamy z twierdzenia o trzech ciągach i dostaj
 Widać więc kandydata na rozkład stacjonarny $$\pi := \lim\limits_{n \to \infty} \delta_i\mathbb{P}^n$$ gdzie wybór $i \in S$ jest dowolny, z (2.3.5) bowiem można zauważyć, jeśli granica istnieje, to nie zależy od $i$. Żeby udowodnić punkty (1), (2) twierdzenia ergodycznego pozostaje pokazać, że:
 \begin{enumerate}
 	\item[(a)] granica istnieje i nie zależy od rozkładu początkowego
-	\item[(b)] zadaje rozkład stacjonarny 
-	\item[(c)] $\pi_i > 0$ dla każdego $i \in S$ 
+	\item[(b)] zadaje rozkład stacjonarny
+	\item[(c)] $\pi_i > 0$ dla każdego $i \in S$
 	\item[(d)] zachodzi $p_{ij}(n) \to \pi_j$
 \end{enumerate}
 Dowód (a): Pokażemy, że ciąg $\delta_i\mathbb{P}^n$ spełnia warunek Cauchy'ego. Istotne jest, że wcześniejsze rozważania były niezależne od stanów początkowych $i, j$, zatem (2.3.5) zachodzi dla dowolnej pary stanów. Ustalmy $\varepsilon > 0$ oraz takie $K$, że dla każdej pary stanów $s_1, s_2 \in S$ i $n > K$  zachodzi $\|\delta_{s_1}\mathbb{P}^n - \delta_{s_2}\mathbb{P}^n\|_{L1} < \varepsilon$. Takie $K$ istnieje, bo jest skończenie wiele par stanów i dla każdej pary $\|\delta_{s_1}\mathbb{P}^n - \delta_{s_2}\mathbb{P}^n\|_{L1} \to 0$ z lematu (2.3.5). Weźmy sobie dowolne $N > M > K$. Zauważmy tedy, że $\delta_i\mathbb{P}^{N-M}$ zadaje pewien rozkład $\mu$. Zauważmy też, że taki rozkład $\mu$ (i dowolny inny) na $S$ da się zapisać jako $\mu = \sum\limits_{k \in S} \mu_k\delta_k$. Zatem:\\\\
 \begin{align*}
-\|\delta_i\mathbb{P}^N - \delta_i\mathbb{P}^M\|_{L_1} &= \|(\delta_i\mathbb{P}^{N-M})\mathbb{P}^{M} - \delta_i\mathbb{P}^M\|_{L_1}\\  
-&= \|(\mu\mathbb{P}^{M} - \delta_i\mathbb{P}^M\|_{L_1} \\ 
+\|\delta_i\mathbb{P}^N - \delta_i\mathbb{P}^M\|_{L_1} &= \|(\delta_i\mathbb{P}^{N-M})\mathbb{P}^{M} - \delta_i\mathbb{P}^M\|_{L_1}\\
+&= \|(\mu\mathbb{P}^{M} - \delta_i\mathbb{P}^M\|_{L_1} \\
 &= \|(\mu\mathbb{P}^{M} - \delta_i\mathbb{P}^M\|_{L_1} \\
 &= \|(\sum\limits_{k \in S} \mu_k\delta_k)\mathbb{P}^{M} - \delta_i\mathbb{P}^M\|_{L_1} \\
 &= \|(\sum\limits_{k \in S} \mu_k\delta_k)\mathbb{P}^{M} - (\sum\limits_{k \in S} \mu_k)\delta_i\mathbb{P}^M\|_{L_1} \\
@@ -365,13 +369,13 @@ Gdzie ostatnia nierówność wynika z nierówności trójkąta i tego, że $M > 
 Dowód (b): Zauważmy, że $$\pi\mathbb{P} = (\lim\limits_{n \to \infty} \delta_i\mathbb{P}^n)\mathbb{P} = \lim\limits_{n \to \infty} \delta_i\mathbb{P}^{n+1} = \pi$$ zatem $\pi$ jest rozkładem stacjonarnym.
 Jest też jedynym rozkładem stacjonarnym, bo pokazaliśmy wcześniej, że granica $$\lim\limits_{n \to \infty} \nu\mathbb{P}^n = \pi$$ nie zależy od rozkładu początkowego. Jeśli istniałby inny rozkład stacjonarny $\pi' \neq \pi$, to z równania balansu byłoby $\pi'\mathbb{P} = \pi'$, a więc $\pi'\mathbb{P}^n \to \pi'$, ale skoro granica nie zależy od rozkładu początkowego, to $\pi'\mathbb{P}^n \to \pi$, a więc mamy sprzeczność, zatem rozkład $\pi$ jest jedynym rozkładem stacjonarnym. \qed\\\\
 Dowód (c): Ustalmy $i,j \in S$. Mamy $$\pi_j = (\lim\limits_{n \to \infty} \delta_i\mathbb{P}^n)_j = (\delta_i \lim\limits_{n \to \infty} \mathbb{P}^n)_j = (\delta_i)_i \lim\limits_{n \to \infty} p_{ij}(n) = \lim\limits_{n \to \infty} p_{ij}(n)$$ co należało udowodnić. \qed\\\\
-Dowód (d): Weźmy dowolne $k \in S$. Jak w lemacie (2.3.4) istnieje $N$, że $\forall s \in S:\, p_{sk}(N) > 0$, ustalmy $\varepsilon = \min_{s \in S}(p_{sk}(N)) > 0$. Z definicji $\varepsilon$ i własności Markowa 
+Dowód (d): Weźmy dowolne $k \in S$. Jak w lemacie (2.3.4) istnieje $N$, że $\forall s \in S:\, p_{sk}(N) > 0$, ustalmy $\varepsilon = \min_{s \in S}(p_{sk}(N)) > 0$. Z definicji $\varepsilon$ i własności Markowa
 \begin{align*}
 P(X_N = k) &= \sum\limits_{s \in S} P(X_N = k|X_0 = s)P(X_0 = s) \\
 &= \sum\limits_{s \in S} p_{sk}(N)P(X_0 = s) \\
 &\geq \varepsilon \sum\limits_{s \in S} P(X_0 = s) = \varepsilon
 \end{align*}
-Stosując prostą indukcję pokazujemy, że także dla każdego $t = 1,2,3...$, $P(X_{tN} = k), \geq \varepsilon$, bo 
+Stosując prostą indukcję pokazujemy, że także dla każdego $t = 1,2,3...$, $P(X_{tN} = k), \geq \varepsilon$, bo
 $$P(X_{(t+1)N} = k) = \sum\limits_{s \in S} p_{sk}(N)P(X_{tN} = s) \geq \varepsilon \sum\limits_{s \in S} P(X_{tN} = s) = \varepsilon$$
 \qed
 \\ Udowodnione zostały zatem pierwsze dwa punkty twierdzenia ergodycznego. Widzimy również, że dowód lematu (2.3.4), przedstawienie dowolnego rozkładu jako sumy ważonej $\delta_k$ (oraz nierówność z (2.3.3)) wskazują w pewien sposób tempo zbieżności do rozkładu stacjonarnego, tj. odległość od rozkładu stacjonarnego w $n$-tym kroku jest mniejsza od $c \cdot (\sqrt[N]{(1-\varepsilon)})^n = c\alpha^n$ dla $N, \varepsilon$ zdefiniowanych w dowodzie (2.3.4) i pewnej stałej $c$. Tak więc tempo zbieżności wg rozkładu jest w pewien sposób wykładnicze, jednak na razie nie mówi to nam za dużo. Dokładniej tempem zbieżności zajmę się przy okazji analizy algorytmów (pojawią się pojęcia \textit{mixing time} itd.).
@@ -379,7 +383,7 @@ $$P(X_{(t+1)N} = k) = \sum\limits_{s \in S} p_{sk}(N)P(X_{tN} = s) \geq \varepsi
 \subsection{Czasy $n$-tej wizyty i zbieżność prawie na pewno}
 Przyjmujemy te same założenia na temat JŁM, co w poprzednim rozdziale (czyli nieredukowalność i nieokresowość, skończona przestrzeń stanów S). Wiemy już, że \\
 \\
-\textbf{Definicja 2.5.1} 
+\textbf{Definicja 2.5.1}
 Czasem $n$-tej wizyty:  $\tau_n^{(s)}$  w stanie $s \in S$ jednorodnego łańcucha Markowa $X_n$. nazywamy:\\
 \begin{align*}
 &\tau_1^{(s)} = \inf_{m = 0,1,2...} \{m: X_m = s\}\\
@@ -503,7 +507,7 @@ Dowód: Powtarzając kroki z poprzedniego dowodu $\gamma_1^{(s)}$:
     &\text{z lematu (2.5.2)}\\
     &\leq N^k(1 + 2^k(1-\varepsilon) + 3^k(1 - \varepsilon)^2 ...) < \infty
 \end{align*}
-gdzie ostatnia suma jest skończona na mocy kryterium Cauchy'ego zbieżności szeregów, bo 
+gdzie ostatnia suma jest skończona na mocy kryterium Cauchy'ego zbieżności szeregów, bo
 $$\sqrt[n]{(n+1)^k(1-\varepsilon)^n} \xrightarrow{n \to \infty} (1-\varepsilon) < 1$$
 Podobnie postępujemy dla $n=2,3,4...$, powtarzając kroki z poprzedniego dowodu dla każdego warunku $\tau^{(s)}_{n-1} = t$, takiego że $P(\tau^{(s)}_{n-1} = t) > 0$ dostajemy:
 \begin{align*}
@@ -519,7 +523,7 @@ Teraz formalnie pokażemy intuicyjny fakt, że czasy, które upływają między 
 $\gamma_2^{(s)}, \gamma_3^{(s)}...$ mają ten sam rozkład.\\
 Dowód: Niech $n\geq 2$, $k = 1,2,3...$, rozbijamy prawdopodobieństwo względem $\tau_{n-1}^{(s)}$ podobnie jak w dowodzie poprzedniego twierdzenia (korzystając z twierdzenia (2.1.2):\\
 \begin{align*}
-    P(\gamma_n^{(s)} = k) = \sum\limits_{P(\tau_{n-1}^{(s)} = t) > 0} P(X_{t+k} = s, ..., X_{t+2} \neq s, X_{t+1} \neq s| X_t = s)P(\tau_{k-1}^{(s)} = t) 
+    P(\gamma_n^{(s)} = k) = \sum\limits_{P(\tau_{n-1}^{(s)} = t) > 0} P(X_{t+k} = s, ..., X_{t+2} \neq s, X_{t+1} \neq s| X_t = s)P(\tau_{k-1}^{(s)} = t)
 \end{align*}
 Z jednorodności łańcucha dla każdego $t$:
 \begin{align*}
@@ -547,7 +551,7 @@ Zauważmy, że dla każdego $k \geq 2$ i $0 < t_2,...t_k \in \mathbb{N}$:
     &\sum\limits_{t: P(\tau_1^{(s)} = t)} C(\mathbb{P}, t_2, s)C(\mathbb{P}, t_3, s)...C(\mathbb{P}, t_k, s)P(\tau_1^{(s)} = t) =\\
     &\quad\quad\quad\quad\,\,\, C(\mathbb{P}, t_2, s)C(\mathbb{P}, t_3, s)...C(\mathbb{P}, t_k, s) = P(\gamma_k^{(s)} = t_k) P(\gamma_{k-1}^{(s)} = t_{k-1}) ...P(\gamma_2^{(s)} = t_2)
 \end{align*}
-W przedostatniej nierówności skorzystaliśmy z (2.5.4), znanej tożsamości 
+W przedostatniej nierówności skorzystaliśmy z (2.5.4), znanej tożsamości
 $$P(A_n, ... A_1|A_0) = P(A_n|A_{n-1}, ...A_0)P(A_{n-1}|A_{n-2}...A_0)...P(A_1|A_0)$$
 oraz własności Markowa/twierdzenia (2.1.2). Udowodnioną własność możemy łatwo uogólnić z $t_2, ... t_k \in \mathbb{N}$ na $A_2, ... A_k \subseteq \mathbb{N}$, rozbijając każdy $A_n$ na pojedyncze elementy i sumując, zatem mamy:
 $$P(\gamma_k^{(s)} \in A_k, \gamma_{k-1}^{(s)} \in A_{k-1} ..., \gamma_2^{(s)} \in A_2) = P(\gamma_k^{(s)} \in A_k) P(\gamma_{k-1}^{(s)} \in A_{k-1}) ...P(\gamma_2^{(s)} \in A_{2})$$
@@ -563,9 +567,9 @@ Oznaczmy teraz przez $\lambda_j := \mathbb{E}\gamma_2^{(j)}$.\\\\
 \textbf{Lemat 2.5.7}
 $$\lim\limits_{n \to \infty} \frac{1}{n} \sum\limits_{i = 1}^n \gamma_i^{(j)} = \lambda_j$$
 prawie na pewno.\\
-Dowód: 
+Dowód:
 \begin{align*}
-    \lim\limits_{n \to \infty} \frac{1}{n} \sum\limits_{i = 1}^n \gamma_i^{(j)} = 
+    \lim\limits_{n \to \infty} \frac{1}{n} \sum\limits_{i = 1}^n \gamma_i^{(j)} =
     \lim\limits_{n \to \infty} \left(\frac{\gamma_1^{(j)}}{n} + \frac{n-1}{n}\cdot\frac{1}{n-1} \sum\limits_{i = 2}^n \gamma_i^{(j)}\right)\\
     = \lim\limits_{n \to \infty} \frac{1}{n-1} \sum\limits_{i = 2}^n \gamma_i^{(j)} = \lambda_j
 \end{align*}
@@ -587,12 +591,12 @@ A więc:
 \end{align}
 Mnożąc (1) i (2) stronami dostajemy tezę.
 \\\\
-Ponieważ $\gamma$ są skończone prawie na pewno, więc $m_n$ są również skończone prawie na pewno, ponadto prawie na pewno $m_n \to \infty$ przy $n \to \infty$. W takim razie elementy ciągu 
+Ponieważ $\gamma$ są skończone prawie na pewno, więc $m_n$ są również skończone prawie na pewno, ponadto prawie na pewno $m_n \to \infty$ przy $n \to \infty$. W takim razie elementy ciągu
 $$\frac{\sum\limits_{i=1}^{m_n} \gamma_i^{(j)}}{m_n}$$
 prawie na pewno pokrywają się z elementami ciągu:
 $$\frac{\sum\limits_{i=1}^{n} \gamma_i^{(j)}}{n}$$
 a skoro jak już powiedziano $m_n \to \infty$, to prawie na pewno są równe w granicy.
-Stąd, z oczywistej własności $\frac{m_n}{m_n-1} \overset{p.n.}{\to} \infty$ i z własności granicy prawie na pewno ($ X_n \to X \implies \frac{1}{X_n} \to \frac{1}{X}$, jeśli tylko $X_n \neq 0$ prawie na pewno), widzimy, że skrajne strony nierówności z lematu dążą do $\frac{1}{\lambda_j}$ prawie na pewno. A więc z twierdzenia o trzech ciągach, również $W_{j,n} \to \frac{1}{\lambda_j}$ prawie na pewno.\\
+Stąd, z oczywistej własności $\frac{m_n}{m_n-1} \overset{p.n.}{\to} 1$ i z własności granicy prawie na pewno ($ X_n \to X \implies \frac{1}{X_n} \to \frac{1}{X}$, jeśli tylko $X_n \neq 0$ prawie na pewno), widzimy, że skrajne strony nierówności z lematu dążą do $\frac{1}{\lambda_j}$ prawie na pewno. A więc z twierdzenia o trzech ciągach, również $W_{j,n} \to \frac{1}{\lambda_j}$ prawie na pewno.\\
 \\
 Pozostaje dowieść, że $\pi_j = \frac{1}{\lambda_j}$. W tym celu wystarczy pokazać, że:
 $$ \lim\limits_{n \to \infty} \mathbb{E}(W_{j,n}) = \pi_j$$ Dalej bowiem korzystamy z twierdzenia Lebesgue'a o zbieżności zmajoryzowanej – ponieważ $W_{j,n}$ są wspólnie ograniczone przez funkcję całkowalną $f \equiv 1$, zatem:
@@ -607,7 +611,7 @@ co po zastosowaniu do ciągu $a_n := \mathbb{E}(\mathbbm{1}_{\{X_n = j\}})$ i to
 $$\mathbb{E}(W_{j,n}) = \frac{1}{n} \sum\limits_{i=0}^{n-1} \mathbb{E}(\mathbbm{1}_{\{X_i = j\}}) = \frac{1}{n} \sum\limits_{i=0}^{n-1} a_i$$
 daje tezę i ostatecznie dowodzi punktu (3) twierdzenia ergodycznego. \qed
 \\
-Zauważmy, że przy okazji dostajemy też ciekawą informację na temat rozkładu stacjonarnego, mianowicie $\pi_j = \frac{1}{\lambda_j}$, gdzie $\lambda_j$ jest średnim czasem powrotu do $j$ (i.e. ile średnio czekamy na ponowną wizytę w $j$ po jego odwiedzinach). 
+Zauważmy, że przy okazji dostajemy też ciekawą informację na temat rozkładu stacjonarnego, mianowicie $\pi_j = \frac{1}{\lambda_j}$, gdzie $\lambda_j$ jest średnim czasem powrotu do $j$ (i.e. ile średnio czekamy na ponowną wizytę w $j$ po jego odwiedzinach).
 \\\\
 Punkt (3) twierdzenia ergodycznego pokazuje nam, że zbieżność do rozkładu jest \textit{mocna} (co można było w jakiś sposób "wyczuć" \, już na podstawie wykładniczego tempa zbieżności do rozkładu stacjonarnego omówionego w poprzednim podrozdziale). Gdybyśmy mieli tylko punkty (1) i (2) (czyli zbieżność według rozkładu), nie byłoby gwarancji na to, że zmienna losowa $W_{j,n}$ (średni czas przebywania w stanie $j$) nie \textit{odchyla się} (mimo że coraz rzadziej, ale jednak nieskończenie wiele razy i dowolnie daleko) od $\pi_j$. \textit{Mocna} zbieżność daje tę gwarancję – zapewnia nam, że od pewnego momentu średni czas przebywania w $j$ jest niezmiennie bardzo bliski $\pi_j$ (z pr. 1).\\
 Nie ma to aż tak wielkiego znaczenia dla naszych problemów, jednak pokazuje, że JŁM swój cel (przybliżanie zmiennych losowych i.i.d. o rozkładzie $\pi$ – będzie o tym mowa później) realizuje naprawdę dokładnie. Z tego punktu wynika jeszcze jeden prosty wniosek
@@ -622,7 +626,7 @@ Teza wynika z liniowości granicy prawie na pewno i punktu (3) twierdzenia ergod
 Warto na koniec zauważyć, że w istocie do punktów (1) i (3) twierdzenia ergodycznego wystarczyła nieredukowalność $X_n$. \\
 Ponieważ w rozwiązaniach będziemy operować na łańcuchach nieokresowych, przedstawię tylko szkic rozumowania. Zwróćmy uwagę, że w dowodzie, że $\gamma_n^{(s)},\,\, n = 2,3...$ są i.i.d. nie korzystaliśmy z nieokresowości, natomiast w dowodzie tego, że $\gamma_n^{(s)},\,\, n = 1,2,3...$ są skończone prawie na pewno nie trzeba z niej korzystać – wystarczy badać łańcuch 'ograniczony', do tych kroków, w których prawdopodobieństwo znalezienia się w danym stanie $j$ nie jest zerowe, podobnie dowodzi się istnienia momentów (jest jednak trochę szczegółów technicznych, które pomijam). Następnie dowód kontynuujemy jak dla przypadku nieokresowego. W efekcie dostajemy niezależną od rozkładu początkowego zbieżność $W_{n,j}$ do $\nu_j = \frac{1}{\lambda_j}$, takiego że $0 < \frac{1}{\lambda_j} < 1$. $\nu_j$ ze względu na definicję $W_{n,j}$ zadają rozkład. Jeśli JŁM jest nieokresowy, to rozkład ten jest jedynym stacjonarnym z udowodnionego twierdzenia. Jeśli łańcuch natomiast jest okresowy, to o ile ma rozkład stacjonarny, to – jak łatwo dowieść – jest on właśnie równy $\nu$. Pozostaje pokazać, że nieredukowalny, okresowy JŁM ma rozkład stacjonarny. Wystarczy zastosować prosty trick, żeby się o tym przekonać. Jeśli nieredukowalny JŁM o macierzy przejść $\mathbb{P} = (p_{ij})_{i,j \in S}$jest okresowy, to znaczy, że w szczególności $p_{ii} = 0$ dla każdego $i \in S$. Skonstruujmy nowy łańcuch z macierzą przejść $\mathbb{Q} = (q_{ij})_{i,j \in S}$, taki, że dla $i$: $0 < q_{ii} = \varepsilon < 1$ oraz dla różnych $i,j$ $q_{ij} = (1-\varepsilon)p_{ij}$, dla $i \neq s$. Łańcuch oczywiście nadal jest nieredukowalny (wszystkie prawdopodobieństwa przejść, które były dodatnie, są nadal dodatnie), ale nie jest już okresowy. Posiada zatem jedyny rozkład stacjonarny $\pi$ – jedyny spełniający dla każdego $j$ równanie balansu:
 \begin{align*}
-    \pi_j = \sum\limits_{i \in S, i \neq j} \pi_i (1-\varepsilon) p_{ij}  + \varepsilon \pi_j 
+    \pi_j = \sum\limits_{i \in S, i \neq j} \pi_i (1-\varepsilon) p_{ij}  + \varepsilon \pi_j
 \end{align*}
 Przekształcamy równoważnie: po odjęciu stronami $\varepsilon \pi_j$ i podzieleniu przez $(1-\varepsilon)$ dostajemy równanie balansu oryginalnego łańcucha $X_n$. Zatem istnieje jedyny rozkład stacjonarny okresowego łańcucha $X_n$ i jest to $\pi$.
 \\
@@ -639,13 +643,13 @@ $$\frac{\sum\limits_{i=1}^n Z_i - n\mu}{\sqrt{n}} \overset{d}{\to} N(0, \sigma^2
 Naszym celem będzie udowodnienie podobnego twierdzenia dla jednorodnego łańcucha Markowa $\{X_n\}$ i funkcji stanu $f: S \to \mathbb{R}$, tzn. powinna zachodzić zbieżność typu:
 $$ \frac{\sum\limits_{i=0}^{n-1} f(X_i) - n\mu}{\sqrt{n}} \overset{d}{\to} N(0, \sigma^2)$$
 dla pewnego $\sigma$ i jak w (2.5.10) $\mu = \sum\limits_{j \in S} \pi_j f(j)$. \\
-Przyjmiemy podobną strategię jak w dowodzie wersji MPWL dla JŁM. To znaczy, będziemy próbować rozdzielić łańcuch na pewne niezależne części – taką rolę w dowodzie MPWL pełniły $\gamma_n^{(s)}$, tutaj użyjemy ich znowu. Dla wygody ustalmy $s$ i na potrzeby tego rozumowania przyjmijmy $\gamma_n := \gamma_n^{(s)}$ i podobnie $\tau_n := \tau_n^{(s)}$. 
+Przyjmiemy podobną strategię jak w dowodzie wersji MPWL dla JŁM. To znaczy, będziemy próbować rozdzielić łańcuch na pewne niezależne części – taką rolę w dowodzie MPWL pełniły $\gamma_n^{(s)}$, tutaj użyjemy ich znowu. Dla wygody ustalmy $s$ i na potrzeby tego rozumowania przyjmijmy $\gamma_n := \gamma_n^{(s)}$ i podobnie $\tau_n := \tau_n^{(s)}$.
 Oznaczmy następnie:
 \begin{align*}
     F_1 &= \,\,\,\sum\limits_{i = 0}^{\tau_1} \,\,\,\,f(X_i)\\
     F_n &= \sum\limits_{i = \tau_{n-1}+1}^{\tau_n} f(X_i) \quad \text{dla $n > 1$}
 \end{align*}
-Oraz 
+Oraz
 \begin{align*}
     G_{n, k} = \sum\limits_{i = \tau_n+1}^{\tau_n+k} f(X_i) \quad \text{dla $1 \leq k < \tau_{n+1}$, $n > 0$}
 \end{align*}
@@ -687,8 +691,8 @@ Mamy:
     &P(F_n \in A_n, ..., F_2 \in A_2|\gamma_n = l_n ... \gamma_2 = l_2, \tau_1 = l_1) =\\
     &P(F_n \in A_n|F_{n-1} \in A_{n-1},  ..., F_2 \in A_2, \gamma_n = l_n ... \gamma_2 = l_2, \tau_1 = l_1)P(F_{n-1} \in A_{n-1},  ..., F_2 \in A_2|\gamma_n = l_n ... \gamma_2 = l_2, \tau_1 = l_1)
 \end{align*}
-Dalej z definicji $F$ i $\gamma$, niech $B \subseteq S^{(l_1 + l_2 + l_3 ... l_{n-1})}$ będzie zbiorem, że $$(X_0, ..., X_{l_1}, X_{l_1+1} ... X_{l_2 + l_3 ... + l_{n-1} - 1}) \in B$$
-odpowiada zdarzeniu 
+Dalej z definicji $F$ i $\gamma$, niech $B \subseteq S^{(l_1 + l_2 + l_3 ... +l_{n-1})}$ będzie zbiorem, że $$(X_0, ..., X_{l_1}, X_{l_1+1} ... X_{l_2 + l_3 ... + l_{n-1} - 1}) \in B$$
+odpowiada zdarzeniu
 $$E = \{F_{n-1} \in A_{n-1},  ..., F_2 \in A_2, \gamma_n = l_n ... \gamma_2 = l_2, \tau_1 = l_1\}$$
 Dla elementów $E$ z definicji $\gamma$ wynika, że $X_{l_1 + l_2 + l_3 ... + l_{n-1}} = s$, oznaczmy dla wygody $l = l_1 + l_2 + l_3 ... + l_{n-1}$, korzystamy z twierdzenia (2.1.2) i definicji $\gamma$, jak poprzednio przyjmujemy, że $i_1 ... i_{l_n-1}$ to takie ciągi stanów, że $$f(s) + \sum\limits_{m = 1}^{l_n-1} f(i_m) \in A$$
 otrzymując :
@@ -722,13 +726,13 @@ Przed ostatecznym dowodem CTG dla JŁM zostaje nam jeszcze jeden lemat.\\
 \\
 \textbf{Lemat 2.6.4}\\
 Dla $F_i$, $i=2,3,4...$ jest
-$$\mathbb{E}(F_i) = \mu = \sum\limits_{j \in S)} \pi_j f(j)$$
+$$\mathbb{E}(F_i) = \mu = \sum\limits_{j \in S} \pi_j f(j)$$
 Dowód: z liniowości wartości oczekiwanej i skończoności $S$ wystarczy udowodnić twierdzenie dla $f \equiv f_j \equiv \mathbbm{1}_{\{j\}}$ dla $j \in S$ (dowolną funkcję $f$ można przedstawić jako kombinację liniową $f_j$ jak w poprzednim podrozdziale. Ale zauważmy, że przy $f \equiv f_j$ oraz $m_n$, $W_{n, j}$ zdefiniowanych jak wcześniej $$W_{n, j} = \frac{1}{m_n -1}\sum\limits_{i = 1}^{m_n -1} F_i = \frac{F_1}{m_n - 1} + \frac{1}{m_n - 1} \sum\limits_{i = 2}^{m_n - 1} F_i$$
 Ponieważ $F_1$ jest skończona prawie na pewno a $m_n$ dąży do nieskończoności przy $n \to \infty$ prawie na pewno, pierwszy składnik prawie na pewno dąży do zera, lewa strona natomiast prawie na pewno dąży do $\pi_j$ – prawa zatem również musi. Dostajemy więc
 $$\frac{1}{m_n - 1} \sum\limits_{i = 2}^{m_n - 1} F_i \overset{p.n.}{\to} \pi_j$$
 W szczególności
 $$\mathbb{E}\left[\frac{1}{m_n - 1} \sum\limits_{i = 2}^{m_n - 1} F_i\right] \to \pi_j$$
-Powtarzając rozumowanie z MPWL elementy ciągu 
+Powtarzając rozumowanie z MPWL elementy ciągu
 $$\frac{1}{m_n - 1} \sum\limits_{i = 2}^{m_n - 1} F_i$$
 pokrywają się z elementami ciągu:
 $$\frac{1}{n - 1} \sum\limits_{i = 2}^{n - 1} F_i$$
@@ -752,9 +756,9 @@ $m_n = \min \{k: \sum\limits_{i=0}^k \gamma_i^{(j)} > n\}$. Dostajemy wtedy:
     &= \frac{F_1 + G_{m_n-1, n}}{\sqrt{n}} + \sqrt{\frac{m_n -2}{n}} \cdot \frac{\sum\limits_{i=2}^{m_n-1} F_i }{\sqrt{m_n-2}}
 \end{align*}
 Podobnie jak poprzednio, elementy $$\frac{\sum\limits_{i=2}^{m_n-1} F_i }{\sqrt{m_n-2}}$$
-pokrywają się z elementami: 
+pokrywają się z elementami:
 $$\frac{\sum\limits_{i=2}^{n-1} F_i }{\sqrt{n-2}}$$
-prawie na pewno. Ze względu na lemat (2.6.4) oraz udowodnioną wcześniej skończoność wariancji $F_i$ dla drugiego przypadku zachodzi klasyczne CTG, a więc skoro elementy ciągów się pokrywają i $m_n \to \infty$, to CTG zachodzi również dla pierwszego przypadku. Ponadto $F$ i $G$ są skończone prawie na pewno, więc pierwszy składnik dąży do 0 prawie na pewno (a więc również wg rozkładu). Ponadto, na mocy faktów udowodnionych przy okazji MPWL: 
+prawie na pewno. Ze względu na lemat (2.6.4) oraz udowodnioną wcześniej skończoność wariancji $F_i$ dla drugiego przypadku zachodzi klasyczne CTG, a więc skoro elementy ciągów się pokrywają i $m_n \to \infty$, to CTG zachodzi również dla pierwszego przypadku. Ponadto $F$ i $G$ są skończone prawie na pewno, więc pierwszy składnik dąży do 0 prawie na pewno (a więc również wg rozkładu). Ponadto, na mocy faktów udowodnionych przy okazji MPWL:
 $$ \lim\limits_{n \to \infty} \frac{m_n -2}{n} = \pi_j \quad\quad p.n.$$
 Zatem ostatecznie na mocy klasycznego CTG:
 $$\frac{\sum\limits_{i=0}^{n-1} f(X_i) - n\mu}{\sqrt{n}} \overset{d}{\to} N(0, \pi_s Var[F_2])$$
@@ -782,7 +786,7 @@ Potrzebujemy więc dwóch rzeczy: konstrukcji JŁM o proporcjonalnym do zadanej 
 \\\\
 \textbf{Lemat 2.7.1}\\
 Jeśli dla jednorodnego łańcucha Markowa o macierzy przejść $\mathbb{P} = (p_{ij})_{i, j \in S}$ rozkład $\pi$ spełnia $$\pi_j p_{ji} = \pi_i p_{ij},  \forall i,j \in S$$ to $\pi$ jest rozkładem stacjonarnym.\\
-Dowód: dodając stronami  tożsamości dla wszystkich $i \in S$ dostajemy: 
+Dowód: dodając stronami  tożsamości dla wszystkich $i \in S$ dostajemy:
 $$\pi_j \sum\limits_{i \in S} p_{ji} = \pi_j \cdot 1 = \pi_j = \sum\limits_{i \in S} \pi_i p_{ij}$$ \qed\\
 Równości z lematu noszą nazwę \textit{detailed balance equations} (szczegółowych równań balansu?) i jak się okazuje są warunkiem koniecznym i wystarczającym na tzw. \textit{odwracalność} stacjonarnego JŁM $\{X_n\}$, tzn. dla każdego $n = 0,1,2,...$ i stacjonarnego JŁM $\{X_n\}$ równość rozkładów:
 $$(X_0, X_1, ..., X_n) \overset{d}{=} (X_n, X_{n-1}, ..., X_0)$$
@@ -795,14 +799,15 @@ p_{i_1 i_0} \pi_{i_1}  p_{i_1 i_2} ... p_{i_{n-1} i_n} = ... \\ &=p_{i_1 i_0} p_
 &=P(X_n = i_0, X_{n-1} = i_1, ... X_0 = i_n)
 \end{align*}
 co oznacza, że łańcuch jest odwracalny. \qed
-\\\\
+\newpage
 \section{Metody Monte Carlo}
 W rozdziale tym zajmę się metodami generowania łańcuchów Markowa o zadanych własnościach, a także spróbuję przybliżyć własności w ten sposób wygenerowanych łańcuchów.
 \\
 \subsection{Wprowadzenie}
 Czym są klasyczne metody Monte Carlo? W uproszczeniu jest to szukanie rozwiązania (być może przybliżonego) danego problemu przy użyciu ciągu niezależnych zmiennych losowych (pseudolosowych).\\
-Oryginalną motywacją dla metod Monte Carlo było obliczanie pewnych wartości, tudzież symulowania modeli, które są zbyt skomplikowane (niemożliwe) do obliczenia za pomocą metod analitycznych czy klasycznych metod numerycznych. Wyobraźmy sobie płaską figurę geometryczną $\mathcal{F}$ położoną wewnątrz kwadratu jednostkowego opisaną skomplikowanym wzorem.\\
-Niech teraz wzór będzie na tyle skomplikowany, że użycie metod analitycznych jest niemożliwe, a użycie metod numerycznych jest zbyt obciążające obliczeniowo, jednak dla dowolnego punktu z kwadratu sprawdzenie, czy należy do figury jest proste (jest to jakaś wersja P vs NP). Losujmy kolejno jednostajnie punkty $P_n$ z kwadratu. Zgodnie z klasycznym prawdopodobieństwem geometrycznym: $$P(P_n \in \mathcal{F}) = \mathbb{E}\mathbf{1}_{\mathcal{F}}(P_n) = Pole(\mathcal{F})$$
+Oryginalną motywacją dla metod Monte Carlo było obliczanie pewnych wartości, tudzież symulowania modeli, które są zbyt skomplikowane (lub niemożliwe) – np. zajmuje to zbyt wiele czasu  – do obliczenia za pomocą metod analitycznych czy klasycznych metod numerycznych
+\\Wyobraźmy sobie płaską figurę geometryczną $\mathcal{F}$ położoną wewnątrz kwadratu jednostkowego opisaną skomplikowanym wzorem.
+Niech wzór będzie na tyle skomplikowany, że zarówno użycie metod analitycznych jak i numerycznych jest niepraktyczne/niewygodne/niemożliwe przez nadmierne skomplikowanie czy zbyt długi czas obliczeń, jednak dla dowolnego punktu z kwadratu sprawdzenie, czy należy do figury jest proste (jest to jakaś wersja P vs NP). Losujmy kolejno jednostajnie punkty $P_n$ z kwadratu. Zgodnie z klasycznym prawdopodobieństwem geometrycznym: $$P(P_n \in \mathcal{F}) = \mathbb{E}\mathbf{1}_{\mathcal{F}}(P_n) = Pole(\mathcal{F})$$
 Widać więc, że generujemy w ten sposób ciąg i.i.d. zmiennych losowych $\mathbf{1}_{\mathcal{F}}(P_n)$ o rozkładzie dwupunktowym $$P(\mathbf{1}_{\mathcal{F}} = 1) = Pole(\mathcal{F}), P(\mathbf{1}_{\mathcal{F}} = 0) = 1 - Pole(\mathcal{F})$$
 Zatem z prawa wielkich liczb:
 $$\frac{1}{n} \sum\limits_{i=1}^n \mathbf{1}_{\mathcal{F}}(P_n) \overset{p.n.}{\to} Pole(\mathcal{F})$$
@@ -814,9 +819,9 @@ Na tym przykładzie widać dwa najczęstsze zastosowania metod Monte Carlo:\\
 Co do idei podejście do rozwiązania problemów w tej pracy jest podobne, jednak jak zostanie opisane w kolejnym podrozdziale – rozkłady, a także przestrzenie probabilistyczne, które się tu pojawiają, są dużo bardziej skomplikowane niż kwadrat jednostkowy i $\mathbf{1}_{\mathcal{F}}$, stąd użycie klasycznych metod Monte Carlo (z niezależnym losowaniem zmiennych z rozkładu) nie jest możliwe ze względów pamięciowych i obliczeniowych. Z pomocą przychodzą nam Monte Carlo Markov Chains (MCMC, próbkowanie łańcuchów Markowa metodami Monte Carlo).
 \\\\
 \subsection{Metody MCMC. Dlaczego ich potrzebujemy?}
-Z pewnych powodów do problemów dekodowania i komiwojażera (dziwna przestrzeń rozwiązań, szersze uzasadnienie wkrótce) nie możemy użyć metod analitycznych, gradientowych ani numerycznych. Pozostaje nam więc podejście probabilistyczne (może ono przyjąć różne formy), ze względu na specyfikę zwłaszcza problemu dekodowania obieramy podejście Monte Carlo, tj. chcemy losować kolejne propozycje rozwiązań wg rozkładu takiego, że im rozwiązanie (stan w $S$) lepsze, tym większe powinno mieć prawdopodobieństwo wystąpienia.
-Chcemy więc wprowadzić pewną funkcję stanu (oddającą rzeczywistość, czyli np. częstość występowania danej sekwencji znaków w języku angielskim), taką że im większa jej wartość, tym stan jest \textit{lepszy}. Chcemy znaleźć stan, przy którym ta funkcja przyjmuje maksimum. Toteż im większa wartość funkcji stanu, tym większe ma być prawdopodobieństwo wylosowania. Idea jest zatem taka, że losujemy kolejno zmienne wg rozkładu, którego nie znamy, jednak wiemy, że jest proporcjonalny do wartości funkcji, którą umiemy obliczać. Problem jest taki, że w przeciwieństwie do przykładu z figurą rozkład ten jest dużo bardziej skomplikowany, moc przestrzeni stanów jest bardzo duża – – wykładniczego rzędu – $O(n!)$ lub $O(k^n)$ ($k, n$ rzędu kilkudziesięciu do kilkuset) Ideą jest losować kolejno z tego rozkładu i jeśli wartość funkcji dla \textit{poprawnego} rozwiązania jest duża – powinniśmy w pewnym rozsądnym czasie to rozwiązanie uzyskać (albo rozwiązanie w jakiś sposób \textit{zbliżone} do poprawnego). 
-Gdybyśmy jednak to chcieli zrobić podobnie jak z figurą, musielibyśmy przechowywać pełną informację o rozkładzie (w przypadku figury, tą informacją jest jej równanie), w naszych przypadkach, jak kuż powiedzieliśmy, rozkłady są skomplikowane i skupione na dużej przestrzeni stanów. Tak że samo przechowywanie informacji o rozkładzie  wymagałoby przynajmniej wykładniczej pamięci (i wykładniczego czasu obliczeń). Stąd próby losowania zmiennej losowej o \textit{dokładnie} tym rozkładzie są skazane na niepowodzenie, ze względu na ograniczenia komputera.\\
+Z pewnych powodów, w większości przypadków, do problemów dekodowania i komiwojażera, co szerzej omówimy w odpowiadających im rozdziałach – nie możemy (bądź przynajmniej jest to pod pewnym względem nieoptymalne) użyć metod analitycznych, gradientowych ani numerycznych. Pozostaje nam więc podejście probabilistyczne (może ono przyjąć różne formy), ze względu na specyfikę zwłaszcza problemu dekodowania obieramy podejście Monte Carlo, tj. chcemy losować kolejne propozycje rozwiązań wg rozkładu takiego, że im rozwiązanie (stan w $S$) lepsze, tym większe powinno mieć prawdopodobieństwo wystąpienia.
+Chcemy więc wprowadzić pewną funkcję stanu (oddającą rzeczywistość, czyli np. częstość występowania danej sekwencji znaków w języku angielskim), taką że im większa jej wartość, tym stan jest \textit{lepszy}. Chcemy znaleźć stan, przy którym ta funkcja przyjmuje maksimum. Toteż im większa wartość funkcji stanu, tym większe ma być prawdopodobieństwo wylosowania. Idea jest zatem taka, że losujemy kolejno zmienne wg rozkładu, którego nie znamy, jednak wiemy, że jest proporcjonalny do wartości funkcji, którą umiemy obliczać. Problem jest taki, że w przeciwieństwie do przykładu z figurą rozkład ten jest dużo bardziej skomplikowany, moc przestrzeni stanów jest bardzo duża – – wykładniczego rzędu – $O(n!)$ lub $O(k^n)$ ($k, n$ rzędu kilkudziesięciu do kilkuset) Ideą jest losować kolejno z tego rozkładu i jeśli wartość funkcji dla \textit{poprawnego} rozwiązania jest duża – powinniśmy w pewnym rozsądnym czasie to rozwiązanie uzyskać (albo rozwiązanie w jakiś sposób \textit{zbliżone} do poprawnego).
+Gdybyśmy jednak to chcieli zrobić podobnie jak z figurą, musielibyśmy przechowywać pełną informację o rozkładzie (w przypadku figury, tą informacją jest jej równanie), w naszych przypadkach, jak już powiedzieliśmy, rozkłady są skomplikowane i skupione na dużej przestrzeni stanów. Tak że samo przechowywanie informacji o rozkładzie  wymagałoby przynajmniej wykładniczej pamięci (i wykładniczego czasu obliczeń). Stąd próby losowania zmiennej losowej o \textit{dokładnie} tym rozkładzie są skazane na niepowodzenie, ze względu na ograniczenia komputera (na dużej przestrzeni stanów umiemy losować \textit{wprost} tylko z pewnych specyficznych i w pełni znanych rozkładów np. jednostajnego)\\
 W dowolnym rozwiązaniu opierającym się na podejściu probabilistycznym należy zatem w jakiś sposób zredukować problem do niższego wymiaru. Będziemy to robić, używając metod MCMC. Dzięki tym metodom jesteśmy w stanie świetnie przybliżać dany rozkład, mając jedynie pewien stan początkowy i informację o tym, jak obliczać pewną funkcję (w wielomianowym, ew. pseudowielomianowym czasie) miarę prawdopodobieństwa, nie mając pełnej informacji o rozkładzie (chociażby nie znając stałej normalizującej).
 
 
@@ -843,8 +848,8 @@ gdzie przedostatnia równość wynika z symetrii macierzy $\mathbb{Q}$. Ponadto 
 \\
 \\
 Z powyższej konstrukcji wynika algorytm Metropolisa generacji JŁM $\{X_n\}$ o rozkładzie stacjonarnym $\pi$, gdy mamy daną macierz kandydatów $\mathbb{Q}$, informację jak obliczać $\frac{\pi_i}{\pi_j}$ i generator  i.i.d. prób z $U[0,1]$:\\\\
-\textbf{Algorytm Metropolisa}
-\begin{algorithm}
+\begin{algorithm}[H]
+\caption{Algorytm Metropolisa}
 \SetKwInput{For}{dla}
 \SetKwInput{If}{jeśli}
 \SetKwInput{Else}{w przeciwnym razie}
@@ -857,7 +862,6 @@ Zacznij w dowolnie wybranym stanie $X_0 := i \in S$\\
 \quad \Else{}{
 \quad\quad $X_{n+1} := X_n$\;}}
 \end{algorithm}
-\\
 Łatwo sprawdzić, że taki algorytm generuje łańcuch o macierzy przejścia $\mathbb{P}$ opisanej wcześniej.\\
 Teraz możemy pozbyć się założenia o symetryczności macierzy $Q$ – będzie to algorytm Metropolisa-Hastingsa.\\
 \\
@@ -879,8 +883,8 @@ Dowód: Stochastyczności dowodzimy tak jak poprzednio: wyrazy w wierszu sumują
 Zatem równanie balansu jest spełnione, więc $\pi$ jest rozkładem stacjonarnym. \qed
 \\\\
 W takim razie możemy zapisać algorytm:\\\\
-\textbf{Algorytm Metropolisa-Hastingsa}
-\begin{algorithm}
+\begin{algorithm}[H]
+\caption{Algorytm Metropolisa-Hastingsa}
 \SetKwInput{For}{dla}
 \SetKwInput{If}{jeśli}
 \SetKwInput{Else}{w przeciwnym razie}
@@ -893,15 +897,14 @@ Zacznij w dowolnie wybranym stanie $X_0 := i \in S$\;
 \quad \Else{}{
 \quad\quad $X_{n+1} := X_n$\;}}
 \end{algorithm}
-\\
-Również łatwo sprawdzamy, że otrzymujemy w ten sposób łańcuch zadany macierzą $\mathbb{P}$ z równania.\\
+Również łatwo sprawdzamy, że otrzymujemy w ten sposób łańcuch zadany macierzą $\mathbb{P}$ z równania. Uwaga: zauważmy, że do nieokresowości łańcucha wynikowego jest wystarczająca, ale nie jest konieczna nieokresowość macierzy $\mathbb{Q}$, więc zwykle w zastosowaniach przejmujemy się tylko nieokresowością $\mathbb{P}$. Dowody nieredukowalności i spełniania równań balansu nie zależą od nieokresowości, tak więc w praktyce $\mathbb{Q}$ może nie być nieokresowa. \\
 Zwróćmy uwagę, że proces przejścia naturalnie rozdziela się na wybór kandydata (przy pomocy \textit{macierzy generującej}), a następnie akceptację lub odrzucenie i pozostanie przy aktualnym stanie. Można zatem zdefiniować \textit{prawdopodobieństwo akceptacji} $\alpha_{ij}$, czyli prawdopodobieństwo przejścia z $i$ do $j$ ($i \neq j$) pod warunkiem, że $j$ został wylosowany jako kandydat. Dla algorytmu Metropolisa mamy:
 $$\alpha_{ij} = \min(1, \frac{\pi_j}{\pi_i})$$
 Natomiast dla uogólnienia Metropolisa-Hastingsa (tam, gdzie $q_{ij} \neq 0$, w przeciwnym razie przyjmujemy $\alpha_{ij} = 1$):
 $$\alpha_{ij} = \min(1, \frac{\pi_j q_{ji}}{\pi_i q_{ij}})$$
 \\
 I prawdopodobieństwo przejścia $p_{ij} = q_{ij}\alpha_{ij}$ gdy $i \neq j$ oraz $p_{ii} = 1 - \sum\limits_{j \in S, j \neq i} p_{ij}$\\\\
-Ogólnie za [Hastings-Peskun] możemy wprowadzić pewną rodzinę algorytmów, czyli równoważnie stochastycznych, nieredukowalnych i nieokresowych macierzy przejść $\mathbb{P}$ o stacjonarnym rozkładzie $\pi$ wyprowadzonych na podstawie $\mathbb{Q}$ o założeniach jak w algorytmie Metropolisa-Hastingsa. Sprowadza się to do ustalenia warunków na $(\alpha_{ij})_{i,j \in S, i \neq j}$, gdzie $0 < \alpha_{ij} \leq 1$ (chcemy, żeby każdy wylosowany \textit{kandydat} miał niezerowe szanse na zostanie stanem w następnym kroku). Mamy więc  $$p_{ij} = q_{ij}\alpha_{ij}$$
+Ogólnie za [Hastings-Peskun] możemy wprowadzić pewną rodzinę algorytmów, czyli równoważnie stochastycznych, nieredukowalnych i nieokresowych macierzy przejść $\mathbb{P}$ o stacjonarnym rozkładzie $\pi$ wyprowadzonych na podstawie $\mathbb{Q}$ o założeniach jak w algorytmie Metropolisa-Hastingsa (zgodnie z uwagą możemy pominąć nieokresowość). Sprowadza się to do ustalenia warunków na $(\alpha_{ij})_{i,j \in S, i \neq j}$, gdzie $0 < \alpha_{ij} \leq 1$ (chcemy, żeby każdy wylosowany \textit{kandydat} miał niezerowe szanse na zostanie stanem w następnym kroku). Mamy więc  $$p_{ij} = q_{ij}\alpha_{ij}$$
 I ustalamy:
 $$ 0 \leq \alpha_{ij} = \frac{s_{ij}}{1+t_{ij}} \leq 1$$
 gdzie  $s_{ij}$ są zadane pewną symetryczną funkcją ($s_{ij} = s_{ji}$) $S \times S \to \mathbb{R}_{\geq 0}$, natomiast $$t_{ij} = \frac{\pi_i q_{ij}}{\pi_j q_{ji}}$$
@@ -909,7 +912,7 @@ Tam gdzie $q_{ij} \neq 0$ oraz $t_{ij} = 0$ w przeciwnym razie.\\
 Ostatecznie więc jest to rodzina symetrycznych nieujemnych funkcji $s_{ij}$, takich, że wynikowa $0 < \alpha_{ij} \leq 1$.\\
 Po pierwsze zauważmy, że $\alpha$ w wersji z algorytmu Metropolisa-Hastingsa należy do tej rodziny. Rzeczywiście, przyjmując dla $i,j \in S,\,\, i \neq j$, że $q_{ij} \neq 0$:
 $$s_{ij} = 1 + \min(t_{ij}, t_{ji}) = 1 + \min\left(\frac{\pi_i q_{ij}}{\pi_j q_{ji}}, \frac{\pi_j q_{ji}}{\pi_i q_{ij}}\right)$$
-i $s_{ij} = 1$, tam gdzie $q_{ij} = 0$ 
+i $s_{ij} = 1$, tam gdzie $q_{ij} = 0$
 Mamy:
 $$\alpha_{ij} = 1$$
 jeśli $q_{ij} = 0$. Dla $i \neq j \in S$, że $q_{ij} \neq 0$ przyjmijmy natomiast bez straty ogólności:
@@ -918,7 +921,7 @@ Wtedy:
 $$0 < \frac{\pi_i q_{ij}}{\pi_j q_{ji}} \leq 1 \leq \frac{\pi_j q_{ji}}{\pi_i q_{ij}}$$
 Zatem:
 $$\alpha_{ij} = \frac{1 + \frac{\pi_i q_{ij}}{\pi_j q_{ji}}}{1 + \frac{\pi_i q_{ij}}{\pi_j q_{ji}}} = 1 = \min(1, \frac{\pi_j q_{ji}}{\pi_i q_{ij}})$$
-oraz 
+oraz
 $$\alpha_{ji} = \frac{1 + \frac{\pi_i q_{ij}}{\pi_j q_{ji}}}{1 + \frac{\pi_j q_{ji}}{\pi_i q_{ij}}} = \frac{\frac{\pi_i q_{ij} + \pi_j q_{ji}}{\pi_j q_{ji}}}{\frac{\pi_i q_{ij} + \pi_j q_{ji}}{\pi_i q_{ij}}} = \frac{\pi_i q_{ij}}{\pi_j q_{ji}} = \min(1, \frac{\pi_i q_{ij}}{\pi_j q_{ji}}) $$
 \\
 Oczywiście tak zdefiniowana $s_{ij}$, o, zatem algorytm Metropolisa-Hastingsa (i Metropolisa) należy do tej rodziny. Ponadto można pokazać, że do jeśli tylko $0 < \alpha_{ij} \leq 1$, to wynikowa macierz $\mathbb{P}$ jest nieredukowalna, nieokresowa i ma rozkład stacjonarny $\pi$. Istotnie, ponieważ $p_{ij} = \alpha_{ij}q_{ij}$ są dodatnie, jeśli tylko $q_{ij}$ są dodatnie nieredukowalność i nieokresowość są zachowane. Natomiast dzięki definicji $\alpha$ jest spełnione \textit{detailed balance equation} (lemat 2.7.1): dla $i = j$, jest to oczywiste, jeśli $q_{ij} = 0$, po obu stronach równości dostajemy $0$, pozostaje więc przypadek, gdy $q_{ij} > 0$:
@@ -935,35 +938,1056 @@ W przeciwnym razie zachodziłoby albo $\alpha_{ij} > 1$, albo $\alpha_{ji} > 1$,
 Teraz podamy bez dowodu twierdzenie [dowód w: Peskun, Optimum Monte-Carlo sampling using Markov chains]\\
 \\
 \textbf{Twierdzenie 3.4.1}
-Niech $\mathbb{P}^{(1)} = (p_{ij}^{(1)})_{i,j \in S}$, $\mathbb{P}^{(2)}= (p_{ij}^{(2)})_{i,j \in S}$ będą dwiema ergodycznymi macierzami o stacjonarnym rozkładzie $\pi$ spełniającymi ponadto \textit{detailed balance equations}. Jeśli dla wszystkich wyrazów leżących poza diagonalą zachodzi $p_{ij}^{(1)} \geq p_{ij}^{(2)}$, to dla dowolnej $f: S \to \mathbb{R}$,  $\mathbb{P}^{(1)}$ ma mniejszą wariancję asymptotyczną, czyli:
+Niech $\mathbb{P}^{(1)} = (p_{ij}^{(1)})_{i,j \in S}$, $\mathbb{P}^{(2)}= (p_{ij}^{(2)})_{i,j \in S}$ będą dwiema ergodycznymi macierzami o stacjonarnym rozkładzie $\pi$ spełniającymi ponadto \textit{detailed balance equations}. Jeśli dla wszystkich wyrazów leżących poza diagonalą zachodzi $p_{ij}^{(1)} \geq p_{ij}^{(2)}$, to dla dowolnej $f: S \to \mathbb{R}$,  $\mathbb{P}^{(1)}$ ma mniejszą lub równą wariancję asymptotyczną, czyli:
 $$Var_f(\mathbb{P}^{(1)}) \leq Var_f(\mathbb{P}^{(2)})$$
 \\\\
-Z wcześniejszego rodziału wiemy, że mówienie o wariancji asymptotycznej ma sens. Z wcześniejszych rozważań wiemy, że dla dowolnych $i \neq j \in S$ macierz z algorytmu Metropolisa-Hastingsa maksymalizuje $p_{ij}$ w obrębie rodziny $\mathcal{R}$, a więc również minimalizuje asymptotyczną wariancję w tej rodzinie. Zatem w odpowiednio długim przedziale czasowym, najlepiej symuluje docelowy rozkład, z tego powodu ten algorytm jest wyborem do rozwiązania postawionych w tej pracy problemów.\\\\
- Z teorii zostają jeszcze: na pewno mixing time przy okazji analizy zbieżności, wtedy może też się pojawić odwracalność łańcucha i CFTP, doopisać uzasadnienie użycia MCMC - o metodach gradientowych, teoria niejednorodnych ŁM i symulowane wyżarzanie. Ponadto jeśli chodzi o background - dodać historyjkę o więźniach - nazwisko Diaconis powinno się tam pojawić, przy okazji problemu komiwojażera opowiedzieć o P/NP, pokazać równoważność komiwojażera i dekodowania w wersji z szyfrem podstawieniowym, element nt. Markowa, który badał odstępy między samogłoskami w wojnie i pokoju. Dodać bibliografię -> źródła którymi się inspirowałem w dowodach teorii Markowa.
+Z poprzedniego rodziału wiemy, że mówienie o wariancji asymptotycznej ma sens. Z wcześniejszych rozważań wiemy natomiast, że dla dowolnych $i \neq j \in S$ macierz z algorytmu Metropolisa-Hastingsa maksymalizuje $p_{ij}$ w obrębie rodziny $\mathcal{R}$, a więc również minimalizuje asymptotyczną wariancję w tej rodzinie. Zatem w odpowiednio długim przedziale czasowym, najlepiej symuluje docelowy rozkład, z tego powodu ten algorytm jest wyborem do rozwiązania postawionych w tej pracy problemów. \newpage
 
 \section{Dekodowanie zaszyfrowanego tekstu}
-Częstości wzięte z http://practicalcryptography.com/cryptanalysis/letter-frequencies-various-languages/english-letter-frequencies/ \\
-Diaconis: The Markov Chain Monte Carlo Revolution\\
-Książki: gutenberg project
+Zajmę się w tym rozdziale zastosowaniem MCMC do dekodowania zaszyfrowanego tekstu. Opowiem zarówno o swoich \textit{udanych} jak i \textit{nieudanych} (przynajmniej do momentu oddania tej pracy) próbach rozwiązania tego problemu dla różnych typów szyfrów.
 \subsection{Wprowadzenie do problemu}
+Będę zajmował się rodzinami szyfrów podstawieniowych – mono- i polialfabetycznych, gdzie zaszyfrowana wiadomość jest w języku angielskim, a więc bazą najczęściej jest również angielski alfabet (bez polskich znaków). Czym są takie szyfry? Zaczniemy od przykładu jednego z najprostszych i najstarszych szyfrów – szyfru Cezara. Załóżmy, że chcemy zaszyfrować wiadomość \textbf{'MONTE CARLO MARKOV CHAINZ'}.\\
+Mamy do dyspozycji tabelę alfabetów:\\
+\begin{center}
+\begin{longtable}
+{|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|}
+\hline
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N} & \textbf{O} & \textbf{P} & \textbf{Q} & \textbf{R} & \textbf{S} & \textbf{T} & \textbf{U} & \textbf{V} &
+\textbf{W} & \textbf{X} & \textbf{Y} & \textbf{Z} \\
+\hline
+\textbf{A} & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V &
+W & X & Y & Z
+\\
+\hline
+\textbf{B} & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V & W & X
+ & Y & Z & A
+\\
+\hline
+\textbf{C} & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V & W & X & Y
+ & Z & A & B
+\\
+\hline
+\textbf{D} & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V & W & X & Y & Z
+ & A & B & C
+\\
+\hline
+\textbf{E} & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V & W & X & Y & Z & A
+ & B & C & D
+\\
+\hline
+\textbf{F} & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V & W & X & Y & Z & A & B
+ & C & D & E
+\\
+\hline
+\textbf{G} & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V & W & X & Y & Z & A & B & C
+ & D & E & F
+\\
+\hline
+\textbf{H} & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V & W & X & Y & Z & A & B & C & D
+ & E & F & G
+\\
+\hline
+\textbf{I} & I & J & K & L & M & N & O & P & Q & R & S & T & U & V & W & X & Y & Z & A & B & C & D & E
+ & F & G & H
+\\
+\hline
+\textbf{J} & J & K & L & M & N & O & P & Q & R & S & T & U & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I
+\\
+\hline
+\textbf{K} & K & L & M & N & O & P & Q & R & S & T & U & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J
+\\
+\hline
+\textbf{L} & L & M & N & O & P & Q & R & S & T & U & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K
+\\
+\hline
+\textbf{M} & M & N & O & P & Q & R & S & T & U & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L
+\\
+\hline
+\textbf{N} & N & O & P & Q & R & S & T & U & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L & M
+\\
+\hline
+\textbf{O} & O & P & Q & R & S & T & U & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L & M & N
+\\
+\hline
+\textbf{P} & P & Q & R & S & T & U & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O
+\\
+\hline
+\textbf{Q} & Q & R & S & T & U & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P
+\\
+\hline
+\textbf{R} & R & S & T & U & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q
+\\
+\hline
+\textbf{S} & S & T & U & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R
+\\
+\hline
+\textbf{T} & T & U & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S
+\\
+\hline
+\textbf{U} & U & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T
+\\
+\hline
+\textbf{V} & V & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U
+\\
+\hline
+\textbf{W} & W & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V
+\\
+\hline
+\textbf{X} & X & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V & W
+\\
+\hline
+\textbf{Y} & Y & Z & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V & W & X
+\\
+\hline
+\textbf{Z} & Z & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V & W & X & Y
+\\
+\hline
+\end{longtable}
+\end{center}
+Szyfr Cezara składa się z jednej litery alfabetu. Niech będzie to "B". Zaszyfrowana wiadomość będzie miała postać \textbf{'NPOUF DBSMP NBSLPW DIBJOA'}. Szyfrogram został otrzymany w ten sposób, że każdej literze \textbf{$\alpha$} została przyporządkowana litera na przecięciu $\alpha$ i litery szyfru "B". Można zauważyć, że jest to równoważne \textit{przesunięciu} każdej litery tekstu o jedno miejsce w prawo (modulo długość alfabetu) – szyfry opierające się na tej własności nazywamy \textit{przesuwnymi}. Szyfr Cezara jest szyfrem monoalfabetycznym, tzn. każdą literę wiadomości kodujemy przy użyciu tej samej procedury. Zanim przejdziemy do dalszych rozważań, usystematyzujmy trochę pojęcia związane z szyfrowaniem.\\\\
+\textbf{Definicja 4.1.1.}\\
+\textit{Alfabetem} nazywamy różnowartościowy ciąg $A = \{\alpha_0, \alpha_1, ... \alpha_{n-1}\}$. Element $\alpha_i$ nazywamy $i$-tą \textit{literą} alfabetu. Wielkość $n$ nazywamy długością alfabetu. \\\\
+\textbf{Definicja 4.1.2.}\\
+\textit{(Podstawieniową) funkcją szyfrującą} $\sigma$ nad alfabetem $A$ nazywamy bijekcję $\sigma: A \to A$. Funkcję odwrotną $\sigma^{-1}$ nazywamy \textit{funkcją deszyfrującą}.
+\\
+Zwróćmy uwagę, że $(\sigma(\alpha_0), \sigma(\alpha_1),...,\sigma(\alpha_{n-1}))$ również zadaje alfabet. Stąd funkcję szyfrującą możemy równoważnie zdefiniować podając odpowiadający jej alfabet, czego przykład można było zobaczyć wyżej przy szyfrze Cezara (każdej możliwej literze $l$ odpowiadał alfabet w wierszu/kolumnie $l$). Zwróćmy też uwagę, że symbol $\sigma$ nie jest tu przypadkowy. Podstawieniowe funkcje szyfrujące są po prostu permutacjami nad alfabetem. Stąd nazwa podstawieniowy – pod każdą literę alfabetu podstawiamy inną (lub tę samą) literę alfabetu.
+\\\\
+\textbf{Definicja 4.1.3.}\\
+\textit{Tekstem} $T$ nad alfabetem $A$ i rozszerzonym zbiorem znaków $S$, $A \subseteq S$ nazwiemy ciąg $T = t_0, t_1, t_2, ..., t_{n-1}$, gdzie $t_i \in S$. Następnie weźmy ciąg $\beta = \beta_0, \beta_1, ... \alpha_k$ elementów tekstu (mogą się oczywiście powtarzać), takich, że są literami alfabetu uporządkowanymi tak samo jak w oryginalnym tekście. $\alpha_i$ nazwiemy wtedy $i$-tą literą w tekście, $\beta$ – ciągiem liter z tekstu $T$
+\\\\
+\textbf{Definicja 4.1.4}\\
+\textit{Kluczem szyfrującym} lub \textit{kodującym} nad tekstem $T = t_0, ..., t_{n-1}$ o ciągu liter $\beta = \beta_0, ... \beta_{k}$ nazwiemy ciąg (podstawieniowych) funkcji szyfrujących $\Sigma = \sigma_0, \sigma_1, ... \sigma_k$. \textit{Szyfrogramem} dla tekstu $T$ i klucza $\Sigma$ nazwiemy zaszyfrowany tekst $S = s_0, ..., s_{n-1}$, gdzie $s_j = t_j$, jeśli $t_j$ nie należy do alfabetu oraz $s_j = \sigma_i(t_j) = \sigma_i(\beta_i)$, jeśli $t_j$ należy do alfabetu i odpowiada $i$-tej literze w tekście. Ciąg funkcji odwrotnych $\sigma_0^{-1}, \sigma_1^{-1} ... \sigma_k^{-1}$ będziemy nazywać \textit{kluczem deszyfrującym} bądź \textit{dekodującym}.
+\\\\
+Innymi słowy kluczem szyfrującym (podstawieniowym) dla danego tekstu jest zbiór (podstawieniowych) funkcji szyfrujących, taki że na każdą literę w tekście przypada funkcja szyfrująca. Zaszyfrowanie tekstu polega więc na zaszyfrowaniu każdej z liter odpowiadającą funkcją szyfrującą i pozostawieniu znaków spoza alfabetu tak jak w oryginale. Odszyfrowanie polega w takim razie na zastosowaniu klucza deszyfrującego do szyfrogramu – w wyniku otrzymamy oryginalny tekst.\\
+Może się zdarzyć, że wszystkie elementy (funkcje) \textit{klucza} są takie same albo że co najmniej dwa spośród nich są różne. W pierwszym przypadku mówimy o kluczu (szyfrze) monoalfabetycznym (jest nim szyfr Cezara, każdą literę tekstu, szyfrujemy bowiem tą samą funkcją – odpowiadającą właściwemu alfabetowi), w drugim – o szyfrze polialfabetycznym.
+Możemy wyrazić teraz rodzinę Cezara funkcji szyfrujących w algebraiczny sposób, uogólniając na dowolny alfabet.\\\\
+\textbf{Definicja 4.1.5.}\\
+Rodziną funkcji Cezara dla alfabetu $A = (\alpha_0, ..., \alpha_{n-1})$ nazwiemy funkcje postaci $c_j(\alpha_i) = \alpha_{(i+j \mod n)}$ dla $j = 0,1...n-1$.\\
+Zauważmy prosty fakt, że rodzina funkcji (a więc i kluczy z racji monoalfabetyczności) Cezara tworzy grupę ze względu na złożenia i ta grupa jest izomorficzna z $\mathbb{Z}_n^+$ (elementem odwrotnym $c_{j}$ jest $c_{(-j) \mod n}$ – jest to klucz deszyfrujący, widać więc, że klucz ten należy do tej samej rodziny). Stąd szyfr Cezara możemy utożsamiać z elementem $j \in \mathbb{Z}_n$ lub równoważnie z $\alpha_j$. Odnosząc to do przedstawionego w początku rozdziału przykładu szyfr "B" (przy alfabecie ABCDEFGHIJKLMNOPQRSTUVWXYZ) można było równoważnie zapisać jako 1, podobnie litery alfabetu można zastąpić ich pozycjami w alfabecie (A: 0, B:1, ...).  Dalej będziemy korzystać z obu tych zapisów zamiennie (tj. $c_i$ będziemy zapisywać jako $i$ lub $\alpha_i$ w zależności od okoliczności)\\
+Ogólnie, klucze szyfrujące nad danym tekstem tworzą grupę ze względu na złożenia, a elementem odwrotnym jest dla danego klucza szyfrującego, odpowiadający mu klucz deszyfrujący. Algorytmy szyfrujące bazujące na kluczach podstawieniowych należą do tzw. \textit{symetrycznych} algorytmów szyfrowania. Nazwa bierze się stąd, że znając klucz szyfrujący, jesteśmy w stanie bez problemu znaleźć klucz deszyfrujący (odwracanie permutacji jest łatwe!). Zatem do zaszyfrowania komunikacji potrzeba i wystarczy, żeby nadawca i adresat zaszyfrowanej wiadomości posiadali informację na temat tego samego klucza, zachodzi więc \textit{symetria}. Innym rodzajem szyfrowania jest szyfrowanie \textit{asymetryczne}, gdzie znalezienie klucza deszyfrującego mimo posiadania klucza szyfrującego jest \textit{trudne} w pewnym sensie. W praktyce oznacza to, że w celu komunikacji nadawca zna tylko klucz szyfrujący, który może być publiczny (bo nie można łatwo z niego odtworzyć klucza deszyfrującego), natomiast odbiorca zna tylko klucz deszyfrujący – ten dla bezpieczeństwa komunikacji powinien być tajny. Ze względu na asymetrię: tajny-publiczny szyfrowanie to nazywamy asymetrycznym. Ataki na szyfry asymetryczne to bardzo ciekawy temat, jednak nie będę się nim zajmował w tej pracy. Przykładami szyfrów asymetrycznych są ECC czy RSA.
+\\\\
+Celem tej części pracy będą \textit{ataki} na różne szyfry podstawieniowe (przede wszystkim pewne szczególne przypadki szyfrów polialfabetycznych). Atak na szyfr to próba zdekodowania zaszyfrowanej tym szyfrem wiadomości (szyfrogramu), mimo braku znajomości klucza deszyfrującego – czyli innymi słowy próba \textit{zgadnięcia} tego klucza.
+\\\\
+Wróćmy do szyfru Cezara – nazwa pochodzi stąd, że według podań historycznych Juliusz Cezar używał tego szyfru do kodowania swoich wiadomości do przyjaciół [wiki] – i naszej zaszyfrowanej wiadomości: \textbf{NPOUF DBSMP NBSLPW DIBJOA} Zwróćmy uwagę, że szyfr Cezara jest bardzo łatwy do złamania komputerowo za pomocą ataku \textit{brute force} – wystarczy sprawdzić wszystkie $n$ (długość alfabetu) możliwości klucza deszyfrującego – w naszym wypadku 26 i – jeśli tylko tekst nie jest za krótki (zauważmy bowiem, że możliwymi dekodowaniami szyfrogramu ST są zarówno NO jak i HI), powinien być tylko jeden klucz deszyfrujący, dla którego odkodowana wiadomość ma sens.
+\begin{center}
+0:  NPOUF DBSMP NBSLPW DIBJOA \\
+1:  OQPVG ECTNQ OCTMQX EJCKPB \\
+...
+\\
+23: PRQWH FDUOR PDUNRY FKDLQC \\
+24: LNMSD BZQKN LZQJNU BGZHMY \\
+25: MONTE CARLO MARKOV CHAINZ \\
+\end{center}
+Istotnie, tylko dla deszyfrującego klucza 25 (równoważnie: Z lub -1), wiadomość ma sens, więc odgadujemy, że to jest właśnie klucz deszyfrujący,a MONTE CARLO MARKOV CHAINZ jest zaszyfrowaną wiadomością. Ważne jest założenie, że oryginalna wiadomość powinna mieć pewne cechy znanego języka. Jeśli bowiem wiadomość byłaby nadana w jakimś dziwnym, nieznanym nam języku, w którym OQPVG ECTNQ OCTMQX EJCKPB ma znaczenie, a MONTE CARLO MARKOV CHAINZ – nie, atak nie powiedzie się (o ile nie znajdziemy do pomocy kogoś, kto posługuje się tym dziwnym językiem). Tak więc metoda \textit{brute force} opiera się na znajomości pewnych struktur w rzeczywistym języku – w tym wypadku angielskim – przyjmujemy założenie, że oryginalna wiadomość została napisana właśnie w tym rzeczywistym języku. Na tych samych założeniach będą się opierały wszystkie dalej opisane metody.\\
+Jeśli nie mielibyśmy do dyspozycji komputera, wypisywanie wszystkich możliwości byłoby czasochłonne, atak da się ulepszyć wtedy przy użyciu analizy częstotliwościowej: tj. wiadomo, że najczęściej występującymi literami w języku angielskim są E,T,O,N – możemy zatem założyć, że najczęściej występującą literę szyfrogramu klucz deszyfrujący powinien przeprowadzić na jedną z nich – oczywiście wyznaczenie takiego klucza jest bardzo łatwe. Szybkie sprawdzenie tych czterech możliwości powinno nam dać właściwą.
+\\
+Przejdźmy teraz do następnego rozdziału, w którym opiszę, jakimi będę się zajmował szyframi. Większość z nich opiera się mniej lub bardziej na idei szyfru \textit{przesuwnego} (Cezara), są jednak szyframi polialfabetycznymi, co czyni ich złamanie znacząco trudniejszym.\\\\
 \subsection{Przedstawienie analizowanych szyfrów}
-\subsection{Przedstawienie zastosowanych algorytmów}
-\subsection{Zbieżność, mixing time. Analiza teoretyczna algorytmów}
-\subsection{Uwagi implementacyjne}
-\subsection{Symulacje i wyniki}
-\subsection{Inne możliwe podejścia}
-\subsection{Dodatkowe rozważania i uwagi}
-\section{Problem komiwojażera}
-\subsection{Wprowadzenie, opis problemu}
-\subsection{Niejednorodne łańcuchy Markowa. Symulowane wyżarzanie} 
-\subsection{Przedstawienie zastosowanych algorytmów}
-\subsection{Analiza teoretyczna}
-\subsection{Symulacje i wyniki}
-\subsection{Uwagi implementacyjne}
-\subsection{Inne możliwe podejścia}
-\subsection{Dodatkowe rozważania i uwagi}
-\section{Podsumowanie}
+Chcemy użyć idei szyfru przesuwnego. Szyfr Cezara jest zbyt prosty, ale umiemy w prosty sposób go skomplikować. Wystarczy zestawić kilka ($k$) szyfrów Cezara w następujący sposób:
+wróćmy do naszej wcześniejszej wiadomości: MONTE CARLO MARKOV CHAINZ (w zapisie liczbowym $\mathbb{Z}_{26}$:
+$$[12, 14, 13, 19, 4, ' ', 2, 0, 17, 11, 14, ' ', 12, 0, 17, 10, 14, 21, ' ', 2, 7, 0, 8, 13, 25]$$
+Wcześniej szyfrowaliśmy ją za pomocą klucza "B" (odpowiadającego 1 w $\mathbb{Z}_{26}^+$). Rozważmy teraz klucz "BC" (czyli $[1, 2]$). Szyfrowanie przeprowadzamy w następujący sposób:
+\begin{center}\begin{tabular}{|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|}
+    M & O & N & T & E & & C & A & R & L & O & & M & A & R & K & O & V & & C & H & A & I & N & Z \\
+    B & C & B & C & B & & B & C & B & C & B & & B & C & B & C & B & C & & B & C & B & C & B & C
+\end{tabular}
+\end{center}
+Tj. dla zerowej litery (numerujemy od zera, bo jest to wygodniejsze z punktu widzenia dodawania indeksów \textit{modulo}), czyli M używamy klucza B (inaczej 1), dostając N, dla pierwszej litery, czyli O, używamy klucza C (2) i dostajemy Q itd., spacje jako znaki spoza alfabetu zostawiamy bez zmian. Ostatecznie szyfrogram ma postać:
+\begin{center}
+    NQOVF EBTMQ NCSMPX DJBKOB
+\end{center}
+Co odpowiada zapisowi liczbowemu:
+$$ [13, 16, 14, 21, 5, ' ', 4, 1, 19, 12, 16, ' ', 13, 2, 18, 12, 15, 23, ' ', 3, 9, 1, 10, 14, 1]$$
+Ogólnie, jak widać, kopiujemy klucz, 'tyle razy ile potrzeba', aby móc zaszyfrować cały tekst – tak samo robiliśmy przy szyfrze Cezara, z tym że klucz tam był jednoelementowy (tu jest 2-elementowy, ogólnie może być $n$-elementowy).\\\\
+Możemy więc wprowadzić rodzinę szyfrów: szyfry z tej rodziny nazywamy szyframi Vigenere'a od nazwiska Blaise'a de Vigenere'a XVI-wiecznego francuskiego kryptografa, któremu błędnie przypisywany jest pomysł tego szyfru. Szyfr Vigenere'a w rzeczywistości pierwszy raz został opisany przez włoskiego kryptografa Giovana Battistę Bellaso. Sam Vigenere jest natomiast autorem szyfru z autokluczem opierającego się na podobnej idei – tym szyfrem również zajmiemy się później.\\\\
+\textbf{Definicja 4.2.1.}\\
+\textit{Szyframi Vigenere'a} długości $n$ nad tekstem $T$ o ciągu liter $\beta_0, ..., \beta_k$ nazywamy szyfry postaci $\sigma = \sigma_0, \sigma_1, ..., \sigma_k$ wyznaczane przez ciąg funkcji szyfrujących Cezara $i_0, ..., i_{n-1}$ w następujący sposób $\sigma_m = i_{(m \mod n)}$.\\\\
+Łatwo zauważyć, że już dla nie tak wielkich $n$ zastosowanie metody \textit{brute force} nie jest możliwe, liczba możliwych szyfrów w rodzinie wynosi wtedy $l^n$, gdzie $l$ jest długością alfabetu, a więc rośnie wykładniczo wraz z długością szyfru. Zauważmy, że szyfry Vigenere'a definiują się przez ciąg funkcji Cezara, a więc tak naprawdę przez ciąg elementów $\mathbb{Z}_l$. Łatwo zauważyć, że klucz deszyfrujący Vigenere'a bądź złożenie kluczy o długości n również będą zdefiniowane przez $n$ szyfrów Cezara: dokładnie $-i_0, -i_1, ..., -i_{n-1}$ (skopiowanych tak, by zostały pokryte wszystkie litery w tekście) w konwencji $\mathbb{Z}_l^+$ dla klucza szyfrującego $i_0, ..., i_{n-1}$, a więc należy również do tej samej rodziny szyfrów oraz przy znajomości $i_0, ..., i_{n-1}$ nie zależy od kodowanego/dekodowanego tekstu. Jest to o tyle wygodne, że do celów kodowania i dekodowania można wówczas użyć tej samej funkcji zależnej tylko od $i_0, ..., i_{n-1}$ – rodzina tych szyfrów jest izomorficzna z $\mathbb{Z}_l^n(+)$, i nie zależy od szyfrowanego tekstu. W kolejnym przypadku – szyfru z autokluczem – sprawa będzie się miała inaczej.\\\\
+Opiszmy teraz szyfr z autokluczem, ten, którego autorem istotnie jest Blaise de Vigenere. Zaczniemy od przykładu, znów chcemy zakodować wiadomość MONTE CARLO MARKOV CHAINZ. Szyfr Vigenere'a z autokluczem wyraża się podobnie jak zwykły szyfr Vigenere'a przez ciąg liter lub elementów $\mathbb{Z}_l$. Użyjmy znów klucza szyfrującego $(1, 2)$ (BC) i sporządźmy tabelę szyfrowania:
+\begin{center}\begin{tabular}{|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|}
+    M & O & N & T & E & & C & A & R & L & O & & M & A & R & K & O & V & & C & H & A & I & N & Z \\
+    B & C & M & O & N & & T & E & C & A & R & & L & O & M & A & R & K & & O & V & C & H & A & I
+\end{tabular}
+\end{center}
+Gdzie szyfr możemy zapisać również jako:
+$$[1, 2, 12, 14, 13, 19, 4, 2, 0, 17, 11, 14, 12, 0, 17, 10, 14, 21, 2, 7, 0, 8]$$
+Widać jasno ideę szyfru: dla szyfru długości $n$ pierwsze $n$ liter koduje się za pomocą szyfru, tak jak w przypadku zwykłego szyfru Vigenere'a, a następnie do zaszyfrowania użyj samej wiadomości – stąd nazwa szyfru z autokluczem (\textit{autokey}) wiadomość jest bowiem sama dla siebie kluczem (częścią klucza). Otrzymujemy szyfrogram:\\
+\begin{center}
+    NQZHR VETLF XODKFF QCCPNH
+\end{center}
+Możemy sformalizować definicję szyfru (Vigenere'a) z autokluczem. \\\\
+\textbf{Definicja 4.2.2.}\\
+\textit{Szyframi (Vigenere'a) z autokluczem} długości $n$ nad tekstem $T$ o ciągu liter $\beta_0, ..., \beta_k$ nazywamy szyfry $\sigma = \sigma_0, \sigma_1, ..., \sigma_k$ wyznaczane przez ciągi funkcji szyfrujących Cezara $i_0, ..., i_{n-1}$ w następujący sposób:
+\begin{align*}
+\sigma_m =
+\begin{cases}
+  i_m \text{ jeśli } m < n  \\
+  \beta_{m-n} \text{ w przeciwnym wypadku}.
+\end{cases}
+\end{align*}
+Gdzie $\beta_{m-n}$ utożsamiamy z odpowiadającą tej literze funkcją Cezara (podobnie będziemy utożsamiać litery i funkcje Cezara z elementami grupy addytywnej $\mathbb{Z}_l$ wszędzie później, np. dla klasycznego alfabetu -A=A, bo $-0 \equiv 0 \mod 26$, natomiast -B=Z, bo $-1 \equiv 25 \mod 26$.
+\\\\
+Istotną kwestią jest teraz to, że do dekodowania szyfrogramu (który powstał przy użyciu klucza kodującego wygenerowanego przy pomocy ciągu Cezara $i_0, ..., i_{n-1}$) o ciągu liter $\gamma_0, ... \gamma_k$ należy użyć klucza $\delta_0, ..., \delta_k$ postaci:
+\begin{align*}
+\delta_m =
+\begin{cases}
+  -i_m \text{ jeśli } m < n  \\
+  -\delta_{m-n}(\gamma_{m-n}) \text{ w przeciwnym wypadku}.
+\end{cases}
+\end{align*}
+Dla udowodnienia poprawności klucza można przeprowadzić prostą indukcję: oczywiście dla $m < n$ wiadomość została zdekodowana poprawnie. Dla większych $m$ zakładamy, że wszystkie wcześniejsze litery zostały zdekodowane poprawnie. $\gamma_m$ została zakodowana przez $\beta_{m-n}$ zgodnie z definicją autoklucza. Zatem zostanie odkodowana przez przesunięcie $-\beta_{m-n}$. Ale $\beta_{m-n} = \delta_{m-n}(\gamma_{m-n})$, ponieważ założyliśmy, że wcześniejsze litery zostały zdekodowane poprawnie, stąd $\delta$ jest poprawnym kluczem dekodującym. \\\\
+W tym wypadku jak widać, nie można kodowania i dekodowania zaimplementować tą samą funkcją (jeśli za argumenty funkcji dekodującej mamy do dyspozycji tylko $-i_0, ... -i_{n-1}$ i szyfrogram. Ta rodzina nie jest więc grupą ze względu na złożenia, która byłaby zdefiniowana niezależnie od szyfrowanego tekstu, bo rozpatrując to w tym sensie nie każdy element posiada funkcję odwrotną należącą do tej rodziny (i.e. funkcja odwrotna istotnie zależy od tekstu). Jednak algorytm deszyfrujący nie jest istotnie bardziej skomplikowany niż algorytm kodujący – do dekodowania kolejnych litery używamy po prostu liter dotychczas zdekodowanych. \\\\
+Na koniec zauważmy, że możemy jeszcze nieco bardziej skorzystać z utożsamienia alfabetu z $\mathbb{Z}_l$. Mianowicie stosując ideę taką jak dla szyfru Vigenere'a (czyli kopiowanie $n$-elementowych ciągów funkcji szyfrujących 'tyle razy, ile trzeba') szyfrować $i$ nie przez $i+b \mod l$ dla $b \in \mathbb{Z}_l$ jak dla szyfru Vigenere'a, ale przez $ai+b \mod l$, gdzie $a \in \mathbb{Z}_l^*$ i $b \in \mathbb{Z}_l$ – element klucza odpowiadający danej współrzędnej możemy zatem zapisać jako $(a,b)$. \\\\
+\textbf{Definicja 4.4.3.}\\
+Szyfry z rodziny opisanej powyżej będę nazywać \textit{rozszerzonymi/afinicznymi szyframi Vigenere'a}. \\\\
+Nazwa \textit{rozszerzony/afiniczny} jest wprowadzona przeze mnie, szyfr ten nie ma powszechnie przyjętej osobnej nazwy, generalnie jest traktowany po prostu jako jedna z wariacji szyfru Vigenere'a. Klucz dekodujący dla rozszerzonego klucza kodującego na poszczególnych współrzędnych będzie miał postać $a^{-1}, -a^{-1}b$, bowiem $a^{-1}(ai+b) - a^{-1}b \equiv i \mod l$, gdzie $a^{-1}$ jest odwrotnym elementem do $a$ w grupie $\mathbb{Z}_l^*$ z mnożeniem $\cdot_l$ Stąd do kodowania i dekodowania możemy użyć tej samej implementacji niezależnej od kodowanego/dekodowanego tekstu, podobnie złożenie należy do tej samej rodziny kluczy niezależnych od tekstu – szyfry te tworzą grupę niezależną od szyfrowanego tekstu izomorficzną z iloczynem $(\mathbb{Z}_l^*, \mathbb{Z}_l^+)^n$.
+Dla przykładu zobaczmy napis MONTE CARLO MARKOV CHAINZ zaszyfrowany za pomocą klucza $[(1,1), (3,2)]$:
+\begin{center}
+    NSOHF IBBMS NCSGPN DXBAOZ
+\end{center}
+Wyliczamy pierwszą literę szyfrogramu: $1*M+1 \equiv 1*12+1 \equiv 13 \mod 26 \equiv N$, drugą: $3*O + 2 \equiv 3*14 + 2 \equiv 20 \mod 26 \equiv S$ itd.
+\\\\
+Poza wymienionymi tu szyframi zajmę się jeszcze w dalszej analizie szyfrem podstawieniowym (raczej pokrótce: podejście MCMC do tego szyfru został już obszernie przeanalizowane w [Diaconis], [Connor], [Chen\&Rosenthal], mi niestety nie udało się znacząco rozszerzyć ich wyników, więc opiszę tylko skrótowo swoje próby i dodam jedno spostrzeżenie), tj. wspomnianym już szyfrem monoalfabetycznym: szyfrowanie polega na zastosowaniu do każdej litery tekstu tej samej permutacji alfabetu.
+\subsection{Idea ataku na przedstawione szyfry}
+Tak jak już wspomniałem, do ataku na przedstawione szyfry wykorzystam pewne własności języka angielskiego – mianowicie częstości występowania $n$-gramów w tym języku. $n$-gramem dla zbioru znaków $S$ nazwiemy ciąg $g \in S^n$. Przykładowo 4-gramem ze zbioru znaków $\{ABCD\_\}$ będzie np. $ADC\_$. Ze względu na znikomy (albo wręcz negatywny) wpływ na skuteczność ataku, natomiast na pewno negatywny wpływ na efektywność (rozmiar słownika $n$-gramów rośnie wykładniczo ze względu na $n$, więc im większe $n$ tym większa złożoność pamięciowa) odnotowany już z samego początku pracy ograniczyłem się do analizy 1-gramów (inaczej \textit{monogramów} lub \textit{unigramów}: ta pierwsza nazwa prawdopodobnie nie jest do końca poprawna, jako że monogram ma swoje inne znaczenie w języku polskim, jednak z początku pracowałem na słownikach częstości z: http://practicalcryptography.com/cryptanalysis/text-characterisation/monogram-bigram-and-trigram-frequency-counts/, gdzie nazwa ta się pojawia – z tego powodu powszechnie używałem jej w kodzie, więc również tu powinna się pojawić dla osiągnięcia pewnej spójności), 2-gramów (inaczej \textit{bigramów} lub \textit{digramów}) oraz 3-gramów (inaczej \textit{trigramów)}, przy czym główny nacisk zdecydowanie położyłem na uni- i bigramy, ze względów, które omówię dalej.\\\\
+Stosujemy piękne podejście znane już wcześniej z prac [1,2,3]. \\
+$i$-tym $n$-gramem tekstu $T = t_0...t_n$ nazwiemy $t_it_{i+1}...t_{n-1}$ i bedziemy go oznaczać po prostu przez $t_i(n)$. Załóżmy, że mamy dane częstości (niekoniecznie znormalizowane) występowania $n$-gramów $f_n(g)$ w języku, w którym była napisana zaszyfrowana w wiadomość (zakładamy, że wiemy w jakim, i go znamy) i szyfrogram $E=e_0,...e_n$, który chcemy odszyfrować. Dla potencjalnego klucza dekodującego $k$, który zadaje tekst – zdekodowany szyfrogram $D=d_0^k, ..., d_n^k$ wprowadzamy $w_n$ – \textit{wagę ze względu na $n$-gram} takiego klucza:
+$$w_n(k) = \prod\limits_{i=0}^{n-i+1} f_n(d_i^k(n))$$
+Można wprowadzić \textit{wagę mieszaną} ze współczynnikami $p_n$, tj.
+$$w(k) = \prod\limits_{n=1}^{\infty} (w_n(k))^{p_n}$$
+W praktyce – choć przeprowadzałem początkowo pewne doświadczenia z powyższą mieszaną wagą, jej zastosowanie nie poprawiało w żaden sposób jakości ataku (choć można przeprowadzić dalsze badania na ten temat, bo prawdopodobnie nie został on wyczerpany). Ostatecznie więc używałem wszędzie 'czystych' $n$-gramowych wag dla różnych $n$ – podobnie użycie współczynnika $p_n$ różnego od 1 dla $n$-gramowych wag nie przyniosło istotnej poprawy, więc dalej będą stosowane po prostu czyste $n$-gramowe wagi.\\\\
+Dalej możemy wprowadzić równoważną definicję $n$-gramowej wagi. Dla wszystkich możliwych $n$-gramów g nad użytym zbiorem znaków $S$ – niech zadają one zbiór $G$ – dla potencjalnie zdekodowanego szyfrogramu $D$ oznaczmy przez $r_D(g)$ liczbę wystąpień $g$ w $D$. Wtedy:
+$$w_n(k) = \prod\limits_{g \in G} f_n(g)^{r_D(g)}$$
+Intuicyjnie, waga jest tym większa im bardziej tekst jest bliski językowi angielskiemu – a więc rzeczywistej wiadomości – bowiem wtedy popularne $n$-gramy występują często, a te niepopularne rzadko. Użyliśmy tu wagi jak w [Chen\&Rosenthal]. Można użyć również ciut innego podejścia[Connors, Diaconis], które – mimo że odrobinę mniej wygodne – ma ładne Markowowskie uzasadnienie.\\\\
+Dla unigramów funkcja stanu/waga w tym podejściu będzie taka sama: uznaje się wtedy, że język angielski generuje kolejne znaki niezależnie zgodnie z rozkładem $f_1$ (znormalizowanym). Dla większych $n$ przyjmuje się, że język angielski generuje łańcuch Markowa o rozkładzie początkowym i macierzy przejścia wyliczonych z $f$. Podam przykładowo koncepcję dla bigramów. Pierwszy (zerowy) znak $s_0$ generujemy z rozkładu $f_1$. Następne znaki generujemy, biorąc pod uwagę jeden poprzedni, zgodnie z macierzą przejścia:
+$$p_{ij} = P(s_{n+1} = j|s_n = i) \approx \frac{f_2(ij)}{f_1(i)}$$
+Ostatnia równość bierze się stąd, że $\sum_j f_2(ij) \approx f_1(i)$, występuje znak $\approx$ zamiast $=$ ponieważ po lewej stronie nie bierzemy pod uwagę sytuacji, gdzie $i$ występuje na końcu tekstu – co można jednak łatwo naprawić dodając znak końca tekstu do naszego zbioru znaków. Wtedy funkcja wagi miałaby postać:
+$$ f(d_0) \cdot \prod\limits_{i=1}^{k-1} p_{{d_i}{d_{i+1}}} $$
+Użycie takiej wagi ma bardzo ładne teoretyczne uzasadnienie, ale z przeprowadzonych doświadczeń użycie jej nie zwiększa mocy ataku w porównaniu z wagą zdefiniowaną wcześniej. Są natomiast pewne małe implementacyjne niedogodności – np. specjalnie trzeba traktować pierwszy znak tekstu, trzeba normalizować częstości – więc w swoich atakach użyłem zdefiniowanej wcześniej wersji [ChenRosenthal].\\\\
+Co zatem będzie ideą naszego ataku – można się domyślić, poszukiwanie:
+$$ \argmax_k w_n(k) $$
+dla różnych $n$. Jeśli znajdziemy taki klucz, który maksymalizuje $n$-gramową wagę, odszyfrowany tekst powinien być blisko języka angielskiego, a skoro tak, to jest to prawdopodobnie poprawnie odszyfrowana wiadomość.\\
+Koncepcja tu zaprezentowana słusznie może kojarzyć się z wnioskowaniem Bayesowskim, bo jest jego wersją. Rozkładem \textit{a priori} jest tutaj jednostajny rozkład na zbiorze kluczy z danej rodziny (nic nam nie wiadomo o tym, żeby np. przesunięcia o parzystą liczbę były stosowane częściej). Doświadczeniem czy obserwacją jest dany nam szyfrogram. Nieznanym parametrem jest klucz $k$, natomiast waga – po znormalizowaniu – jest naszym rozkładem \textit{a posteriori}.\\
+W następnym podrozdziale opowiem, jak poszukiwać klucza maksymalizującego prawdopodobieństwo \textit{a posteriori}, co będzie rozwiązaniem problemu dekodowania.\\\\
+Istotna uwaga: ze względów numerycznych dużo lepszą opcją jest badanie $\log w_n(k) = \sum\limits_{i=0}^{n-i+1} \log f_n(d_i^k(n)) = \sum\limits_{g \in G}{r_D(g)} f_n(g)$, oczywiście jako że logarytm jest funkcją rosnącą to $\argmax$ będzie w obu przypadkach ten sam, więc są to opcje równoważne. Tak więc lepiej jest przechowywać słownik logarytmów częstości – (1) dodawanie jest tańsze, (2) operujemy na mniejszych wartościach, więc są też mniejsze błędy związane z arytmetyką zmiennoprzecinkową i nie ma ryzyka przekroczenia maksymalnej/minimalnej reprezentowalnej przez liczby zmiennoprzecinkowe wartości.\\\\
+Ostatecznie więc zakładamy, że przechowujemy taki (wyliczony ze zbioru uczącego bądź w jakiś sposób dany z góry) słownik log-częstości (dla $n$-gramów) i mamy do niego dostęp w czasie stałym.
+\subsection{Algorytmy deterministyczne}
+Zaczynamy więc część właściwą pracy. Swoje rozwiązania będę prezentował na razie dla zwykłego szyfru Vigenere'a, uogólnienie ich na pozostałe szyfry (autoklucz, afiniczny) – wymaga jedynie doprecyzowania kroków występujących w podprocedurach – na alfabecie $A$ o długości $l$ – na razie przy założeniu znajomości długości klucza $k$ – oznaczmy ją przez $n_k$. Mamy dany tekst–szyfrogram o długości $m$: $E=e_0e_1...e_{m-1}$. Zacznijmy od najprostszej kwestii – maksymalizacji wagi unigramowej (jej logarytmu). Wróćmy do napisu MONTE CARLO MARKOV CHAINZ i szyfru $[1,2]$. Dostajemy zaszyfrowaną wiadomość: NQOVF DCSNP NCSMPX EICJPA. Zauważmy teraz, że szyfrogram możemy podzielić na 2 fragmenty zaszyfrowane monoalfabetycznym szyfrem Cezara, mianowicie na \textit{litery} z pozycji (liczymy tylko pozycje liter – elementów szyfrowanych) $\equiv 0 \mod 2$:
+\begin{center}
+    NOFCNNSPECP
+\end{center}
+oraz $\equiv 1 \mod 2$:
+\begin{center}
+    QVDSPCMXIJA
+\end{center}
+Ogólnie, dla szyfru długości $n_k$ możemy podzielić napis na $n_k$ monoalfabetycznych ciągów liter (pozycje $\equiv 0,1,2,3,...n_k -1 \mod n_k$. Dla każdego z nich mamy $l$ możliwych kluczy dekodujących do sprawdzenia, obliczenie \textit{cząstkowej} (tj. związanej z danym ciągiem uzyskanym przez podział) logarytmu wagi każdej możliwości kosztuje nas $m/n_k$ dodawań, możliwości jest $l$, monoalfabetycznych ciągów $n_k$. Oznaczmy wagę cząstkową klucza $k_i$ o długości 1 użytego do dekodowania na pozycjach $\equiv i \mod l$ przez $w_1^{(i)}(k_i)$ Ostatecznie więc rozwiązanie wygląda tak:\\\\
+\begin{algorithm}[H]
+\caption{Algorytm monogramowy}
+\SetKwInput{For}{dla}
+\SetKwInput{If}{jeśli}
+\SetKwInput{Else}{w przeciwnym razie}
+\SetKwInput{Return}{zwróć}
+klucz\_dekodujący = []\\
+\For{$i=0,1,2,3...n_k-1$}{
+\quad klucz\_dekodujący[i] = $\argmax_{k_i = 0,1...l-1}  \log w_1^{(i)}(k_i)$\;
+}
+\Return{klucz\_dekodujący}
+\end{algorithm}
+a zgodnie z wcześniejszymi rozważaniami złożoność czasowa rozwiązania to $O(m/n_k \cdot n_k \cdot l) = O(ml)$. Rozwiązanie jest więc proste i szybkie, jednak działa dobrze tylko dla kluczy krótszych od pewnej wielkości zależnej od długości tekstu $m$, co pokażemy doświadczalnie później. Można jedynie zauważyć, że ma to związek z tym, że metoda unigramowa nie bierze w ogóle pod uwagę związków między kolejnymi znakami tekstu. Te związki w oczywisty sposób są już brane pod uwagę dla $n$-gramów o większych $n$, co daje im sporą przewagę. Wynik, który otrzymaliśmy tym podejściem (przy użyciu wygenerowanego ze zbioru uczącego – o tym później - słownika) dla naszego szyfrogramu to: MANFE OADLA MMRWOH CTAUNL. Widać więc, że trafiliśmy w 50\%, konkretnie na ciągu związanym z $0 \mod 2$, na drugim ciągu, jak widać, zaszło odchylenie od oczekiwanych wartości, na tyle, że nasza metoda zawiodła.\\\\
+Zaprezentuję teraz jak rozwiązywać w sposób deterministyczny postawione zagadnienie dla $n > 1$, konkretnie pokażę jak zrobić to dla $n=2$ – idea potem rozszerza się na większe $n$ w naturalny – choć niewygodny z punktu widzenia implementacji – sposób.\\
+Wracamy do naszego tekstu MONTE CARLO MARKOV CHAINZ, szyfrogramu zakodowanego, tym razem 3-elementowym kluczem $[1,2,3]$, aby lepiej pokazać, o co chodzi w metodzie. Szyfrogram ma postać: NQQUG FBTOP ODSMRW EKBKQA. Stosujemy podobny trick, co wcześniej – szyfrogram można podzielić na 3 (ogólnie $n_k$) ciągi bigramów, zaszyfrowanych tym samym 2-elementowym kluczem (kolejno na pozycjach (0,1), (1,2) i (2,0):\\
+dla (0,1):\\
+\textbf{NQ, UG, BT, para bigramów: P+spacja i spacja+O} (tak że P jest wynikiem zaszyfrowania 0-owym elementem klucza, a O 1-szym), \textbf{SM, W+spacja, spacja+E. BK}\\
+Pewnym usprawnieniem, które wprowadziłem, jest, jak widać, branie pod uwagę w analizie statystycznej również połączeń między szyfrowanymi (należącymi do alfabetu) a nieszyfrowanymi (niealfabetycznymi) znakami (tak jak w poprzednim podrozdziale było napisane: bierzemy $n$-gramy nad całym zbiorem znaków, które występują w zbiorze uczącym), co pozwala uchwycić więcej zależności statystycznych. Zauważmy, że przy zmianie szyfru zmieniają się tylko znaki alfabetyczne, stąd np. do jakichkolwiek obliczeń związanych z szyfrowaniem wystarczy brać pod uwagę tylko te $n$-gramy, które mają w sobie choć jeden alfabetyczny znak.
+Podobnie bierzemy bigramy związane z (1,2) i (2,0). Znowu przyda nam się \textit{waga cząstkowa} ($w_2^{(i, i+1)}(k_i, k_{i+1})$ - związana z ciągiem elementów na pozycjach $\equiv i, i+1 \mod n_k$ dla $i=0,1...,n_k-1$ – dla $i=n_k-1$ oczywiście sumujemy tylko log-wagi bigramów $(n_k-1, n_k)$, $(2n_k-1, 2n_k)$ itd. – które próbujemy odkodować 'podkluczem' $k_i, k_{i+1}$). Nie możemy podejść do tego problemu jak poprzednio i po prostu policzyć dla każdego ciągu bigramów $l^2$ możliwości i wybrać z nich argument maksymalizujący (2-elementowy klucz dekodujący), bo może się zdarzyć (i zwykle się zdarza!), że dla pozycji (0,1) uzyskamy np. [1,7] a dla pozycji (1,2), [19, 3] – innymi słowy: po prostu nie zgadzają się wartości – w tym wypadku na współrzędnej 1. Jesteśmy jednak sobie w stanie z tym poradzić, choć nie za darmo – bo w zamian tracimy na złożoności czasowej i pamięciowej. \\\\
+Pomysł opiera się na programowaniu dynamicznym (warto zwrócić uwagę na podobieństwo algorytmu do algorytmu Viterbiego, co ładnie nawiązuje do łańcuchów Markowa). Ideą jest przechowywać \textit{maksymalny prefiks o długości d+1, zerowej pozycji i d-tej pozycji j}. Dla wszystkich $i,j=0,1...l-1$ oraz $d$ rosnących od $1$ do $n_k$. Co znaczą te maksymalizujące prefiksy? Są to takie prefiksy klucza (np. prefiksami [1,2,3] są [1], [1,2], [1,2,3]), że wartość log-wagi bigramowej ograniczona do pozycji $[0,1,2,...d-1]$ jest maksymalna (umiemy to kolejno obliczać). Po ostatnim kroku mamy więc maksymalne wartości prefiksów (i możliwość odtworzenia ich całości, jak to w programowaniu dynamicznym) o długości $n_k+1$ dla wszystkich możliwych par początek-koniec prefiksu. Jednak zwróćmy uwagę, że jedyne pary, które mają sens to takie, gdzie koniec jest równy początkowi (bo szyfr ma długość $n_k$, więc element szyfru na pozycji $0$ musi się równać elementowi na pozycji $n_k$). Wybieramy więc spośród tych par tę, która maksymalizuje wagę a następnie odtwarzamy szyfr. Istnienie takiego algorytmu jest o tyle istotne, że daje nam narzędzia, aby w skończonym czasie ocenić skuteczność metody bigramów (podejście MCMC, o którym napiszę później, zgodnie z wcześniej wyprowadzoną teorią gwarantuje nam zbieżność prawie na pewno w skończonym, ale dowolnie długim czasie – ponadto jest ograniczone jakością generatora losowego), w tym sensie, że możemy stwierdzić, do kiedy $\argmax$ rzeczywiście pokrywa się z kluczem dekodującym. Jako że jest to główny wynik tego podrozdziału, a po części także całej pracy, poświęcę mu chwilę więcej uwagi i opisowo udowodnię też jego poprawność.\\
+Zaczniemy od opisania podprocedury przechodzenia z $d$-tego do $d+1$-szego kroku, na razie pominiemy część odzyskiwania klucza (będzie to później proste ulepszenie) i skupmy się na znajdowaniu maksymalnej wagi (logarytmu) i elementu $i \in \mathbb{Z}_l$, który stoi na początku \textit{najlepszego} klucza. Załóżmy, że mamy do dyspozycji tabelę $T_d[i][j]$ dla wszystkich $i,j \in \mathbb{Z}_l$, która w aktualnym momencie ma w sobie maksymalną wagę log-wagę, którą da się osiągnąć dekodując tekst kluczem o zerowym elemencie $i$ oraz $d$-tym elemencie $j$, wliczając do wagi tylko bigramy na pozycjach (0-d). Na tej podstawie, chcemy obliczyć maksymalną log-wagę dla $i$, $j$ i $d+1$, którą następnie umieścimy w nowej tabeli $T_{d+1}[i][j]$ (tę musimy pozostawić niezmienioną, dopóki krok $d$ się nie skończy). Bierzemy więc:
+\begin{align*}
+T_{1}[i][j] &= w_2^{(0,1)}(i, j) \\
+T_{d+1}[i][j] &= \max_{k \in \mathbb{Z}_l} T_{d}[i, k] + w_2^{(d,d+1)}(k, j)\,\,\, d > 1
+\end{align*}
+Z argumentu indukcyjnego jasne jest, że dla wszystkich kroków (także dla ostatniego odnosi się ten argument, choć zajmiemy się nim osobno, bo jest szczególny) będziemy w nowej tabeli przechowywać wartości zgodne z założeniami, czyli maksymalną wartość wagi ograniczonej do pozycji $0-d+1$, wystarczy zauważyć, że przy ustalonym $k$ z założenia indukcyjnego dostajemy maksymalną wartość log-wagi dla prefiksów takich, że na zerowym miejscu jest $i$, na $d$ –$k$, a na $d+1$ – $j$. Ponieważ iterujemy po wszystkich $k$ dostajemy maksimum globalne. Jest to standardowa procedura w algorytmach dynamicznych – parametr $k$ dzielony przez obydwa składniki sumy zapewnia nam spójność klucza, który w ten sposób uzyskujemy. Pewne wątpliwości może budzić ostatni krok, który robi swego rodzaju 'zawinięcie' (przeprowadzić go wystarczy, tylko dla par $i,i$, jak wspomniałem wcześniej), czyli:
+$$T_{n_k}[i][i] = \max_{k \in \mathbb{Z}_l} T_{n_k-1}[i, k] + w_2^{(n_k-1,n_k)}(k, i)$$
+Ale w rzeczywistości  on też jest poprawny z tego samego argumentu, bowiem przy ustalonym $k$ pierwsza część sumy maksymalizuje wagę cząstkową \textit{złożenia} bigramów $(0,1)$, $(1,2)$, ... $(n_k-2, n_k-1)$ z założenia indukcyjnego, a druga część jest jedyną możliwą do wyboru opcją. Iterując po wszystkich $k$ dostaniemy maksimum globalne. Maksimum z $T_{n_k}[i][i]$ po $i \in \mathbb{Z}_l$ da więc rzeczywiście maksymalną log-wagę bigramową, algorytm jest więc poprawny.\\\\
+Zanim zapiszemy algorytm w spójnej wersji – parę uwag. Ponieważ przechowujemy pełen szyfrogram, łącznie z niezakodowanymi (niealfabetycznymi) znakami (co więcej, bierzemy je też pod uwagę przy obliczeniach), a z drugiej strony, chcemy móc szybko iterować po znakach zakodowanych (tzn. przy obliczaniu cząstkowej log-wagi chcemy poruszać się skokami o $n_k$ – żeby dekodować kolejne pozycje równe $\mod n_k$) – mieć po prostu stały dostęp (O(1)) do $i$-tego elementu. Nie jest to jednak bardzo trudne – wystarczy użyć przeznaczonej do tego struktury, która:\\
+(a) będzie w ciągłej pamięci przechowywać zakodowane znaki nieprzedzielone niezakodowanymi\\
+(b) będzie możliwość sprawdzenia w stałym czasie, czy po danej pozycji nie zaczyna się ciąg znaków niezakodowanych: jeśli tak, będzie przekazane coś w rodzaju wskaźnika do tego ciągu znaków (w przypadku Pythona może to być po prostu indeks na liście ciągów niezakodowanych znaków), który również przechowujemy w pamięci ciągłej, żeby np. mieć szybki dostęp do pierwszego i ostatniego znaku w tym ciągu.\\\\
+Spełnienie (a) i (b) zapewnia nam, że wszystkie operacje związane z obliczaniami $n$-gramowymi odbędą się w najkrótszym możliwym czasie.\\\\
+Wróćmy teraz do algorytmu bigramowego. Jak odzyskać maksymalizujący klucz? Wystarczy przechowywać jeszcze jedną tablicę $P[i][j][d]$, która zawiera poprzedników $j$ w maksymalizującym prefiksie o początku $i$, i końcu $j$ na pozycji $d$. Czyli:
+\begin{align*}
+P_[i][j][1] &= i \\
+ P_[i][j][d+1] &= \argmax_{k \in \mathbb{Z}_l} T_{d}[i, k] + w_2^{(d,d+1)}(k, j)\,\,\, d > 1
+\end{align*}
+Podobny argument jak poprzednio pozwala nam stwierdzić, że rzeczywiście po każdym kroku elementy przechowywane w $P[i][j][d+1]$ i wcześniejszych tablicach są zgodne z założeniem. Pozostaje odzyskać klucz z tablicy $P$. Załóżmy, że $j$ jest elementem, który występuje na zerowej pozycji maksymalizującego klucza.\\\\
+\begin{algorithm}[H]
+\SetKwInput{For}{dla}
+\SetKwInput{If}{jeśli}
+\SetKwInput{Else}{w przeciwnym razie}
+\SetKwInput{Procedure}{procedura}
+\SetKwInput{Return}{zwróć}
+\Procedure{odzyskaj\_klucz(j, P)}{
+\quad klucz = []\;
+\quad poprzednik = j\;
+\quad\For{$i=n_k,n_k-1,...1$}{
+\quad\quad     poprzednik = P[j][poprzednik][i]\;
+\quad\quad    klucz := [poprzednik]+klucz\;
+}
+}
+\quad\Return{klucz}
+\end{algorithm}
+Dla dowodu poprawności zauważmy tylko, że niezmiennikiem jest fakt, że po $m$-tej iteracji (numerowanej od zera) dla $m=0,1,2...n_k-1$ klucz przechowuje elementy maksymalizującego klucza od $n_k-1-m$ do $n_k-1$, stąd po $n_k$-tej iteracji będzie przechowywał elementy z pozycji maksymalizującego klucza od $0$ do $n_k-1$, czyli cały klucz.\\\\
+Ostatecznie możemy więc zapisać cały \textit{algorytm bigramowy}.
+\\\\\\\\\\\\
 
+\begin{algorithm}[H]
+\caption{Algorytm bigramowy}
+\SetKwInput{For}{dla}
+\SetKwInput{If}{jeśli}
+\SetKwInput{Else}{w przeciwnym razie}
+\SetKwInput{Procedure}{procedura}
+\SetKwInput{Return}{zwróć}
+\For{$i,j \in \mathbb{Z}_l$}{
+\quad$P_[i][j][1] = i$\;
+\quad$T_{1}[i][j] = w_2^{(0,1)}(i, j)$\;
+}
+\For{$d=2,3,...n_k$}{
+\quad\For{$i,j \in \mathbb{Z}_l$}
+\quad\quad $T_{d+1}[i][j] = \max_{k \in \mathbb{Z}_l} T_{d}[i, k] + w_2^{(d,d+1)}(k, j)$\;
+\quad\quad $P_[i][j][d+1] = \argmax_{k \in \mathbb{Z}_l} T_{d}[i, k] + w_2^{(d,d+1)}(k, j)$\;
+}
+\Return{odzyskaj\_klucz($\argmax_i T_{n_k}[i][i]$, P)}
+\end{algorithm}
+Dla wygody zapisu nie rozdzielaliśmy specjalnie ostatniej iteracji, mimo że wystarczy ją wykonać dla par $i,i$ – wykonanie jej dla wszystkich $i,j$ nie zmienia zresztą istotnie złożoności algorytmu – oczywiście dalej pozostaje on poprawny.
+Zauważmy teraz, że wystarczy zamienić $\mathbb{Z}_l$ – w miejscach gdzie występuje – na \textit{zbiór wszystkich szyfrów długości jeden} z danej rodziny i dostaniemy poprawne rozwiązanie problemu bigramów dla wszystkich szyfrów (polialfabetycznych podstawieniowych) długości $n_k$ o własności:\\
+\textit{wartość zakodowanej litery na pozycji $i$ zależy tylko od samego tekstu i szyfru na pozycji $i \mod n_k$}\\\\
+Długość możemy tu rozumieć intuicyjnie jako najmniejszą liczbę elementów $S_A$, czyli bijekcjami nad alfabetem, których znajomość wystarczy do zakodowania/zdekodowania tekstu. Dla 3 rodzajów szyfru o długości $n$ rzeczywiście do zakodowania/zdekodowania była potrzebna i wystarczająca znajomość $n$ bijekcji (w przypadku Vigenere'a i autoklucza były to bijekcje-przesunięcia, w przypadku afinicznego szyfru Vigenere'a były to funkcje postaci $ai+b$). Długość szyfru monoalfabetycznego to 1 itd. Własność powyższa zapewnia nam to, że możemy rozpatrywać wszystkie elementy odpowiadające $i \mod n_k$ jako zaszyfrowane tą samą funkcją ('szyfrem długości 1') i osobno dekodować takie właśnie grupy. Wszystkie rozważane w poprzednim podrozdziale szyfry miały tę własność (dla Vigenere'a i szyfru afinicznego jest to oczywiste, dla szyfru z autokluczem też, gdy przypomnimy sobie postać funkcji szyfrującej i deszyfrującej). Problemem, żeby ten algorytm zadziałał dla każdego szyfru o podanej powyżej własności jest oczywiście rozmiar podzbioru $S_A$, który rozważamy do znalezienia $\argmax$ w danym kroku – robimy to sprawdzając wszystkie możliwości. W przypadku szyfra z autokluczem i szyfru Vigenere'a jest to $l$ – długość alfabetu. W przypadku szyfru afinicznego $\varphi(l) \cdot l$, gdzie $\varphi$ jest funkcją Eulera oznaczającą moc $\mathbb{Z}_l^*$ liczb względnie pierwszych z $l$ mniejszych od $l$.\\
+Zanim przejdziemy do dalszej analizy algorytmu, warto przypomnieć o tym jak kodować i dekodować litery tylko na pozycjach $\equiv i \mod n_k$.
+Dla szyfrów Vigenere'a i afinicznego jest to proste, po prostu dla każdego $j = i, i+n_k, i+2n_k... < m$, gdzie $m$ jest długością tekstu bierzemy:
+$$d_j = \sigma_i(e_j)$$
+Lub jeśli klucz jest szyfrujący a nie deszyfrujący, to zamieniamy $d$ i $e$ miejscami ($\sigma_i$ jest oczywiście $i$-tym wyrazem klucza). Nieco inaczej sprawa ma się z deszyfrowaniem (bo to nas bardziej interesuje) tekstu zakodowanego z autokluczem. W istocie da się dekodować grupy odpowiadające elementom modulo niezależnie. Załóżmy, że mamy na $i$-tej pozycji klucza dekodującego $-s$ (czyli innymi słowy odgadliśmy, że klucz kodujący miał na tej pozycji $s$). Wtedy:
+\begin{align*}
+    d_i &= e_i - s\\
+    d_{i+n_k} &= e_{i+n_k} - d_i\\
+    ...\\
+    d_{i+tn_k} &= e_{i+tn_k} - d_{i+(t-1)n_k}
+\end{align*}
+Tak więc rzeczywiście we wszystkich tych szyfrach na pozycje $\equiv i \mod n_k$ wpływa tylko $i$-ty element szyfru. Log-wagi cząstkowe bigramów liczymy więc w ten sposób:\\\\
+\begin{algorithm}[H]
+\SetKwInput{For}{dla}
+\SetKwInput{If}{jeśli}
+\SetKwInput{Else}{w przeciwnym razie}
+\SetKwInput{Procedure}{procedura}
+\SetKwInput{Return}{zwróć}
+$\log w_2^{(i,i+1)}(k_i, k_{i+1}) := 0$\;
+\For{$j = i, i+n_k, ... < m$}{
+\quad \tcc{możliwe, że używając wcześniej odkodowanych elementów na pozycjach $\equiv i$, $\equiv i+1$}
+\quad   odkoduj($e_j$)\;
+\quad   odkoduj($e_{j+1})$\;
+ \quad  b = bigramy\_po\_odkodowaniu($j,j+1$)\;
+\quad    s = suma log-wag(b)\;
+\quad    $\log w_2^{(i,i+1)}(k_i, k_{i+1})$ += s\;
+}
+\Return{$\log w_2^{(i,i+1)}(k_i, k_{i+1})$}
+\end{algorithm}
+\textit{bigramy} powyżej to są po prostu bigramy związane z wagą cząstkową $i,i+1$ (po odkodowaniu $e_i, e_{i+1}$). Może to być albo pojedynczy bigram albo para bigramów jeśli litery na pozycjach $i, i+1$ są przedzielone niealfabetycznym ciągiem (P+spacja i spacja+O we wcześniejszym przykładzie). W przypadku Vigenere'a i szyfru afinicznego nie trzeba przechowywać dodatkowych informacji, dla autoklucza za każdym razem trzeba aktualizować klucze które zostaną użyte do dekodowania w następnej iteracji. Ponadto należy dbać, żeby cały czas był dostęp do oryginalnego szyfrogramu, aby następne kroki algorytmu mogły z niego korzystać. Jako że bigramy jesteśmy w stanie pobrać w czasie $O(1)$, podobnie mamy stały dostęp do słownika log-częstości, również odkodowanie zajmuje O(1) (oczywiście przyjmując stały czas pojedynczej operacji mnożenia/dodawania liczb całkowitych), zatem czas pojedynczej iteracji jest stały. Stąd obliczenie cząstkowej wagi bigramowej zajmuje $O(m/n_k)$ (gdyby $n$ w $n$-gramie było duże, należałoby jeszcze wziąć je pod uwagę, jednak $n=2$ możemy traktować jako stałą). Jest to pierwszy element analizy złożoności czasowej. Do kolejnych elementów przejdziemy później, ale najpierw pokażemy jak algorytm zadziałał na naszym szyfrogramie, najpierw dla uprzednio zaszyfrowanego MONTE CARLO MARKOV CHAINZ szyfrem (1,2), czyli szyfrogramu:
+NQOVF DCSNP NCSMPX EICJPA.
+W istocie, dostaliśmy poprawne odszyfrowanie:
+MONTE CARLO MARKOV CHAINZ.\\
+\\
+Sprawdźmy jak sobie poradziły obie metody dla szyfru (1,2,3). Szyfrogram to:\\
+AEDIT TOHBD BRFAEK RYOYDO\\
+Metoda monogramowa poprawnie zdekodowała jedną trzecią tekstu, co w tym wypadku nie pomaga zbytnio:
+RENYU CFHLT CAWAOA SHFYNE
+Metoda bigramowa natomiast:
+MONTE CARLO MARKOV CHAINZ. A więc od razu widać, że metoda \textit{bigramowa} jest istotnie lepsza od monogramowej.\\
+W tym wypadku nie ma jednak nic za darmo – algorytm bigramowy ma również istotnie większą złożoność czasową i pamięciową, oceńmy więc: w każdej iteracji $d=1,2.., n_k$ dla każdej pary $i,j$ ($i,j$ – szyfry długości 1 z danej rodziny) musimy obliczyć $max$ i $\argmax$, a więc i wagę cząstkową $s$ razy, gdzie $s$ jest liczbą szyfrów długości $1$ w  rodzinie szyfrów, którą rozważamy (w przypadku Vigenere'a jest to po prostu $l$), trzeba bowiem to zrobić dla wszystkich $k$, po których przebiegają $\max$, $\argmax$ (zwróćmy uwagę, że możemy i powinniśmy obliczyć oba wewnątrz tej samej procedury). Każda taka iteracja zajmuje więc $s^2$ – liczba par $i,j$, razy $s$ – liczba argumentów, po których przebiega krok razy $O(m/n_k)$ – koszt obliczenia wagi. Łącznie dostajemy więc złożoność czasową $O(s^3 \cdot m)$, natomiast złożoność pamięciowa zdominowana jest przez tablicę \textit{poprzedników} (zauważmy, że do przechowywania wartości log-wag wystarczą nam tak naprawdę dwie tablice \textit{aktualna} i \textit{przyszła}, z tablicą poprzedników tak nie jest, bo potrzebujemy całej 'ścieżki' klucza). Tak więc używamy dodatkowej pamięci $O(s^2 \cdot n_k)$. W zależności od $s$ i $m$ $O(s^3 \cdot m)$ to może być dużo lub mało, ale często może się zdarzyć, że jest to naprawdę dużo, przez co w pewnych wypadkach nie jesteśmy w stanie w rozsądnym czasie przeprowadzić skutecznego ataku kryptograficznego, wtedy z pomocą przychodzą nam MCMC, ale o tym opowiemy później.\\
+Teraz możemy się jeszcze zastanowić, jak uogólnić ideę algorytmu bigramowego na dowolne $n$-gramy. Nie jest to trudne – wystarczy zastosować ten sam argmax-owy mechanizm, tyle tylko, że dla spójności musimy brać pod uwagę klucze długości $n-1$ – po takich będzie iterowało $k$ dla ustalenia $\max$ i $\argmax$ (w przypadku $n=2$, było to – jak widzieliśmy – $1$, w przypadku $n=1$ było to $0$, kolejne 'cząstki' w ogóle od siebie nie zależały), bo taki rozmiar jest wymagany dla utrzymania spójności (np. dla trigramów by obliczyć maksymalne wagi dla pozycji (0,1,2,3,4), mając je już dla (0,1,2,3) musimy pamiętać o spójności na pozycjach (2,3)). Tak więc złożoność czasowa podnosi się do $O(s^n \cdot s^{n-1} \cdot m) = O(s^{2n-1}m$, a pamięciowa – $O(s^{2(n-1)} \cdot n_k$). Przy już dość małym $n$ więc (już dla szyfru Vigenere'a, alfabetu o długości $l=26$ i $n=3$ oraz tekstu długości, powiedzmy 1000), stosowanie $n$-gramowej taktyki staje się zupełnie nieefektywne czasowo i pamięciowo – w deterministycznej wersji. Już dla $n=2$ jest natomiast \textit{wolne}.\\\\
+W zakończonym podrozdziale zaprezentowałem deterministyczne podejście do ataku na szyfry z omówionych wcześniej trzech rodzin – zaprezentowałem działanie tego podejścia na krótkim napisie. Głównym wkładem tych rozważań jest jednak to, że możemy dzięki deterministycznemu algorytmowi znajdowania $\argmax$ sprawdzić to podejście doświadczalnie, czym zajmę się w następnym podrozdziale.\\
+\subsection{Ocena skuteczności metody n-gramowej}
+Chcemy sprawdzić, kiedy rozważane uprzednio podejście ma w ogóle sens. Można intuicyjnie wyczuć, że im większa długość szyfru w stosunku do długości szyfrowanego tekstu, tym szyfrowanie jest bezpieczniejsze. Rzeczywiście, wtedy szyfr coraz bardziej zbliża się do szyfru Vernama – który jest \textit{szyfrem nie do złamania} – jeśli tylko szyfrowane są wszystkie znaki i klucz jest generowany losowo. Szyfr Vernama to odmiana szyfru Vigenere'a – klucz jednak ma długość taką jak oryginalna wiadomość, przez co, jeśli klucz jest wygenerowany zgodnie z rozkładem jednostajnym, nie jesteśmy w stanie odczytać poprawnie żadnych zależności statystycznych z szyfrogramu – każda litera wiadomości jest przesunięta o losową wylosowaną jednostajnie wartość – więc samą literę szyfrogramu można traktować jako wylosowaną z alfabetu z rozkładem jednostajnym! Każda sekwencja liter jest więc tak samo prawdopodobna niezależnie od rzeczywistego tekstu. W bardzo małym stopniu jest możliwe zaatakować ten szyfr, jeśli występują znaki niekodowane, np. załóżmy, że mamy niekodowaną spację i zakodowany szyfrem Vernama tekst ABC DEF. Możemy wtedy badać najbardziej prawdopodobne sekwencje dwóch słów w angielskim – jednak bez dodatkowej znajomości kontekstu jest to w zasadzie dalej niemożliwe, tzn. HEY BOY jest praktycznie tak samo prawdopodobne jak YES SIR, jeśli nie wiemy np., że to list dziewczyny do chłopaka albo odwrotnie – fragment scenariusza do filmu wojennego. Bez znajomości kontekstu natomiast, przy użyciu zautomatyzowanych metod, szyfr nadal pozostaje \textit{praktycznie} nie do złamania.\\
+Skupiamy się nadal na metodach $n$-gramowych. Dzięki wyprowadzeniu algorytmów deterministycznych możemy zaimplementować je i sprawdzić, kiedy poziom odszyfrowania otrzymany w ten sposób jest zadowalający, innymi sprawdzić górne ograniczenia tej metody i wszystkich opartych na tym schemacie. Zwróćmy uwagę, że dla 1000-elementowego zaszyfrowanego tekstu przy kluczu długości 1000 (szyfr Vernama) i niekodowanych (bądź ich braku) znakach w tych samych miejscach algorytmy deterministyczne dadzą zawsze (muszą dać!) ten sam wynik, po prostu najbardziej prawdopodobną (względem przyjętego rozkładu znormalizowanych $w$) sekwencję znaków w języku angielskim – skoro szyfr jest nie do złamania, to jak mielibyśmy go złamać? Do pewnego momentu jednak jesteśmy w stanie taki szyfr całkiem skutecznie zaatakować. Jednak klasycznie opisywana metoda analizy części zaszyfrowanych monoalfabetycznie – nie zetknąłem się z innymi – wg częstości pojedynczych liter przeważnie – dla długiego klucza – wtedy zawodzi. Już we wcześniejszym rozdziale na podstawie krótkiego napisu pokazaliśmy, że jeśli ciągi zaszyfrowane monoalfabetycznie są krótkie – to w bardzo nikłym stopniu wyrażają się tam statystyczne zależności. Nawet jeśli uda się poprawnie zdekodować któryś z monoalfabetycznych ciągów, to ponieważ liczba pól do zdekodowania jest duża niewiele nas to porusza do przodu. Powiedzmy, że klucz ma 1/4 długości tekstu – monoalfabetyczne ciągi mają długość 4 – to bardzo mało (daje to niski \textit{indeks koincydencji} [wiki]). Jeśliby nawet podobnie jak dla szyfru Cezara założyć, że na każdym z tych ciągów najczęściej występowała jedna z czterech najpopularniejszych liter alfabetu, nadal jest do sprawdzenia wykładniczo wiele wartości ($4^{m/4}$, $m$ – długość tekstu). Pomocą są tu wyprowadzone metody, które poza samymi monoalfabetycznie zaszyfrowanymi ciągami biorą też pod uwagę zależności między nimi. \\\\
+Przeprowadziłem testy dla szyfru Vigenere'a, żeby to zobrazować, a także, żeby dać pewne wyobrażenie o granicach skuteczności metody. Testy będą przeprowadzane przy użyciu alfabetu Vigenere'a (duże angielskie litery), szyfrując i deszyfrując, zachowujemy niekodowane znaki – jak w klasycznym opisie szyfru Vigenere'a, który znajdziemy na wikipediach. Słownik log-częstości uni- (mono-) bi- (di-) i trigramów wygenerowałem na podstawie trzech książek (w języku angielskim) \textit{Duma i uprzedzenie} Jane Austen, \textit{Oliver Twist} Karola Dickensa oraz \textit{Wojna i pokój} Lwa Tołstoja.[Gutenberg project] Klucze szyfrujące generujemy losowo (przy użyciu metod z biblioteki \textit{random} w Pythonie – po prostu losowo generujemy każdą kolejną współrzędną). Test przeprowadzamy na losowo wybranych fragmentach długości $m$ książki \textit{Rok 1984} George'a Orwella (gdzie oczywiście małe litery są wcześniej skonwertowane na wielkie, podobnie tekst jest wcześniej oczyszczony z podwójnych spacji itd. – mogłaby to być równie dobrze część działania algorytmu dekodującego, nie robi to różnicy). Skuteczność dekodowania jest dana stosunkiem zaszyfrowanych pól, które udało się odszyfrować poprawnie do wszystkich zaszyfrowanych pól. I tak dla długości tekstu 20 dostajemy skuteczności:\\
+\begin{center}\begin{tabular}{
+|c|c|c|}
+\hline   &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
+\hline  DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
+1
+ & 1.0 & 1.0\\ \hline
+2
+ & 1.0 & 1.0\\ \hline
+3
+ & 0.66 & 1.0\\ \hline
+4
+ & 0.5 & 1.0\\ \hline
+5
+ & 0.2 & 0.4\\ \hline
+6
+ & 0.33 & 0.83\\ \hline
+7
+ & 0.28 & 0.14\\ \hline
+8
+ & 0.25 & 0.5\\ \hline
+9
+ & 0.11 & 0.33\\ \hline
+10
+ & 0.3 & 0.4\\ \hline
+11
+ & 0.09 & 0.27\\ \hline
+12
+ & 0.25 & 0.41\\ \hline
+13
+ & 0.23 & 0.0\\ \hline
+14
+ & 0.14 & 0.28\\ \hline
+15
+ & 0.2 & 0.26\\ \hline
+16
+ & 0.12 & 0.18\\ \hline
+17
+ & 0.17 & 0.23\\ \hline
+18
+ & 0.22 & 0.27\\ \hline
+19
+ & 0.15 & 0.21\\ \hline
+20
+ & 0.15 & 0.2\\ \hline
+\end{tabular}\end{center}
+
+Dla tekstu o długości 50:
+\begin{center}\begin{tabular}{
+|c|c|c|}
+\hline   &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
+\hline DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
+1
+ & 1.0 & 1.0\\ \hline
+2
+ & 1.0 & 1.0\\ \hline
+3
+ & 0.66 & 1.0\\ \hline
+4
+ & 0.75 & 1.0\\ \hline
+5
+ & 0.6 & 1.0\\ \hline
+6
+ & 0.5 & 1.0\\ \hline
+7
+ & 0.85 & 1.0\\ \hline
+8
+ & 0.5 & 0.87\\ \hline
+9
+ & 0.55 & 0.88\\ \hline
+10
+ & 0.5 & 1.0\\ \hline
+11
+ & 0.45 & 0.81\\ \hline
+12
+ & 0.33 & 0.66\\ \hline
+13
+ & 0.30 & 0.46\\ \hline
+14
+ & 0.42 & 0.64\\ \hline
+15
+ & 0.26 & 0.66\\ \hline
+16
+ & 0.37 & 0.56\\ \hline
+17
+ & 0.29 & 0.41\\ \hline
+18
+ & 0.27 & 0.55\\ \hline
+19
+ & 0.31 & 0.52\\ \hline
+20
+ & 0.15 & 0.4\\ \hline
+21
+ & 0.23 & 0.28\\ \hline
+22
+ & 0.18 & 0.13\\ \hline
+23
+ & 0.13 & 0.30\\ \hline
+24
+ & 0.20 & 0.37\\ \hline
+25
+ & 0.24 & 0.32\\ \hline
+\end{tabular}\end{center}
+Dla tekstu o długości 100 znaków:
+\begin{center}\begin{tabular}{
+|c|c|c|}
+\hline   &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
+\hline  DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
+1
+ & 1.0 & 1.0\\ \hline
+2
+ & 1.0 & 1.0\\ \hline
+3
+ & 1.0 & 1.0\\ \hline
+4
+ & 1.0 & 1.0\\ \hline
+5
+ & 0.8 & 1.0\\ \hline
+6
+ & 0.83 & 1.0\\ \hline
+7
+ & 0.85 & 1.0\\ \hline
+8
+ & 0.75 & 1.0\\ \hline
+9
+ & 0.88 & 1.0\\ \hline
+10
+ & 0.6 & 1.0\\ \hline
+11
+ & 0.63 & 0.90\\ \hline
+12
+ & 0.5 & 1.0\\ \hline
+13
+ & 0.53 & 1.0\\ \hline
+14
+ & 0.71 & 0.92\\ \hline
+15
+ & 0.53 & 0.86\\ \hline
+16
+ & 0.56 & 0.93\\ \hline
+17
+ & 0.41 & 1.0\\ \hline
+18
+ & 0.38 & 0.77\\ \hline
+19
+ & 0.36 & 0.89\\ \hline
+20
+ & 0.6 & 0.9\\ \hline
+21
+ & 0.47 & 0.80\\ \hline
+22
+ & 0.27 & 0.54\\ \hline
+23
+ & 0.39 & 0.78\\ \hline
+24
+ & 0.25 & 0.62\\ \hline
+25
+ & 0.36 & 0.72\\ \hline
+26
+ & 0.15 & 0.73\\ \hline
+27
+ & 0.33 & 0.59\\ \hline
+28
+ & 0.39 & 0.57\\ \hline
+29
+ & 0.27 & 0.55\\ \hline
+30
+ & 0.33 & 0.5\\ \hline
+31
+ & 0.25 & 0.51\\ \hline
+32
+ & 0.37 & 0.59\\ \hline
+33
+ & 0.21 & 0.36\\ \hline
+34
+ & 0.23 & 0.44\\ \hline
+35
+ & 0.37 & 0.68\\ \hline
+36
+ & 0.27 & 0.33\\ \hline
+37
+ & 0.24 & 0.35\\ \hline
+38
+ & 0.28 & 0.5\\ \hline
+39
+ & 0.28 & 0.38\\ \hline
+40
+ & 0.22 & 0.27\\ \hline
+41
+ & 0.19 & 0.41\\ \hline
+42
+ & 0.23 & 0.45\\ \hline
+43
+ & 0.23 & 0.18\\ \hline
+44
+ & 0.22 & 0.20\\ \hline
+45
+ & 0.15 & 0.26\\ \hline
+46
+ & 0.17 & 0.28\\ \hline
+47
+ & 0.17 & 0.21\\ \hline
+48
+ & 0.14 & 0.27\\ \hline
+49
+ & 0.14 & 0.20\\ \hline
+\end{tabular}\end{center}
+Dla tekstu o długości 500:
+\begin{center}\begin{tabular}{
+|c|c|c|}
+\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
+\hline DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
+20
+ & 0.95 & 1.0\\ \hline
+40
+ & 0.82 & 1.0\\ \hline
+60
+ & 0.58 & 1.0\\ \hline
+80
+ & 0.6 & 0.93\\ \hline
+100
+ & 0.37 & 0.8\\ \hline
+120
+ & 0.35 & 0.72\\ \hline
+140
+ & 0.29 & 0.55\\ \hline
+160
+ & 0.26 & 0.46\\ \hline
+180
+ & 0.21 & 0.36\\ \hline
+200
+ & 0.23 & 0.30\\ \hline
+220
+ & 0.20 & 0.28\\ \hline
+240
+ & 0.2 & 0.26\\ \hline
+260
+ & 0.17 & 0.20\\ \hline
+280
+ & 0.13 & 0.19\\ \hline
+300
+ & 0.16 & 0.17\\ \hline
+\end{tabular}\end{center}
+Dla tekstu o długości 2000:
+\begin{center}\begin{tabular}{
+|c|c|c|}
+\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
+\hline DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
+50
+ & 1.0 & 1.0\\ \hline
+100
+ & 0.95 & 1.0\\ \hline
+150
+ & 0.77 & 1.0\\ \hline
+200
+ & 0.64 & 0.99\\ \hline
+250
+ & 0.54 & 0.98\\ \hline
+300
+ & 0.46 & 0.95\\ \hline
+350
+ & 0.41 & 0.87\\ \hline
+400
+ & 0.36 & 0.81\\ \hline
+450
+ & 0.34 & 0.67\\ \hline
+500
+ & 0.31 & 0.64\\ \hline
+550
+ & 0.28 & 0.58\\ \hline
+600
+ & 0.25 & 0.51\\ \hline
+650
+ & 0.25 & 0.40\\ \hline
+700
+ & 0.22 & 0.38\\ \hline
+750
+ & 0.21 & 0.31\\ \hline
+800
+ & 0.19 & 0.31\\ \hline
+850
+ & 0.19 & 0.29\\ \hline
+900
+ & 0.16 & 0.27\\ \hline
+950
+ & 0.14 & 0.26\\ \hline
+1000
+ & 0.13 & 0.22\\ \hline
+\end{tabular}\end{center}
+I na koniec dla tekstu o długości 10000 znaków:
+\begin{center}\begin{tabular}{
+|c|c|c|}
+\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
+\hline DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
+500
+ & 0.92 & 1.0\\ \hline
+1000
+ & 0.62 & 0.99\\ \hline
+1500
+ & 0.44 & 0.93\\ \hline
+2000
+ & 0.36 & 0.77\\ \hline
+2500
+ & 0.28 & 0.61\\ \hline
+3000
+ & 0.25 & 0.46\\ \hline
+3500
+ & 0.21 & 0.39\\ \hline
+4000
+ & 0.19 & 0.31\\ \hline
+4500
+ & 0.17 & 0.27\\ \hline
+\end{tabular}\end{center}
+
+Wyniki są powtarzalne – metoda bigramowa daje znacznie lepsze rezultaty niż monogramowa. Począwszy od kluczy długości ok. 1/10 - 1/8 długości tekstu są to już wyniki ok. 2 razy lepsze. Bigramowa metoda zachowuje skuteczność na poziomie średnio >50\% zachowuje do kluczy o długości ok. 1/4 - 1/3  długości tekstu. W ewentualnej kontynuacji można by się pokusić o bardziej systematyczne testy diagnostyczne, tutaj przede wszystkim prezentuję ideę, więc zostajemy na razie przy tych zgrubnych oszacowaniach, które dają nam jednak wystarczającą wiedzę do naszych celów. Jedno jest pewne, metoda bigramowa jest skuteczna dla znacznie większego zbioru długości kluczy, więc to ona (albo 'większa') powinna być bazą naszego ataku.\\
+Niestety ze względu na dużą złożoność czasową, jak opisałem w poprzednim podrozdziale, nie było możliwości przetestowania metody trigramowej (ani dla większych $n$). Również testy metody bigramowej zajmowały – zwłaszcza dla tekstów o długości większej niż 1000 – bardzo dużo czasu. Załóżmy teraz, że tego czasu nie mamy, potrzebujemy zdekodować wiadomość \textit{szybko} i \textit{dostatecznie} dobrze. Jest parę powodów, dla których możemy tego potrzebować, czasem potencjalna złożoność czasowa problemu może być tak duża, że realizacja tego algorytmu nie jest realna na komputerze, który mamy do dyspozycji: rozszerzony szyfr Vigenere'a dla alfabetu 92-symbolowego, na którym później również (poza klasycznym o dł. 26) będziemy pracować, zadaje na pojedynczej współrzędnej 4048 możliwości! Złożoność czasowa algorytmu bigramowego dla tekstu długości 1000 jest więc rzędu: $6.6380929649 × 10^{13}$, ponadto dodatkową potrzebną pamięć można oszacować na 4.9158912 GB. Tak naprawdę na komputerze, na którym pracowałem, już obliczenia dla 26-elementowego alfabetu zajmowały bardzo długo (testy dla klucza o długości 2000 zajęły kilka godzin – zauważmy, że stała oznaczająca czas wewnątrz iteracji, również nie jest aż tak mała (choć jest pewne pole do optymalizacji, jeśli zrezygnować z używania generycznych funkcji). Nie jest to dobre również wtedy, kiedy szybko chcemy sprawdzić, czy próba takiego ataku ma w ogóle szansę – gdy nie wiemy, jakim szyfrem tekst został zakodowany i chcemy wypróbować tę możliwość, ale nie tracić na nią niepotrzebnie zbyt dużo czasu i zasobów. Może być też po prostu, że szybko tracimy cierpliwość – powodów jest wiele.\\\\
+Tak więc podsumowując, metoda monogramowa szybko przestaje działać, metoda bigramowa i dalsze (intuicyjnie) dłużej zachowują skuteczność, ale mogą okazać się za wolne. Jak zachować dobre wyniki, jednocześnie przyspieszając algorytm? Odpowiedź dają metody Monte Carlo Markov Chains.
+\\
+\subsection{Algorytmy MCMC}
+Zanim zaczniemy rozwijać opis algorytmu przydatne będzie przedstawienie idei MCMC w postaci grafu (sam graf pojawi się jeszcze wprost jako centrum problemu komiwojażera) odpowiodającego macierzy generującej kandydatów. Zakładam, że to pojęcie jest znane, przypomnę tylko parę koncepcji, które się później jeszcze przydadzą przy okazji analizy \textit{mixing time}. Odległością między wierzchołkami nazwiemy długość (liczbę krawędzi na) najkrótszej drogi (przechodzącej przez jak najmniej krawędzi) między tymi wierzchołkami. Odległość wierzchołka do samego siebie to zero, do wierzchołków połączonych z nim krawędzią to jeden itd. Średnicą w grafie nazwiemy maksymalną odległość w grafie.\\
+Wracamy więc do problemu dekodowania. Jak poprzednio, zaprezentuję podejście dla algorytmu Vigenere'a w wersji standardowej, koncept naturalnie rozszerza się na pozostałe warianty. \\\\
+Przypomnijmy sobie, że szyfr (kodujący czy dekodujący) Vigenere'a i opisanych szyfrów pochodnych długości $n_k$ przedstawia się za pomocą $n_k$ szyfrów pojedynczych (konkretnie $n_k$ elementów $\mathbb{Z}_l$). Chcemy poszukać $\argmax$ dla $n$-gramowej wagi, ale metoda deterministyczna – przynajmniej ta, którą znamy – jest dla nas za wolna. Metody gradientowe czy numeryczne szukania maksimów nie posłużą nam tu, bo nie za bardzo da się oczekiwać, żeby nasza \textit{waga} zachowywała się jakkolwiek regularnie. Przechodzimy więc do metod probabilistycznych. Będziemy chcieli więc symulować jakoś rozkład \textit{a posteriori} (znormalizowane $w$) na zbiorze kluczy, tak że po pewnym czasie powinniśmy trafić w nasze poszukiwane maksimum. Oczywiście mamy do czynienia z sytuacją taką jak opisaną we wcześniejszym rozdziale. Rozkład jest skomplikowany, nieznany \textit{wprost} – mamy tylko informację jak go obliczać i że ma być proporcjonalny do \textit{wagi} $n$-gramowej (gra słowna waga-gram nie była moim zamierzeniem – powstała przez przypadek).  Nie jest to dla nas problemem dzięki temu, że dysponujemy pięknym algorytmem Metropolisa-Hastingsa.\\\\
+Żeby być w stanie go zastosować musimy najpierw opisać jak będziemy próbowali wędrować po zbiorze kluczy dekodujących, czyli opisać macierz generującą kandydatów $\mathbb{Q}$. Macierz powinna mieć możliwie prostą postać – kolejne przejścia powinny być szybkie! Pomysł jest prosty i przypomina błądzenie po $n_k$-wymiarowej kostce. Mianowicie, przypomnijmy sobie, ze nasze klucze przedstawia się po prostu jako $n_k$ 'kluczowych' współrzędnych. Możemy więc po prostu próbować zmieniać jedną współrzędną w jednym kroku – wybór współrzędnej i zmiany zgodnie z rozkładem jednostajnym – i akceptować bądź odrzucać zmianę zgodnie z funkcją \textit{wagi}. Przykładowo, poniżej można zobaczyć wybór kandydatów dla stanu $(0,0)$ przy kluczu Vigenere'a o długości 2 i alfabecie długości 3  \\\\
+\begin{center}
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,534); %set diagram left start at 0, and has height of 534
+
+%Flowchart: Connector [id:dp7835083832008738]
+\draw   (329,265.75) .. controls (329,253.46) and (339.3,243.5) .. (352,243.5) .. controls (364.7,243.5) and (375,253.46) .. (375,265.75) .. controls (375,278.04) and (364.7,288) .. (352,288) .. controls (339.3,288) and (329,278.04) .. (329,265.75) -- cycle ;
+%Straight Lines [id:da9297247359786245]
+\draw    (225,191.5) -- (332,255.5) ;
+%Straight Lines [id:da05933674554300983]
+\draw    (466,190.5) -- (374,255.5) ;
+%Straight Lines [id:da018381659989454402]
+\draw    (352,288) -- (241,379.5) ;
+%Straight Lines [id:da39990929363034433]
+\draw    (371,279.5) -- (479,355.5) ;
+%Shape: Circle [id:dp31181695161976863]
+\draw   (205.5,379.5) .. controls (205.5,369.7) and (213.45,361.75) .. (223.25,361.75) .. controls (233.05,361.75) and (241,369.7) .. (241,379.5) .. controls (241,389.3) and (233.05,397.25) .. (223.25,397.25) .. controls (213.45,397.25) and (205.5,389.3) .. (205.5,379.5) -- cycle ;
+%Flowchart: Connector [id:dp3620572510382867]
+\draw   (182,191.5) .. controls (182,179.97) and (191.63,170.63) .. (203.5,170.63) .. controls (215.37,170.63) and (225,179.97) .. (225,191.5) .. controls (225,203.03) and (215.37,212.38) .. (203.5,212.38) .. controls (191.63,212.38) and (182,203.03) .. (182,191.5) -- cycle ;
+%Flowchart: Connector [id:dp7681292142849967]
+\draw   (479,355.5) .. controls (479,342.8) and (489.07,332.5) .. (501.5,332.5) .. controls (513.93,332.5) and (524,342.8) .. (524,355.5) .. controls (524,368.2) and (513.93,378.5) .. (501.5,378.5) .. controls (489.07,378.5) and (479,368.2) .. (479,355.5) -- cycle ;
+%Shape: Circle [id:dp08521014029208818]
+\draw   (466,190.5) .. controls (466,176.69) and (477.19,165.5) .. (491,165.5) .. controls (504.81,165.5) and (516,176.69) .. (516,190.5) .. controls (516,204.31) and (504.81,215.5) .. (491,215.5) .. controls (477.19,215.5) and (466,204.31) .. (466,190.5) -- cycle ;
+
+% Text Node
+\draw (340,258) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {$\displaystyle ( 0,0)$};
+% Text Node
+\draw (210,372) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {$\displaystyle ( 0,1)$};
+% Text Node
+\draw (189,184) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {$\displaystyle ( 0,2)$};
+% Text Node
+\draw (490,349) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {$\displaystyle ( 1,0)$};
+% Text Node
+\draw (478,185) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {$\displaystyle ( 2,0)$};
+% Text Node
+\draw (403,194) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {$\displaystyle \frac{1}{4}$};
+% Text Node
+\draw (286,187) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {$\displaystyle \frac{1}{4}$};
+% Text Node
+\draw (273,297) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {$\displaystyle \frac{1}{4}$};
+% Text Node
+\draw (439,277) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {$\displaystyle \frac{1}{4}$};
+\end{tikzpicture}
+\end{center}
+Ogólnie więc przyjmujemy – niech $s$ będzie liczbą kluczy długości 1 dla rozważanej rodziny:\\
+\begin{align*}
+q_{ij} = \begin{cases}
+  \frac{1}{(s-1)^{n_k}} \,\, \text{jeśli $i$ różni się od $j$ na dokładnie jednej współrzędnej} \\
+  0 \,\, \text{w przeciwnym razie}
+\end{cases}
+\end{align*}
+Zanim przejdziemy dalej wypada (1) zauważyć, że macierz jest nieredukowalna – rzeczywiście aby dojść z jednego stanu (klucza) do drugiego po prostu kolejno zmieniamy różniące się między stanami współrzędne – zapewnia nam to nieredukowalność wynikowego łańcucha Metropolisa; (2) łańcuch Metropolisa będzie nieokresowy – klucz odpowiadający maksymalnej wadze będzie z niezerowym prawdopodobieństwem odrzucał kandydata (jeśli tylko rozkład stacjonarny nie jest
+Następnie postępujemy zgodnie z algorytmem Metropolisa-Hastingsa – a w zasadzie Metropolisa, zwróćmy bowiem uwagę, że macierz generująca jest symetryczna. Ponadto przypomnijmy sobie, że obliczanie maksymalnego klucza ze względu na monogramy jest szybkie, a może on być dobrym punktem startowym, bowiem prawdopodobnie część pól klucza (nawet jeśli niewielka) jest wtedy odgadnięta poprawnie. Ogólnie uznajemy, że stan startowy podlega wyborowi według ustalonego przez nas kryterium – dla algorytmu bigramowego będziemy przyjmować kryterium maksymalnego klucza ze względu na monogramy, dla trigramowego – opiszę to przy okazji rozdziału z wynikami. Wtedy algorytm ma postać:\\
+\begin{algorithm}[H]
+\caption{Algorytm n-gramowy MCMC}
+\SetKwInput{For}{dla}
+\SetKwInput{If}{jeśli}
+\SetKwInput{Else}{w przeciwnym razie}
+\SetKwInput{Procedure}{procedura}
+\SetKwInput{Return}{zwróć}
+maks\_stan:=stan\_aktualny:=ustalony\_startowy\;
+odszyfrowany\_tekst := odszyfruj(szyfrogram, stan\_aktualny)\;
+maks\_log\_waga := aktualna\_log\_waga := log\_waga(stan\_aktualny)\;
+\For{$i=1,2,...,$liczba\_kroków}{
+\quad kandydat := generuj\_kandydata(stan\_aktualny)\;
+\quad r := różnica\_log\_wag(kandydat, stan\_aktualny)\;
+\quad $log\_u = \log(U \sim U(0,1))$
+\quad \If{$r > log\_u$}{
+\quad\quad odszyfrowany\_tekst := update(odszyfrowany\_tekst, stan\_aktualny, kandydat)\;
+\quad\quad stan\_aktualny := kandydat\;
+\quad\quad aktualna\_log\_waga := aktualna\_log\_waga + r\;
+\quad\quad \If{aktualna\_log\_waga > maks\_log\_waga}{
+\quad\quad\quad maks\_stan:=stan\_aktualny\;
+\quad\quad\quad maks\_log\_waga := aktualna\_log\_waga\;
+}
+}
+}
+\Return{maks\_stan}
+\end{algorithm}
+Omówmy teraz nieco dokładniej implementację poszczególnych kroków. By móc skutecznie i szybko obliczać \textit{log-wagi} ($n$-gramowe) trzymamy w słowniku $n$-gramów aktualne informacje: ile razy $n$-gram wystąpił w danym odszyfrowaniu (za pomocą aktualnego stanu/klucza). Korzystając z tego i drugiego wzoru na \textit{wagę} ($\log w_n(k) =\sum\limits_{g \in G}  {r_D(g)} f_n(g)$ jesteśmy w stanie najpierw obliczyć log-wagę stanu początkowego ($r$ bierzemy z właśnie wspomnianego słownika). Następnie, gdy dostajemy kandydata generujemy różnicę log-wag. Korzystamy tu z faktu, że zmieniamy klucz tylko na jednej współrzędnej, więc zgodnie z rozważaniami z poprzedniego rozdziału możemy brać pod uwagę tylko te $n$-gramy, które mają w sobie pozycję równą modulo zmienianej pozycji klucza. (w każdej grupie kolejnych $n_k$ znaków będzie tylko 1 taki monogram, 2 takie bigramy itd.). Na ich podstawie wyliczamy słownik różnic wystąpień $n$-gramów między aktualnym odszyfrowaniem, a potencjalnym odszyfrowaniem przez kandydata. Na tej podstawie możemy wyliczyć też różnicę wag, jeśli liczba wystąpień $g$ zmieniła się o $c(g)$, różnica log-wag będzie wynosić $\Delta_{w_n}(i,j) = \sum\limits_{\text{zmienione } g}  {c(g)} f_n(g)$. Iterujemy oczywiście tylko po \textit{gramach} powiązanych ze zmienioną współrzędną kandydata (tylko te należą do słownika różnic wystąpień). Następnie, zgodnie z algorytmem Metropolisa (po nałożeniu na obie strony nierówności logarytmu) przechodzimy z aktualnego stanu (klucza) $i$ do stanu kandydata $j$, jeśli $\Delta_{w_n}(i,j) =\log(w_n(j)) - \log(w_n(i)) > log(U)$, gdzie $U$ jest oczywiście z rozkładu jednostajnego $[0,1]$. Aktualizujemy następnie aktualną wagę i aktualny słownik (dodajemy do wpisów słownika wystąpień wpisy ze słownika różnic). Jeśli nowa waga jest większa niż największa dotychczas aktualizujemy maksymalną wagę i maksymalizujący klucz. Na koniec zwracamy klucz dekodujący, który zmaksymalizował wartość wagi w trakcie wędrówki łańcucha – widać, że nie bierzemy tu ostatniego odwiedzonego \textit{stanu}, tylko najlepszy – pomysł przejęty od [ChenRosenthal]. W ten sposób nie musimy się martwić o kryteria zbieżności – arbitralnie po prostu ustalamy liczbę kroków i mamy nadzieję, że w tym czasie łańcuch odwiedzi maksymalizujący klucz – oczywiście liczba ta jest ustalana wg pewnej heurystyki. W praktyce można wprowadzać 'zbieżnościowe' rozwiązania, aby łańcuch nie kontynuował niepotrzebnie swojego przebiegu, takie jak procent odrzucanych kandydatów (gdy kandydaci są odrzucani bardzo często albo wręcz cały czas, to znak, że łańcuch osiągnął stabilność – trafił na maksimum lokalne (możemy mieć nadzieję, że również globalne)), można też oczekiwać pewnej wartości funkcji stanu (log-wagi), która nas satysfakcjonuje itd. W wersji zbieżnościowej po spełnieniu pewnego kryterium 'zatrzymujemy łańcuch'. W części pracy dotyczącej dekodowania jednak nie będę się na tym skupiał – skupiam się raczej na przedstawieniu ogólnej idei zastosowania MCMC do ulepszenia dekodowania. Nieco więcej będzie wspomniane na ten temat przy okazji problemu komiwojażera – stosowane tam symulowane wyżarzanie jest metodą, która bardziej skupia się na zbieżności (sama z siebie ogranicza też 'ruchliwość' łańcucha wraz z upływem czasu).
+\\
+Możemy więc oszacować złożoność czasową – najpierw kroku początkowego: tu musimy odkodować tekst ($O(m)$ – $m$ długość tekstu), wyliczyć słownik i wagę (również  $O(m)$, bo tyle jest $n$-gramów). Następnie krok: wyliczenie różnicy to $O(m/n_k)$ – zakładamy, że $n$ (od $n$-gramów) jest małe, co najwyżej 3, więc może być potraktowane jako stała. Podobnie wyliczenie \textit{update'u} wagi i potencjalny \textit{update} odszyfrowania potrwają $O(m/n_k)$, pozostałe części kroku mają stałą złożoność. Ogólnie więc mamy złożoność $O(m)$ dodać $O(m/n_k \cdot steps)$, przy czym liczba kroków jest raczej większa niż $n_k$, więc drugi składnik oczywiście dominuje.\\
+Odnośnie złożoności pamięciowej, wygląda to z grubsza tak, że potrzebujemy kopii szyfrogramu (którą próbujemy dekodować) i trzech kluczy: najlepszego, aktualnego i kandydata (również tutaj da się przeprowadzić pewną optymalizację, ale raczej jest to optymalizacja rzędu epsilonowego, więc nie ma co sobie nią zaprzątać głowy). Dodatkowa pamięć jest więc zdominowana przez kopię szyfrogramu czyli $O(m)$.\\\\
+Można zauważyć więc, że jeśli tylko nie będzie potrzebna zbyt duża liczba kroków jest szansa na osiągnięcie dużej poprawy w złożoności czasowej i pamięciowej. Pozostaje odpowiedzieć sobie na pytanie: ile kroków nam wystarczy, by osiągnąć oczekiwane wyniki? Tym zajmuje się następny podrozdział. Zagadnienie to jest zagadnieniem trudnym, nie da się go rozwiązać w ogólnym przypadku, bo ogólny przypadek nie istnieje – każdy szyfrogram, a więc i rozkład a posteriori – jest inny, więc analiza będzie raczej heurystyczna, natomiast będziemy mogli zbadać następnie jej poprawność doświadczalnie.
+\subsection{Zbieżność, mixing time, analiza heurystyczna}
+Chcielibyśmy wiedzieć, jak szybko zostanie osiągnięty stan (klucz) maksymalizujący po starcie ze stanu (klucza) początkowego. Przy oczekiwanej własności, że wszystkie stany o dużych wagach skupiają się w sąsiedztwie (według sąsiedztwa definiowanego przy pomocy \textit{macierzy generującej kandydatów}) $\argmax$ jest to niemal równoważne z badaniem zbieżności łańcucha do rozkładu stacjonarnego. Przypomnijmy sobie, że nasza macierz generująca kandydatów jest w zasadzie spacerem po hiperkostce – tylko że jest to hiperkostka z $s$ (liczba pojedynczych kluczy) możliwościami na każdej współrzędnej (zamiast $(0,1)$ czy $(-1,1)$. Oszacujemy tzw. \textit{mixing time} na przestrzeni szyfrów $s^{n_k}$, ale z jednostajnym prawdopodobieństwem dla każdego przejścia – tj. krok polega na tym, że jednostajnie losujemy współrzędną i tam losujemy nową wartość współrzędnej zgodnie z rozkładem jednostajnym na $1,2...s$ (numerujemy klucze długości 1). Zacznijmy od tego, czym jest \textit{mixing time}. Wracamy do klasycznych oznaczeń $S$ na przestrzeń stanów i $\mathbb{P}$ na macierz przejścia. Wcześniej przypomnijmy sobie, że dla dowolnego stanu $i$ z przestrzeni stanów mamy, że:
+$$d(t) = \max_{i \in S} \|\delta_i \mathbb{P}^t - \pi \mathbb{P}^t\|_{TV}$$
+jest ograniczona z góry przez ciąg dążący do zera. Tak więc można zdefiniować:
+$$ t_{mix}(\varepsilon) = \inf_t \forall i \in S\,\, d(t) < \varepsilon$$
+Co nazwiemy \textit{mixing time} na poziomie epsilon. Mówi nam on, że po tym właśnie czasie niezależnie od rozkładu startowego dwa JŁM o macierzy przejścia $\mathbb{P}$ są sobie bliższe wg rozkładu niż $\epsilon$. Dla zobrazowania pewnej idei, a także z tego powodu, że dowód jest po prostu ładny, pokażemy górne ograniczenie na $d(t)$ na takiej samej $s$-hiperkostce wymiaru $n_k$, tyle tylko że ze spacerem losowym wg rozkładu jednostajnego (zapominamy na chwilę o naszych wagach). Najpierw zauważmy, że:
+$$d(t) \leq \max_{i,j \in S} \|\delta_i \mathbb{P}^t - \delta_j \mathbb{P}^t \|_{TV}$$
+Nierówność łatwo dowodzimy podobnie jak w rozdziale z dowodem twierdzenia ergodycznego $\pi\mathbb{P}^t$ – rozkład stacjonarny możemy zapisać jako ważoną sumę $\delta_k \mathbb{P}^t$. Dalej korzystamy z nierówności trójkąta, zakładając, że $k$ był elementem, który zadawał $\max$ w równaniu na $d(t)$ dostając:
+\begin{align*}
+d(t) = \|\delta_k \mathbb{P}^t - \pi \mathbb{P}^t\|_{TV} = \|\delta_k \mathbb{P}^t - (\sum\limits_{i \in S} \alpha_i \delta_i) \mathbb{P}^t\|_{TV} \leq \sum\limits_{i \in j} \alpha_i \|\delta_k \mathbb{P}^t - \delta_i \mathbb{P}^t\|_{TV} \leq \max_{i,j \in S} \|\delta_i \mathbb{P}^t - \delta_j \mathbb{P}^t \|_{TV}
+\end{align*}
+Ostatnia równość wynika oczywiście z tego, że $\alpha_i$ sumują się do jeden. Możemy więc skonstruować coupling, który da nam górne ograniczenie na $d(t)$ dla naszego przypadku. Mianowicie, niech $X_n$ i $Y_n$ startują z dwóch różnych stanów $i$ i $j$. Coupling konstruujemy w ten sposób, że dla obu tych kopii łańcucha następny stan losujemy w następujący sposób: najpierw jednostajnie losujemy współrzędną, potem jednostajnie jej nową wartość – tę samą dla obu łańcuchów. Widać więc, że od tego momentu łańcuchy biegną razem na danej współrzędnej. Kiedy trafimy we wszystkie różniące się współrzędne łańcuchy są więc już sparowane. Oznaczmy pierwszy moment sparowania przez $\tau_{i,j}$. Pamiętamy o nierównościach z podrozdziału (2.3), korzystając z tych nierówności a dodatkowo z nierówności Czebyszewa, mamy więc:
+\begin{align*}
+    d(t) &= \max_{i \in S} \|\delta_i \mathbb{P}^t - \pi \mathbb{P}^t\|_{TV} \\
+    &\leq \max_{i,j \in S} \|\delta_i \mathbb{P}^t - \delta_j \mathbb{P}^t \|_{TV} \\
+    &\leq \max_{i,j \in S} P(X_t \neq Y_t) =  \max_{i,j \in S} P(\tau_{i,j} > t) \\
+    &\leq \max_{i,j \in S}\frac{\mathbb{E}(\tau_{i,j})}{t}
+\end{align*}
+Ponieważ $\tau$ odpowiada czasowi trafienia we wszystkie różniące się współrzędne, największą wartość przyjmie wtedy, gdy wszystkie $n_k$ współrzędnych będzie się różnić (elementy realizują wtedy średnicę grafu zadanego przez macierz generującą). By obliczyć wartość oczekiwaną dla $\tau$, przeprowadzamy rozumowanie jak przy problemie kolekcjonera kuponów. Ustalmy $i,j$, takie co różnią się na wszystkich $n_k$ współrzędnych. przez $\tau_m$ oznaczmy moment, gdy trafiliśmy już w $m$ współrzędnych spośród wszystkich $n_k$. Wtedy $\tau_{m+1} - \tau_m$ ma rozkład geometryczny o parametrze $p = \frac{n_k - m}{n_k}$. $\tau_{i,j} = \sum\limits_{m=0}^{n_k - 1} (\tau_{m+1} - \tau_m)$. Zatem z liniowości wartości oczekiwanej i jej wzoru dla rozkładu geometrycznego\\
+$\mathbb{E}(\tau_{ij}) = \mathbb{E}(\sum\limits_{m=0}^{n_k - 1} (\tau_{m+1} - \tau_m)) = \sum\limits_{m=0}^{n_k - 1} \mathbb{E}(\tau_{m+1} - \tau_m) = \sum\limits_{m=0}^{n_k - 1} \frac{n_k}{n_k - m} = n_k \sum\limits_{m=1}^{n_k} \frac{1}{m} \sim n_k \log(n_k)$\\
+dostajemy więc ostatecznie $d(t) \leq \frac{O(n_k \log n_k)}{t}$. Widać więc, że epsilonowy \textit{mixing time} jest rzędu $\varepsilon \cdot O(n_k \log n_k)$. Korzystając jeszcze z rozważań znanych z problemu kolekcjonera kuponów można zauważyć, że po $n_k \log n_k$ krokach $d$ spada wykładniczo co kolejne $n_k$ kroków, mianowicie:
+\begin{align*}
+    P(\tau_{i,j} > n_k \log n_k + cn_k) &\leq P(\text{pewna ustalona współrzędna nie została odwiedzona})\\
+    &= (1-\frac{1}{n_k})^{n_k \log n_k + cn_k} < e^{-c}
+\end{align*}
+Tak więc $d(n_k \log n_k + cn_k) < e^{-c}$, jak również ostatecznie $t_{mix}(e^{-c}) < n_k \log n_k + cn_k = O(n_k \log n_k)$. Był to oczywiście nie do końca nasz łańcuch – nasz jest bardziej skomplikowany, ale czyniąc pewne heurystyczne założenia możemy coś oszacować i w tym przypadku. Załóżmy więc, że nasz poszukiwany stan dominuje łańcuch po współrzędnych w tym sensie, że współrzędne które pokrywają się ze współrzędnymi poszukiwanego stanu, jeśli zostaną podstawione jako kandydat są przyjmowane, natomiast łańcuch 'bardzo niechętnie' je opuszcza, tak że bardzo długo tam pozostaje, gdy raz już trafi. Efekt ten na początku może być niewidoczny, ale powinien się kaskadowo potęgować wraz z kolejnymi trafieniami. Wtedy możemy przeprowadzić to samo rozumowanie co dla łańcucha 'jednostajnego' tylko pamiętając, że trafienie na współrzędnej musi być trafieniem we współrzędną taką jak w kluczu maksymalnym, stąd prawdopodobieństwa są przemnażane przez $\frac{1}{s}$, więc wynikowa wartość oczekiwana rozkładów geometrycznych będzie przemnożona przez s, tak samo $s$ trzeba wziąć pod uwagę przy późniejszym szacowaniu. Ostatecznie dostajemy przy oznaczeniu $\tau_{max}$ dla pierwszego osiągnięcia stanu maksymalnego więc (heurystycznie) zbieżność:
+$P(\tau_{max} > C(n_k \log n_k + cn_k)) < e^{-\frac{c}{s}}$, czyli
+$P(\tau_{max} > Cs(n_k \log n_k + cn_k) < e^{-c}$, gdzie $C$ jest pewną stałą związaną zwłaszcza z początkowym 'błądzeniem' łańcucha – zanim zaczął trafiać w kolejne współrzędne. Jeśliby ta heurystyczna analiza miała pokrycie w rzeczywistości – pamiętając, że dla tekstu o długości $m$ i klucza długości $n_k$ krok iteracyjny miał złożoność $O(m/n_k)$ – dostaniemy zbieżność (gdzie kolejne przedziały czasowe tej długości niosą wykładniczą poprawę zbieżności) w $O(m \cdot s \cdot \log n_k)$ co oczywiście jest znaczącą poprawą w porównaniu z algorytmem deterministycznym.
+\subsection{Odgadywanie długości klucza}
+Jest to problem nieco poboczny względem głównych punktów zainteresowania, jednak może warto go poruszyć. Rozważaliśmy do tej pory szyfrogram zakodowany kluczem o znanej długości – choć nie jest to głównym celem tego rozdziału (najważniejszym jest pokazanie szybkiej metody dekodowania dla \textit{długich} ustalonej długości kluczy), często najważniejszym elementem złamania szyfru typu Vigenere'a jest właśnie odgadnięcie długości klucza. Zostało opracowanych szereg metod dla rozwiązania tego zagadnienia (Kasiski, Friedman), jednak zamierzałem zastosować w jakiś prosty sposób rozwijane tu metody $n$-gramowe. Pierwszym moim pomysłem było założyć pewne ograniczenie długości klucza – z tego powodu, że po prostu, co pokazały wyniki z jednego z poprzednich podrozdziałów, zbyt duża długość klucza w stosunku do długości tekstu implikuje praktyczną nierozwiązywalność problemu. Następnie myślałem o skonstruowaniu łańcucha od razu dekodującego całość szyfrogramu bez znajomości długości klucza, który poruszałby się po takiej przestrzeni – pomysłów na macierz generującą było kilka – zawsze częścią macierzy były elementy różniące się z aktualnym stanem na jednej współrzędnej (jak przy ustalonej długości), jednak należało również dodać kandydatów zmieniających długość klucza. Próbowałem robić to na różne sposoby, dodając/usuwając nową współrzędną na koniec/współrzędną końcową itd. Nie udało się jednak osiągnąć dobrych wyników, łańcuch miał tendencję do wpadania w maksima lokalne. Możliwe jednak, że da się skonstruować taki łańcuch. Choć na ten moment wydaje mi się to mało prawdopodobne, byłoby to najbardziej eleganckie i najbardziej w duchu MCMC rozwiązanie problemu. \\
+Można jednak też praktycznie wprost zastosować metodę $n$-gramów. Do pewnego progu $p$ dobrze działa metoda monogramów. Tak więc do tego progu próbujemy kolejno dla wszystkich mniejszych lub równych długości tego progu. Jeśli do tego momentu nie udało się uzyskać dobrego rozwiązania (kryterium może być np. liczba/procent poprawnych słów w zdekodowanym tekście) dalej próbujemy metody bigramowej. Zwróćmy uwagę, że jeśli chcielibyśmy wykonać dla największej rozważanej długości klucza (powiedzmy $q$),  $t$ kroków, to zgodnie z heurystyką dla klucza $u$ razy krótszego wystarczy $ t(\frac{\log \frac{q}{u} + \frac{cq}{u}}{\log q + cq})$ kroków. $q$ powinno być w granicach $1/4$ długości tekstu – wtedy jeszcze zdarza się względnie często, że umiemy odszyfrować tekst na poziomie $>50\%$, dalej metoda zawodzi (co więcej produkuje fałszywie dobre rozwiązania - im więcej dowolności, im dłuższy klucz, tym większą wagę można wyprodukować), więc należy ją w odpowiednim momencie zatrzymać. W tym miejscu pokażę jeszcze fragment tekstu (zdekodowany na poziomie 50\%), aby uwydatnić, że jest to jeszcze niezły poziom dekodowania, który zazwyczaj możemy 'dodekodować' do końca:\\
+A CLOCE RTOOO AND THOUGIT HA IPE WNTTTT-ALIETY WHAN REAFLD CU HAS NOUGHT FIFOF-ITLIIE OI ALE SOLLOSING MIRSCOR. BUT HE DID OOS WGGEXV INE OOSUTHT FUNTHER. CT BUT YOT INTERETTHUS.
+\\
+Jeszcze lepiej sprawa wygląda dla 75\%:\\
+HE EDGE OF THE LONDED WOOT AND ADYR ITT TISIC INTO NOTHINGNESS? HE WNGIERET WHEEWIR AFULF ALL THERE WAS A MICROPHOND ANDDED SOMPLLERE OLOR. HE AND JULIA HAD SPOKEN OMED IN LEW WHTHTERS, BUR IT WOULD
+\\
+Widać, że w obu przypadkach tworzą się znajome ciągi, które możemy następnie pouzupełniać. Dla 25\% już wiele nie widać – stąd użycie ($n>1$)-gramów jest tak istotne:\\
+R PQHONQ, WYSM AO L HKANW OF NISN DMVD ZEZS ONXXQWRGSP TNRBHKH MHA MPWY TO A BTLE. COEZLOV 6 PT BAX WKHORBQD GT YNWT. MHA PYIEHCED XYTSHKO ZKH JOGE. UAV ZHF ZUFK\\
+Można więc zastosować takie podejście: biorąc pod uwagę heurystyczną optymalizację uzyskamy złożoność rzędu $p \cdot s \cdot m $, gdzie $m$ długość tekstu, jeśli udało się osiągnąć wymaganą poprawność szyfrowania dla $n_k<p$ a w przeciwnym wypadku, zakładając, że $t$ jest zgodne z heurystyką, dostajemy $O(s \cdot m \cdot \log^2 n_k)$, bowiem dzielimy kolejne liczby kroków przez stosunek długości odpowiadającego klucza do maksymalnego rozważanego (powstaje liczba harmoniczna, a nawet coś mniejszego, bo dzielimy jeszcze dodatkowo przez logarytm, ale takie oszacowanie nam wystarczy).\\\\
+
+\subsection{Wyniki, wnioski i podsumowanie rozdziału}
+Testy na razie (później możliwe uzupełnienie) przeprowadzimy na wygenerowanych losowych 2000-znakowych fragmentach \textit{Roku 1984}. Będziemy pracować na dwóch alfabetach:\\
+(1) klasycznym ABCDEFGHIJKLMNOPQRSTUVWXYZ\\
+(2) rozszerzonym o spację alfabecie 'alpha' z pracy\\ https://pdfs.semanticscholar.org/0493/34ae844024f02bc0f3f854811de5f83096eb.pdf – jest tu opisany nowy algorytm szyfrowania oparty na schemacie Vigenere'a – z punktu widzenia naszej pracy nie różni się niczym od algorytmu Vigenere'a tak jak my go rozumiemy (przypomnijmy, że definiowaliśmy go na dowolnym alfabecie). Dodatkowym elementem szyfrowania jest tu jeszcze permutacja (szyfr podstawieniowy monoalfabetyczny) zastosowany po schemacie Vigenere'a – ale ponieważ permutacja (podstawienie) jest znane, więc wystarczy najpierw zastosować na szyfrogramie permutację odwrotną, a następnie zastosować nasze zwykłe algorytmy. Permutacja ta jest utrudnieniem tylko gdy nie wiemy, że został użyty opisany szyfr, w przeciwnym wypadku nie ma na nic wpływu. Rozszerzenie o spację zapewnia, że zakodowane będą wszystkie znaki (czyścimy wcześniej tekst ze znaków nowej linii tabulatorów – białych znaków innych niż spacja). Alfabet ma postać:\\
+\begin{center}
+\textit{abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\\
+`~!@#\$\%\^&*()\_-=+{}[]|;:"<>,.?/ +spacja }\\\\
+\end{center}
+Ostatecznie decydujemy się na następujące podejście: deterministycznie wybieramy stan maksymalizujący log-wagę monogramową i z niego zaczynamy bigramową wędrówkę MCMC przez (może to się zmienić) proporcjonalną do długości klucza (ze względu na heurystykę, możliwe, że powinniśmy zawrzeć jeszcze logarytm) kroków – w trakcie wędrówki zbieramy dane o kolejno osiąganych progach dokładności odkodowania. Dekodowanie bigramowe jest wynikiem tej wędrówki. Wędrówkę można jeszcze następnie przedłużyć o wędrówkę na trigramach. Testy przeprowadzamy dla kolejno: zwykłego szyfru Vigenere'a, szyfru z autokluczem i \textit{rozszerzonego} dla kluczy o długościach zmieniających się co 50 – dla obu alfabetów. Dla alfabetu nr 1 z oczywistych powodów małe litery są przekształcane na wielkie.\\
+Następnie przeprowadzimy pokazowy test prezentujący szybkość podejścia MCMC w porównaniu z opisanym podejściem deterministycznym.
+Na końcu zaprezentujemy działanie algorytmu deszyfrującego na również wygenerowanym tekście długości 2000, ale zaszyfrowanego kluczami o nieznanej długości (alfabet (1), zwykły szyfr Vigenere'a).
+\\\\
+MIEJSCE NA WYNIKI - DODAĆ TABELE PO WEEKENDZIE
+część pierwsza – tekst 2000, alfabet (1), szyfr Vigenere'a, na razie kopiuj-wklej – do uporządkowania po lewej lista progów dokładności, po prawej kolejno kroki, w których dokładność została osiągnięta\\:
+50\\
+MONOGRAM ACCURACY: 1.0\\
+BIGRAM ACCURACY: 1.0\\
+BIGRAM THRESHOLDS [] IN STEPS : []\\\\
+100\\
+MONOGRAM ACCURACY: 0.95\\
+BIGRAM ACCURACY: 1.0\\
+BIGRAM THRESHOLDS [1.0] IN STEPS : [5668]\\\\
+150\\
+MONOGRAM ACCURACY: 0.8133333333333334\\
+BIGRAM ACCURACY: 1.0\\
+BIGRAM THRESHOLDS [0.9, 1.0] IN STEPS : [1722, 25979]\\\\
+200\\
+MONOGRAM ACCURACY: 0.72\\
+BIGRAM ACCURACY: 1.0\\
+BIGRAM THRESHOLDS [0.8, 0.9, 1.0] IN STEPS : [1583, 5509, 60687]\\\\
+250\\
+MONOGRAM ACCURACY: 0.588\\
+BIGRAM ACCURACY: 0.896\\
+BIGRAM THRESHOLDS [0.6, 0.7, 0.8, 0.9, 1.0] IN STEPS : [104, 4794, 13123, 39872]\\\\
+300\\
+MONOGRAM ACCURACY: 0.48333333333333334\\
+BIGRAM ACCURACY: 0.8466666666666667\\
+BIGRAM THRESHOLDS [0.5, 0.6, 0.7, 0.8, 0.9, 1.0] IN STEPS : [634, 6679, 14801, 28301]\\\\
+350\\
+MONOGRAM ACCURACY: 0.45714285714285713\\
+BIGRAM ACCURACY: 0.76\\
+BIGRAM THRESHOLDS [0.5, 0.6, 0.7, 0.8, 0.9, 1.0] IN STEPS : [2779, 9830, 28874]\\\\
+400\\
+MONOGRAM ACCURACY: 0.405\\
+BIGRAM ACCURACY: 0.6975\\
+BIGRAM THRESHOLDS [0.5, 0.6, 0.7, 0.8, 0.9, 1.0] IN STEPS : [10095, 30135]\\\\
+450\\
+MONOGRAM ACCURACY: 0.37777777777777777\\
+BIGRAM ACCURACY: 0.6\\
+BIGRAM THRESHOLDS [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] IN STEPS : [4708, 25448, 153704]\\\\
+500\\
+MONOGRAM ACCURACY: 0.326\\
+BIGRAM ACCURACY: 0.536\\
+BIGRAM THRESHOLDS [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] IN STEPS : [14698, 141942]\\\\
+550\\
+MONOGRAM ACCURACY: 0.32727272727272727\\
+BIGRAM ACCURACY: 0.48545454545454547\\
+BIGRAM THRESHOLDS [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] IN STEPS : [40865]\\\\
+600\\
+MONOGRAM ACCURACY: 0.2733333333333333\\
+BIGRAM ACCURACY: 0.41833333333333333\\
+BIGRAM THRESHOLDS [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] IN STEPS : [19604, 185319]\\\\
+\\\\
+Zbieżności – dopóki są – wyglądają na do pewnego stopnia zgodne z analizą heurystyczną, trzeba pamiętać, że dla dużych wartości $n_k$ $\maxarg$ nie pokrywa się już stuprocentowo z rozwiązaniem, więc zbieżność do rozwiązania nie pokrywa się wtedy ze zbieżnością łańcucha. Po weekendzie dodać też testy w odniesieniu do zbieżności bigram-argmax.
+Tekst dł. 2000, 26-znakowy alfabet. Przykładowe czasy trwania i trafność obydwu metod\\
+wynik MCMC:\\
+trafność: 0.98
+czas: 0.8443115279951598s\\
+Deterministyczny bigramowy:
+trafność: 1.0
+czas: 190.3957754939911 \\
+\\
+długość klucza – działa\\
+
+Poza zaprezentowanymi rozwiązaniami próbowałem również problemu dekodowania, który miał postać złożenia permutacji i szyfru Vigenere'a, co można rozumieć jako szyfr Vigenere'a, ale gdy znamy tylko zbiór znaków alfabetu bez znajomości ich uporządkowania. Niestety nie udało mi się osiągnąć znaczących sukcesów Rozwiązanie szyfru podstawieniowego zostało zaprezentowane w [Diaconis][Connor][ChenRosenthal]. M.in. w pracy Diaconisa została opisana sytuacja, gdzie metody MCMC (wędrówka po permutacjach) zostały użyte do złamania szyfru podstawieniowego, którym w listach posługiwali się więźniowie, mającego postać jak na obrazku poniżej.\\
+\begin{center}
+\includegraphics[scale=0.1]{diaconis.png}
+\end{center}
+Do złamania samego szyfru permutacyjnego z powodzeniem zastosowałem opisane wcześniej w wymienionych pracach metody, jednak konieczne było rozwinięcie tych metod. Testowałem kilka pomysłów – najbardziej obiecującym wydawał mi się oparty na wagach monogramowych – tj. wędrujemy po permutacjach, funkcją permutacji (proporcjonalną do rozkładu stacjonarnego) jest maksymalna monogramowa waga, którą można na tej permutacji alfabetu osiągnąć. Niestety podejście to zawiodło – przynajmniej przy zadanych ograniczeniach czasowych (nie można było wykonać aż tak wielu kroków jak w dekodowaniu szyfru Vigenere'a czy podstawieniowego, bo każdy krok tutaj miał większą złożoność czasową ($O(s \cdot m)$ jak już wcześniej policzyliśmy). Drugim podejściem była próba przyspieszenia zbieżności przez odpowiedni stan startowy i kroki. Zauważyć można, że jeśli zaczniemy od stanu, który jest zgodny z częstościami występowania pojedynczych liter, powinniśmy robić raczej krótkie transpozycje (tj. np. 'E' nie powinna być w tekście najrzadziej występującą literą, raczej powinna być dość blisko pierwszego miejsca). Mimo że na problemie samych permutacji dawało to nieco szybszą zbieżność (choć mniej dokładną), to nie udało się w żaden sensowny sposób wpleść tego do algorytmu Vigenere+permutacja. Możliwe, że jest możliwość zastosowania podejścia MCMC do tego problemu, niestety w obrębie tej pracy nie udało się to - być może zajmę się tym jeszcze w przyszłości.
+\\
+Mimo wszystko udało się w tym rozdziale skutecznie zastosować MCMC do szyfrów z rodziny Vigenere'a i pochodnych i przyspieszyć dzięki temu podejściu rozwiązanie w porównaniu z algorytmami deterministycznymi, co było celem tej sekcji.
+\newpage
+\section{Problem komiwojażera}
+W rozdziale tym omówię podejście MCMC do rozwiązania problemu komiwojażera. Następnie zaprezentuję jego wyniki na benchmarkowym zbiorze instancji problemu.
+\subsection{Wprowadzenie, opis problemu}
+Wróćmy do grafu – ważonego – i zobaczmy jego przykład jak poniżej:\\
+
+\begin{center}
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,534); %set diagram left start at 0, and has height of 534
+%Flowchart: Connector [id:dp39489242406379743]
+\draw   (479,166.5) .. controls (479,154.97) and (488.63,145.63) .. (500.5,145.63) .. controls (512.37,145.63) and (522,154.97) .. (522,166.5) .. controls (522,178.03) and (512.37,187.38) .. (500.5,187.38) .. controls (488.63,187.38) and (479,178.03) .. (479,166.5) -- cycle ;
+%Flowchart: Connector [id:dp6285514868405493]
+\draw   (241,95.5) .. controls (241,83.97) and (250.63,74.63) .. (262.5,74.63) .. controls (274.37,74.63) and (284,83.97) .. (284,95.5) .. controls (284,107.03) and (274.37,116.38) .. (262.5,116.38) .. controls (250.63,116.38) and (241,107.03) .. (241,95.5) -- cycle ;
+%Flowchart: Connector [id:dp5872942312966463]
+\draw   (393,385.5) .. controls (393,373.97) and (402.63,364.63) .. (414.5,364.63) .. controls (426.37,364.63) and (436,373.97) .. (436,385.5) .. controls (436,397.03) and (426.37,406.38) .. (414.5,406.38) .. controls (402.63,406.38) and (393,397.03) .. (393,385.5) -- cycle ;
+%Flowchart: Connector [id:dp44540060370743495]
+\draw   (149,302.5) .. controls (149,290.97) and (158.63,281.63) .. (170.5,281.63) .. controls (182.37,281.63) and (192,290.97) .. (192,302.5) .. controls (192,314.03) and (182.37,323.38) .. (170.5,323.38) .. controls (158.63,323.38) and (149,314.03) .. (149,302.5) -- cycle ;
+%Straight Lines [id:da9934555309292514]
+\draw    (262.5,116.38) -- (170.5,281.63) ;
+%Straight Lines [id:da631810373801815]
+\draw    (479,166.5) -- (284,95.5) ;
+%Straight Lines [id:da6556019952944867]
+\draw    (505.5,187) -- (414.5,364.63) ;
+%Straight Lines [id:da7925665059125937]
+\draw    (393,385.5) -- (192,302.5) ;
+%Straight Lines [id:da07207873423061018]
+\draw    (479,166.5) -- (183.5,286) ;
+%Curve Lines [id:da3400699458616012]
+\draw    (282.5,85) .. controls (866.5,-48) and (374.5,394.63) .. (414.5,364.63) ;
+
+% Text Node
+\draw (382,106) node [anchor=north west][inner sep=0.75pt]   [align=left] {1};
+% Text Node
+\draw (281,348) node [anchor=north west][inner sep=0.75pt]   [align=left] {3};
+% Text Node
+\draw (197,181) node [anchor=north west][inner sep=0.75pt]   [align=left] {2};
+% Text Node
+\draw (456,241) node [anchor=north west][inner sep=0.75pt]   [align=left] {4};
+% Text Node
+\draw (316,198) node [anchor=north west][inner sep=0.75pt]   [align=left] {5};
+% Text Node
+\draw (582,81) node [anchor=north west][inner sep=0.75pt]   [align=left] {6};
+% Text Node
+\draw (257,88) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{A}};
+% Text Node
+\draw (165,294) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{B}};
+% Text Node
+\draw (409,377) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{C}};
+% Text Node
+\draw (496,158) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{D}};
+
+\end{tikzpicture}
+\end{center}
+Liczby nad krawędziami nazywamy ich wagami grafu i możemy o nich myśleć jako o odległościach między miastami (wierzchołkami) między którymi biegną krawędzie (A,B,C,D). Wyobraźmy sobie teraz, że jesteśmy tytułowym komiwojażerem, chcemy przedstawić naszą ofertę we wszystkich miastach w jak najkrótszym czasie (czas to pieniądz!), startując z naszego rodzinnego miasta A, przechodząc przez pozostałe miasta tylko raz i na koniec wracając do A. Innymi słowy, chcemy zminimalizować sumę odległości na drodze przez wszystkie miasta (przez każde miasto przechodząc dokładnie raz), na końcu wracając do miasta startowego. Taka 'podróż' nazywana jest cyklem Hamiltona. Chcemy więc znaleźć cykl Hamiltona o najmniejszej długości, oczywiście wybór miasta początkowego nie ma znaczenia – jak to w cyklu. W powyższym wypadku odpowiedź jest łatwa do sprawdzenia – zbiór możliwych cykli jest mały ($\frac{4!}{4} = 3! = 6$). Ponadto rozwiązanie 'widać' cykl ABCD zawiera 4 krawędzie o najmniejszych wagach, więc w oczywisty sposób jest rozwiązaniem problemu. Jednak już dla grafu poniżej z zamienionymi wagami krawędzi rozwiązanie nie rzuca się już aż tak w oczy:
+
+
+
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,534); %set diagram left start at 0, and has height of 534
+
+%Flowchart: Connector [id:dp39489242406379743]
+\draw   (479,166.5) .. controls (479,154.97) and (488.63,145.63) .. (500.5,145.63) .. controls (512.37,145.63) and (522,154.97) .. (522,166.5) .. controls (522,178.03) and (512.37,187.38) .. (500.5,187.38) .. controls (488.63,187.38) and (479,178.03) .. (479,166.5) -- cycle ;
+%Flowchart: Connector [id:dp6285514868405493]
+\draw   (241,95.5) .. controls (241,83.97) and (250.63,74.63) .. (262.5,74.63) .. controls (274.37,74.63) and (284,83.97) .. (284,95.5) .. controls (284,107.03) and (274.37,116.38) .. (262.5,116.38) .. controls (250.63,116.38) and (241,107.03) .. (241,95.5) -- cycle ;
+%Flowchart: Connector [id:dp5872942312966463]
+\draw   (393,385.5) .. controls (393,373.97) and (402.63,364.63) .. (414.5,364.63) .. controls (426.37,364.63) and (436,373.97) .. (436,385.5) .. controls (436,397.03) and (426.37,406.38) .. (414.5,406.38) .. controls (402.63,406.38) and (393,397.03) .. (393,385.5) -- cycle ;
+%Flowchart: Connector [id:dp44540060370743495]
+\draw   (149,302.5) .. controls (149,290.97) and (158.63,281.63) .. (170.5,281.63) .. controls (182.37,281.63) and (192,290.97) .. (192,302.5) .. controls (192,314.03) and (182.37,323.38) .. (170.5,323.38) .. controls (158.63,323.38) and (149,314.03) .. (149,302.5) -- cycle ;
+%Straight Lines [id:da9934555309292514]
+\draw    (262.5,116.38) -- (170.5,281.63) ;
+%Straight Lines [id:da631810373801815]
+\draw    (479,166.5) -- (284,95.5) ;
+%Straight Lines [id:da6556019952944867]
+\draw    (505.5,187) -- (414.5,364.63) ;
+%Straight Lines [id:da7925665059125937]
+\draw    (393,385.5) -- (192,302.5) ;
+%Straight Lines [id:da07207873423061018]
+\draw    (479,166.5) -- (183.5,286) ;
+%Curve Lines [id:da3400699458616012]
+\draw    (282.5,85) .. controls (866.5,-48) and (374.5,394.63) .. (414.5,364.63) ;
+
+% Text Node
+\draw (309,194) node [anchor=north west][inner sep=0.75pt]   [align=left] {1};
+% Text Node
+\draw (279,345) node [anchor=north west][inner sep=0.75pt]   [align=left] {3};
+% Text Node
+\draw (195,178) node [anchor=north west][inner sep=0.75pt]   [align=left] {2};
+% Text Node
+\draw (454,238) node [anchor=north west][inner sep=0.75pt]   [align=left] {4};
+% Text Node
+\draw (392,102) node [anchor=north west][inner sep=0.75pt]   [align=left] {5};
+% Text Node
+\draw (580,78) node [anchor=north west][inner sep=0.75pt]   [align=left] {6};
+% Text Node
+\draw (255,85) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{A}};
+% Text Node
+\draw (163,291) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{B}};
+% Text Node
+\draw (407,374) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{C}};
+% Text Node
+\draw (494,155) node [anchor=north west][inner sep=0.75pt]   [align=left] {\textbf{D}};
+\end{tikzpicture}
+Tym razem będzie to DBAC. Zanim przejdziemy do dalszych rozważań sformalizujemy pojęcia grafu (choć intuicyjnie jest ono jasne) i cyklu Hamiltona. Zakładamy, że grafy, na których pracujemy, są pełne – jeśli nie byłoby krawędzi między pewnymi wierzchołkami to przyjmujemy po prostu, że ma ona wagę $\infty$.\\
+\\
+\textbf{Definicja 5.1.1.}\\
+Grafem ważonym nazwiemy zbiór wierzchołków $V$, $|V| = n$ i krawędzi $E \subseteq V \times V$, tak że każdej krawędzi $e$ jest przypisana długość (waga) $w_e \in \mathbb{R} \cup \{+\infty\}$. \\
+\\
+W obecnych rozważaniach przyjmujemy, że nie ma krawędzi między wierzchołkiem a tym samym wierzchołkiem, ponadto graf jest symetryczny, więc krawędź $ij$ utożsamiamy z $ji$, podobnie ich wagi. Zadaniem w problemie komiwojażera jest odnalezienie permutacji $\sigma$ wierzchołków (dalej przyjmujemy ich numerację $1,...n$), takiej że $\sum\limits_{i = 1}^n w_{\sigma(i)\sigma(i+1)}$ ma wartość minimalną przy czym przyjmujemy $n+1 := n$. Szukamy więc dla danego grafu:
+$$ \sigma_{min} = \argmin_{\sigma \in S_n} \sum\limits_{i=1}^n w_{\sigma(i)\sigma(i+1)}$$
+Teraz, problem ten jest \textit{trudny}. Konkretnie $NP$-trudny, to znaczy, że każdy problem z klasy $NP$ (problemów, dla których rozwiązanie jest weryfikowalne w wielomianowym czasie) daje się do niego sprowadzić również wielomianową transformacją. Z tego powodu, nawet gdyby, co mało prawdopodobne, okazało się, że $P=NP$ (czyli że problemy z wielomianową weryfikacją mają też wielomianowe rozwiązanie), nie daje to nam pewności, że problem komiwojażera da się rozwiązać w wielomianowym czasie. Jeśliby się natomiast dało, wtedy byłoby $P=NP$, co jest warte milion dolarów. Tak więc, nie są znane deterministyczne algorytmy o wielomianowej złożoności czasowej rozwiązujące postawiony problem – w przeciwieństwie do problemu dekodowania szyfru Vigenere'a w postawionej przeze mnie wersji, gdzie takie rozwiązania istniały, jednak były \textit{tylko} nieoptymalne czasowo. Użyjemy więc znowu metod Monte Carlo Markov Chains. Tym razem jednak, jak już wcześniej wspomnieliśmy, poza klasycznym rozwiązaniem z użyciem JŁM sprawdzimy też jedno z klasycznych rozwiązań prezentujących podejście zbieżnościowe – by 'zwiększyć' zbieżność – i osiągnąć zatrzymanie języka w jakimś do pewnego stopnia optymalnym stanie – musimy zrezygnować z jednorodności. Podejście to nosi nazwę symulowanego wyżarzania.
+
+\subsection{Niejednorodne łańcuchy Markowa. Symulowane wyżarzanie}
+Pomysł, który jest zastosowany do osiągnięcia zbieżności, ma swoje źródła w fizyce statystycznej. Możemy myśleć o naszych permutacjach (czyli potencjalnych rozwiązaniach) jako o pewnych stanach energetycznych, które są do obsadzenia przez chaotycznie poruszającą się cząstkę (cząstki). Cząstka zajmuje dany stan z prawdopodobieństwem związanym z poziomem energetycznym tego stanu – im wyższa energia stanu, tym mniejsze prawdopodobieństwo, konkretnie: stosunek prawdopodobieństw obsadzenia dwóch stanów energetycznych $\sigma_i$ $\sigma_j$ o energiach $E_i$ oraz $E_j$ odpowiednio wynosi:
+$$\frac{e_i}{e_j} = e_{ij} = \exp(\frac{E_j - E_i}{kT})$$
+gdzie $k>0$ jest pewną stałą (stała Boltzmanna) a $T\geq0$ – temperaturą układu. Widać pewne zależności: generalnie im energia niższa tym prawdopodobieństwo wyższe, przy $T$ dążącym do nieskończoności każdy stan staje się jednakowo prawdopodobny, natomiast przy $T=0$ całe prawdopodobieństwo skupia się w stanie o minimalnej energii (skoro temperatura jest zerowa, to układ, a więc i cząstka ma minimalną energię). Ma to oczywiście swoje odzwierciedlenie w rzeczywistości – rzeczywiście im temperatura wyższa, tym cząstki są bardziej ruchliwe – w zerze absolutnym cząstka zastyga.\\
+Tak jak więc zostało wspomniane, możemy myśleć o naszych permutacjach jako o stanach energetycznych do obsadzenia przez cząstkę. Możemy więc myśleć, że prawdopodbieństwo przejścia z jednego stanu do drugiego odpowiada rozkładowi Boltzmanna, czyli:
+$$p_{ij} = e_{ji} = \exp(\frac{E_i - E_j}{kT})$$
+Chcemy zdefiniować problem tak, aby przy temperaturze dążącej do zera, poszukiwane przez nas rozwiązanie minimalizujące odległość, było właśnie stanem, który zajmie cząstka. Tak więc wiążemy sumę odległości w cyklu Hamiltona z energią (tj. suma odległości w danej permutacji, jest energią tej permutacji). Dostajemy więc taki łańcuch na bazie algorytmu Metropolisa-Hastingsa:\\
+\begin{algorithm}[H]
+\caption{Symulowane wyżarzanie}
+\SetKwInput{For}{dla}
+\SetKwInput{If}{jeśli}
+\SetKwInput{Else}{w przeciwnym razie}
+Zacznij w dowolnie wybranym stanie (może być ustalony lub np. wylosowany jednostajnie) $X_0 := \sigma_0 \in S$\\
+\For{$n=0,1,2,3...$}{
+\quad wylosuj Z – kandydata na nowy stan zgodnie z  pewnym rozkładem $q_{X_i  \cdot}$ (nieredukowalna macierz generująca kandydatów, tak by )\;
+\quad wylosuj $V \sim U[0,1]$\;
+\quad $p_{ZX_n} = \exp(\frac{E_{Z} - E_{X_n}}{t_n})$\;
+\quad \If{$V \leq \min(1, p_{X_nZ})$}{
+\quad\quad $X_{n+1} := Z$\;}
+\quad \Else{}{
+\quad\quad $X_{n+1} := X_n$\;}}
+\end{algorithm}
+$t_n$ – jest parametrem wyżarzania (wychładzania) (\textit{annealing scheduling}) – temperaturą w czasie $n$, tj. jak zmieniamy temperaturę w czasie. Zwróćmy uwagę, że gdybyśmy przyjęli $t_n \equiv const$, dostajemy wtedy zwykły JŁM o rozkładzie stacjonarnym odpowiadającym rozkładowi Boltzmanna. W $t_n$ ukryta jest oczywiście też stała $k$. \\
+Oczywiście w idei tej metody zawarte jest założenie $t_n \to 0$ – cały proces przypomina \textit{wyżarzanie} metalu, stąd nazwa.
+Można zastanawiać się, kiedy w istocie zajdzie zbieżność do globalnego minimum względem długości cyklu Hamiltona odpowiadającego permutacji. Łatwo udowodnić, że przynajmniej dla minimum lokalnego zbieżność zachodzi prawie na pewno. Jak uzyskiwać zbieżność do pewnego stopnia pokazał Hajek [Hajek] – warto rozważać $t_n$ postaci $t_n = \frac{c}{\log(n)+1}$ dla pewnej stałej $c>0$, która powiązana jest z pewnymi szczególnymi własnościami rozważanego grafu. Będę więc sprawdzał wyniki dla różnych $c$, ponadto sprawdzę też jakie rozwiązania da się uzyskać stosując podejście JŁM – jak przy okazji dekodowania – czyli przyjmując $t_n = const$. Pozostaje krótko opisać użyte macierze generujące kandydatów, co uczynimy w następnym podrozdziale.
+\subsection{Macierze generujące}
+Dwa rodzaje 'swapowania' permutacji do omówienia
+\subsection{Symulacje i omówienie wyników}
+Dodać tabele z wynikami po weekendzie i przedstawić omówienie
+\subsection{Inne możliwe rozwiązania}
+-> mrówkowe;
+-> ewolucyjne
+-> deterministyczne wykładnicze
+-> suboptymalne wielomianowe
+-> kwantowe symulowane wyżarzanie, wiązanie kilku rozwiązań w jedno, może będzie można tego spróbować?
+\section{O programie}
+Link do repo, zwięzła dokumentacja kodu
+\section{Podsumowanie}
+Podsumowanie pracy i wyników, podziękowania.
 
 \newpage
 \begin{thebibliography}{9}

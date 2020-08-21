@@ -3,7 +3,7 @@ import decryption_problem.alphabetic.alphabetic as alphabetic
 import decryption_problem.ciphers.vigenere as vigenere
 
 
-class MyTestCase(unittest.TestCase):
+class VigenereTest(unittest.TestCase):
     def setUp(self):
         self.alphabet = alphabetic.Alphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -13,13 +13,11 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(vigenere.encrypt_decrypt_single("_", 25, self.alphabet), "_")
 
     def test_encrypt_decrypt_text(self):
-        self.assertEqual(vigenere.encrypt_decrypt_text("I LIKE TO FISH", [1, 2], self.alphabet),
-                         list("J NJMF VP HJUI"))
-        stripped_text = alphabetic.StrippedText("I LIKE TO FISH", self.alphabet)
-        self.assertEqual(vigenere.encrypt_decrypt_text(stripped_text, [1, 2], self.alphabet),
-                         list("JNJMFVPHJUI"))
-        self.assertEqual(vigenere.encrypt_decrypt_text_v2("I LIKE TO FISH", [1, 2], self.alphabet),
-                         list("J MKLG VP GKTJ"))
+        self.assertEqual(vigenere.encrypt_decrypt_text("MONTE CARLO", [1, 2], self.alphabet),
+                         list("NQOVF DCSNP"))
+        stripped_text = alphabetic.StrippedText("MONTE CARLO", self.alphabet)
+        self.assertEqual(vigenere.encrypt_decrypt_text(stripped_text, [1, 2], self.alphabet).non_stripped_part,
+                         list("NQOVFEBTMQ"))
 
     def test_update_encryption_by_index(self):
         decryption = list("J MKLG VP GKTJ")
