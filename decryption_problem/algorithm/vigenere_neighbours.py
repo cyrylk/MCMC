@@ -11,8 +11,7 @@ def get_random_starting_state(alphabet, key_length):
 def get_ith_neighbour(current, i, alphabet):
     position_to_change = i // alphabet.max_shift_length
     shift = i % alphabet.max_shift_length
-    return current[:position_to_change] + \
-           [(current[position_to_change] + shift + 1) % alphabet.length] + current[position_to_change + 1:]
+    return position_to_change, (shift + 1) % alphabet.length
 
 
 def get_neighbours_number(current, alphabet):

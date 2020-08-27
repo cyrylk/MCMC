@@ -144,17 +144,17 @@ def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_li
                                                                            encryption, alphabet, coprimes)
         frequencies_change = frequency_and_weight_change[0]
         weight_change = frequency_and_weight_change[1]
-        changed_index = common.find_change_in_key(current_state, candidate)
+        changed_index = candidate[0]
         u = random.random()
         if log(u) < weight_change:
             cipher.update_decryption_by_key_index(current_decryption, encryption, changed_index,
-                                                  candidate[changed_index], len(current_state), alphabet, coprimes)
-            current_state = candidate
+                                                  candidate[1], len(current_state), alphabet, coprimes)
+            current_state[changed_index] = candidate[1]
             for f in range(len(frequencies_change)):
                 common.update_frequency(current_frequencies[f], frequencies_change[f])
             current_state_weight += weight_change
             if current_state_weight > max_weight:
-                max_state = candidate
+                max_state = current_state[:]
                 max_weight = current_state_weight
                 if true_decrypting_code and \
                         common.consistency(current_state, true_decrypting_code, alphabet) >= \

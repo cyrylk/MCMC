@@ -1,13 +1,13 @@
-\begin{center}\begin{tabular}{|c|c|c|} \hline
-\hline DŁUGOŚĆ KLUCZA & CZAS & SKUTECZNOŚĆ \\ \hline
-40 & 85.2s & 1.0 \\ \hline 
-80 & 90.0s & 1.0 \\ \hline 
-120 & 84.1s & 0.99 \\ \hline 
-160 & 84.7s & 0.94 \\ \hline 
-200 & 84.6s & 0.79 \\ \hline 
-240 & 86.0s & 0.67 \\ \hline 
-280 & 86.5s & 0.61 \\ \hline 
-320 & 86.8s & 0.5 \\ \hline 
-360 & 87.5s & 0.39 \\ \hline 
-400 & 88.7s & 0.38 \\ \hline 
+\begin{center}\begin{tabular}{|c|c|c|} 
+\hline DŁUGOŚĆ KLUCZA & CZAS & SKUTECZNOŚĆ \\ \hline 
+40 & 88.7s & 1.0 \\ \hline 
+80 & 87.0s & 1.0 \\ \hline 
+120 & 90.1s & 0.98 \\ \hline 
+160 & 92.8s & 0.96 \\ \hline 
+200 & 90.0s & 0.82 \\ \hline 
+240 & 91.3s & 0.68 \\ \hline 
+280 & 90.5s & 0.53 \\ \hline 
+320 & 91.5s & 0.48 \\ \hline 
+360 & 91.4s & 0.3 \\ \hline 
+400 & 92.0s & 0.35 \\ \hline 
 \end{tabular}\end{center} 

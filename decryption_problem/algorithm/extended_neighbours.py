@@ -15,20 +15,20 @@ def get_ith_neighbour(current, i, alphabet, coprimes):
 
     if change < alphabet.max_shift_length:
         key_update = (current[position_to_change][0], (current[position_to_change][1] + change + 1) % alphabet.length)
-        return current[:position_to_change] + [key_update] + current[position_to_change + 1:]
+        return position_to_change, key_update
 
     change -= alphabet.max_shift_length
 
     if change < len(coprimes) - 1:
         key_update = ((current[position_to_change][0] + change + 1) % len(coprimes), current[position_to_change][1])
-        return current[:position_to_change] + [key_update] + current[position_to_change + 1:]
+        return position_to_change, key_update
     change -= (len(coprimes) - 1)
 
     a_change = change % (len(coprimes) - 1)
     b_change = change // (len(coprimes) - 1)
     key_update = ((current[position_to_change][0] + a_change + 1) % len(coprimes), (current[position_to_change][1] +
                                                                                     b_change + 1) % alphabet.length)
-    return current[:position_to_change] + [key_update] + current[position_to_change + 1:]
+    return position_to_change, key_update
 
 
 def get_neighbours_number(current, alphabet, coprimes):

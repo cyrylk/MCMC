@@ -1,0 +1,13 @@
+\begin{center}\begin{tabular}{|c|c|c|c|c|c|c|} 
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
+40 & 0.06s & 1.0 & 12.2s & 1.0 & 16.5s & 1.0 \\ \hline 
+80 & 0.06s & 0.9625 & 13.2s & 1.0 & 16.9s & 1.0 \\ \hline 
+120 & 0.07s & 0.9166666666666666 & 12.9s & 1.0 & 17.2s & 1.0 \\ \hline 
+160 & 0.07s & 0.81875 & 13.3s & 0.97 & 17.3s & 0.98 \\ \hline 
+200 & 0.07s & 0.76 & 13.3s & 0.98 & 17.5s & 0.99 \\ \hline 
+240 & 0.07s & 0.6416666666666667 & 13.4s & 0.88 & 17.6s & 0.96 \\ \hline 
+280 & 0.07s & 0.5571428571428572 & 13.7s & 0.73 & 18.0s & 0.78 \\ \hline 
+320 & 0.08s & 0.5625 & 13.9s & 0.70 & 18.4s & 0.78 \\ \hline 
+360 & 0.08s & 0.4888888888888889 & 14.2s & 0.65 & 18.4s & 0.72 \\ \hline 
+400 & 0.08s & 0.42 & 14.3s & 0.50 & 18.8s & 0.57 \\ \hline 
+\end{tabular}\end{center} 
