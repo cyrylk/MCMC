@@ -1,0 +1,9 @@
+\begin{center}\begin{tabular}{|c|c|c|}
+\hline RZECZYWISTA DŁUGOŚĆ & ODGADNIĘTA DŁUGOŚĆ & SKUTECZNOŚĆ\\ \hline 
+10 & 10 & 1.0\\ \hline 
+50 & 50 & 1.0\\ \hline 
+100 & 100 & 0.95\\ \hline 
+150 & 150 & 0.86\\ \hline 
+200 & 200 & 0.65\\ \hline 
+240 & 240 & 0.5\\ \hline 
+\end{tabular}\end{center} 

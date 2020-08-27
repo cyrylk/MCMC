@@ -192,16 +192,25 @@ def break_bounded_length_code_with_mcmc_optimized(encryption, alphabet, n_list, 
                                              log_distributions, 20*steps)
 
 
-def break_bounded_length_code_with_mcmc_monogram_criteria(encryption, alphabet, n_list, coefs, log_distributions, steps,
-                                                          lower_bound, upper_bound, monogram_log_distribution):
+def break_bounded_length_code_with_mcmc_monogram_criteria(encryption, alphabet, n_list, coefs, log_distributions,
+                                                          steps_constant,
+                                                          lower_bound, upper_bound, monogram_log_distribution,
+                                                          scrabble):
     max_weight = float("-inf")
     max_state = [cipher.get_zero_mono_key()]
     for length in range(lower_bound, upper_bound+1):
-        max_monogram = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)
-        state = max_monogram[0]
-        weight = max_monogram[1]
+        state = get_max_monogram_state(encryption, monogram_log_distribution, length, alphabet)[0]
+        if length > (lower_bound + upper_bound) / 2:
+            state = break_fixed_length_code_with_mcmc(encryption, alphabet, state, n_list, coefs,
+                                              log_distributions, int(steps_constant * alphabet.length * length *
+                                                                     (2 + log(length))))[0]
+        words_list = cipher.encrypt_decrypt_text(encryption, state, alphabet).get_words_list()
+        weight = sum([word in scrabble for word in words_list])/len(words_list)
         if weight > max_weight:
             max_weight = weight
             max_state = state
+        if max_weight > 0.5:
+            break
     return break_fixed_length_code_with_mcmc(encryption, alphabet, max_state, n_list, coefs,
-                                             log_distributions, steps)
+                                             log_distributions, int(steps_constant*alphabet.length*len(max_state) *
+                                             (10+log(len(max_state)))))

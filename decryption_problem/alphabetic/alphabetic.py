@@ -82,11 +82,22 @@ class StrippedText(object):
                 text.append(self.stripped_part[self.ends_of_words[i]])
         return "".join(text)
 
+    def get_words_list(self):
+        words_list = []
+        word = ""
+        for i in range(len(self.non_stripped_part)):
+            word += self.non_stripped_part[i]
+            if i in self.ends_of_words:
+                words_list.append(word)
+                word = ""
+        return words_list
+
+
 
 def alphabets_product(alphabet1, alphabet2):
     if not alphabet2:
-        return {i: 0 for i in alphabet1}
-    return {i + j: 0 for i in alphabet1 for j in alphabet2}
+        return {i: 0 for i in alphabet1.letters()}
+    return {i + j: 0 for i in alphabet1.letters() for j in alphabet2}
 
 
 def n_gram_dict(alphabet, n):
@@ -94,5 +105,3 @@ def n_gram_dict(alphabet, n):
     for i in range(n):
         result = alphabets_product(alphabet, result)
     return result
-
-

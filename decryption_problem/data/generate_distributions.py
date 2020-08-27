@@ -2,7 +2,11 @@ import json
 import decryption_problem.data.data_generator as data_generator
 import string
 from decryption_problem.alphabetic.alphabetic import Alphabet
+import re
 
+
+def strip_non_vigenere(text):
+    return re.sub(r'[^A-Z]', '', text)
 
 all_printable = data_generator.get_string_cleared(string.printable + " ")
 upper_printable = all_printable[:10] + all_printable[36:]
@@ -65,4 +69,5 @@ file3.close()
 file4.close()
 file5.close()
 file6.close()
+
 
