@@ -419,6 +419,112 @@ alpha_qwerty_space = alphabetic.Alphabet('''abcdefghijklmnopqrstuvwxyzABCDEFGHIJ
 # efficiency_MCMC.close()
 #
 
+random.seed(time())
+plain_text = data_generator.get_string_cleared(data_generator.generate_random_excerpt("../data/ice_hockey.txt", 1000)).upper()
+plain_text = alphabetic.StrippedText(plain_text, vigenere_alphabet)
+
+
+efficiency_MCMC = open("hockey_extended_classic_MCMC.txt", "w")
+
+efficiency_MCMC.write("\\begin{center}\\begin{tabular}{")
+efficiency_MCMC.write("|c|c|c|c|c|c|c|} \n")
+efficiency_MCMC.write("\\hline \\makecell{DŁUGOŚĆ\\\\KLUCZA} &  \\makecell{MONOGRAM\\\\CZAS} & "
+                      "\\makecell{MONOGRAM\\\\SKUTECZNOŚĆ} & \\makecell{BIGRAM\\\\CZAS} &  "
+                      "\\makecell{BIGRAM\\\\SKUTECZNOŚĆ} & \\makecell{TRIGRAM\\\\CZAS} & "
+                      "\\makecell{TRIGRAM\\\\SKUTECZNOŚĆ}"
+                     "\\\\ \hline \n")
+
+for key_length in range(40, 440, 40):
+    encoding_key = data_generator.generate_random_extended_key_fixed(vigenere_alphabet, key_length)
+    coprimes = extended.get_coprimes(vigenere_alphabet.length)
+    coprimes_mapping = extended.get_coprimes_mapping(coprimes)
+    decoding_key = extended.reverse_key(encoding_key, vigenere_alphabet, coprimes, coprimes_mapping)
+    encryption = extended.encrypt_decrypt_text(plain_text, encoding_key, vigenere_alphabet, coprimes)
+
+    efficiency_MCMC.write(str(key_length) + " & ")
+
+    start = time()
+    monogram_maximizer = extended_decoder.get_max_monogram_state(encryption, upper_monograms_distribution,
+                                                                 key_length, vigenere_alphabet)
+    interval = time() - start
+    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " +
+                          str(consistency(monogram_maximizer[0], decoding_key, vigenere_alphabet))[:4]
+                          + " & ")
+    steps = int(10*len(extended.get_all_mono_keys(vigenere_alphabet, coprimes)) * key_length)
+    start = time()
+    decode = extended_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, monogram_maximizer[0],
+                                                                [2], [1.0], [upper_bigrams_distribution], steps)
+    interval = time() - start
+
+    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key, vigenere_alphabet))[:4] +
+                          " & ")
+    start = time()
+    decode = extended_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, decode[0],
+                                                                [3], [1.0], [upper_trigrams_distribution], steps)
+    interval = time() - start
+    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key,
+                                                                            vigenere_alphabet))[:4] +
+                          " \\\\ \\hline \n")
+    print(key_length)
+
+
+efficiency_MCMC.write("\\end{tabular}\\end{center} \n")
+efficiency_MCMC.close()
+
+
+random.seed(time())
+plain_text = data_generator.get_string_cleared(data_generator.generate_random_excerpt("../data/madame_bovary.txt", 1000)).upper()
+plain_text = alphabetic.StrippedText(plain_text, vigenere_alphabet)
+
+
+efficiency_MCMC = open("bovary_extended_classic_MCMC.txt", "w")
+
+efficiency_MCMC.write("\\begin{center}\\begin{tabular}{")
+efficiency_MCMC.write("|c|c|c|c|c|c|c|} \n")
+efficiency_MCMC.write("\\hline \\makecell{DŁUGOŚĆ\\\\KLUCZA} &  \\makecell{MONOGRAM\\\\CZAS} & "
+                      "\\makecell{MONOGRAM\\\\SKUTECZNOŚĆ} & \\makecell{BIGRAM\\\\CZAS} &  "
+                      "\\makecell{BIGRAM\\\\SKUTECZNOŚĆ} & \\makecell{TRIGRAM\\\\CZAS} & "
+                      "\\makecell{TRIGRAM\\\\SKUTECZNOŚĆ}"
+                     "\\\\ \hline \n")
+
+for key_length in range(40, 440, 40):
+    encoding_key = data_generator.generate_random_extended_key_fixed(vigenere_alphabet, key_length)
+    coprimes = extended.get_coprimes(vigenere_alphabet.length)
+    coprimes_mapping = extended.get_coprimes_mapping(coprimes)
+    decoding_key = extended.reverse_key(encoding_key, vigenere_alphabet, coprimes, coprimes_mapping)
+    encryption = extended.encrypt_decrypt_text(plain_text, encoding_key, vigenere_alphabet, coprimes)
+
+    efficiency_MCMC.write(str(key_length) + " & ")
+
+    start = time()
+    monogram_maximizer = extended_decoder.get_max_monogram_state(encryption, upper_monograms_distribution,
+                                                                 key_length, vigenere_alphabet)
+    interval = time() - start
+    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " +
+                          str(consistency(monogram_maximizer[0], decoding_key, vigenere_alphabet))[:4]
+                          + " & ")
+    steps = int(10*len(extended.get_all_mono_keys(vigenere_alphabet, coprimes)) * key_length)
+    start = time()
+    decode = extended_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, monogram_maximizer[0],
+                                                                [2], [1.0], [upper_bigrams_distribution], steps)
+    interval = time() - start
+
+    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key, vigenere_alphabet))[:4] +
+                          " & ")
+    start = time()
+    decode = extended_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, decode[0],
+                                                                [3], [1.0], [upper_trigrams_distribution], steps)
+    interval = time() - start
+    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key,
+                                                                            vigenere_alphabet))[:4] +
+                          " \\\\ \\hline \n")
+    print(key_length)
+
+
+efficiency_MCMC.write("\\end{tabular}\\end{center} \n")
+efficiency_MCMC.close()
+
+
 
 # random.seed(time())
 # plain_text = data_generator.get_string_cleared(data_generator.generate_random_excerpt("../data/madame_bovary.txt", 1000))
@@ -721,208 +827,208 @@ alpha_qwerty_space = alphabetic.Alphabet('''abcdefghijklmnopqrstuvwxyzABCDEFGHIJ
 # efficiency_MCMC.write("\\end{tabular}\\end{center} \n")
 # efficiency_MCMC.close()
 
-random.seed(time())
-plain_text = data_generator.get_string_cleared(data_generator.generate_random_excerpt("../data/madame_bovary.txt", 1000)).upper()
-plain_text = re.sub('[^A-Z]+', '', plain_text)
-plain_text = alphabetic.StrippedText(plain_text, vigenere_alphabet)
-
-
-efficiency_MCMC = open("bovary_vigenere_stripped_MCMC.txt", "w")
-efficiency_MCMC.write(str(len(plain_text))+"\n\n")
-
-efficiency_MCMC.write("\\begin{center}\\begin{tabular}{")
-efficiency_MCMC.write("|c|c|c|c|c|c|c|} \n")
-efficiency_MCMC.write("\\hline \\makecell{DŁUGOŚĆ\\\\KLUCZA} &  \\makecell{MONOGRAM\\\\CZAS} & "
-                      "\\makecell{MONOGRAM\\\\SKUTECZNOŚĆ} & \\makecell{BIGRAM\\\\CZAS} &  "
-                      "\\makecell{BIGRAM\\\\SKUTECZNOŚĆ} & \\makecell{TRIGRAM\\\\CZAS} & "
-                      "\\makecell{TRIGRAM\\\\SKUTECZNOŚĆ}"
-                     "\\\\ \hline \n")
-
-for key_length in range(40, 440, 40):
-    encoding_key = data_generator.generate_random_vigenere_key_fixed(vigenere_alphabet, key_length)
-    decoding_key = vigenere.reverse_key(encoding_key, vigenere_alphabet)
-    encryption = vigenere.encrypt_decrypt_text(plain_text, encoding_key, vigenere_alphabet)
-
-    efficiency_MCMC.write(str(key_length) + " & ")
-
-    start = time()
-    monogram_maximizer = vigenere_decoder.get_max_monogram_state(encryption, upper_monograms_distribution,
-                                                                 key_length, vigenere_alphabet)
-    interval = time() - start
-    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " +
-                          str(consistency(monogram_maximizer[0], decoding_key, vigenere_alphabet))
-                          + " & ")
-    steps = int(10*len(vigenere.get_all_mono_keys(vigenere_alphabet)) * key_length)
-    start = time()
-    decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, monogram_maximizer[0],
-                                                                [2], [1.0], [upper_bigrams_distribution], steps)
-    interval = time() - start
-
-    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key, vigenere_alphabet))[:4] +
-                          " & ")
-    start = time()
-    decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, decode[0],
-                                                                [3], [1.0], [upper_trigrams_distribution], steps)
-    interval = time() - start
-    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key,
-                                                                            vigenere_alphabet))[:4] +
-                          " \\\\ \\hline \n")
-    print(key_length)
-
-
-efficiency_MCMC.write("\\end{tabular}\\end{center} \n")
-efficiency_MCMC.close()
-
-random.seed(time())
-plain_text = data_generator.get_string_cleared(data_generator.generate_random_excerpt("../data/ice_hockey.txt", 1000)).upper()
-plain_text = re.sub('[^A-Z]+', '', plain_text)
-plain_text = alphabetic.StrippedText(plain_text, vigenere_alphabet)
-
-
-efficiency_MCMC = open("hockey_vigenere_stripped_MCMC.txt", "w")
-efficiency_MCMC.write(str(len(plain_text))+"\n\n")
-
-efficiency_MCMC.write("\\begin{center}\\begin{tabular}{")
-efficiency_MCMC.write("|c|c|c|c|c|c|c|} \n")
-efficiency_MCMC.write("\\hline \\makecell{DŁUGOŚĆ\\\\KLUCZA} &  \\makecell{MONOGRAM\\\\CZAS} & "
-                      "\\makecell{MONOGRAM\\\\SKUTECZNOŚĆ} & \\makecell{BIGRAM\\\\CZAS} &  "
-                      "\\makecell{BIGRAM\\\\SKUTECZNOŚĆ} & \\makecell{TRIGRAM\\\\CZAS} & "
-                      "\\makecell{TRIGRAM\\\\SKUTECZNOŚĆ}"
-                     "\\\\ \hline \n")
-
-for key_length in range(40, 440, 40):
-    encoding_key = data_generator.generate_random_vigenere_key_fixed(vigenere_alphabet, key_length)
-    decoding_key = vigenere.reverse_key(encoding_key, vigenere_alphabet)
-    encryption = vigenere.encrypt_decrypt_text(plain_text, encoding_key, vigenere_alphabet)
-
-    efficiency_MCMC.write(str(key_length) + " & ")
-
-    start = time()
-    monogram_maximizer = vigenere_decoder.get_max_monogram_state(encryption, upper_monograms_distribution,
-                                                                 key_length, vigenere_alphabet)
-    interval = time() - start
-    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " +
-                          str(consistency(monogram_maximizer[0], decoding_key, vigenere_alphabet))
-                          + " & ")
-    steps = int(10*len(vigenere.get_all_mono_keys(vigenere_alphabet)) * key_length)
-    start = time()
-    decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, monogram_maximizer[0],
-                                                                [2], [1.0], [upper_bigrams_distribution], steps)
-    interval = time() - start
-
-    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key, vigenere_alphabet))[:4] +
-                          " & ")
-    start = time()
-    decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, decode[0],
-                                                                [3], [1.0], [upper_trigrams_distribution], steps)
-    interval = time() - start
-    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key,
-                                                                            vigenere_alphabet))[:4] +
-                          " \\\\ \\hline \n")
-    print(key_length)
-
-
-efficiency_MCMC.write("\\end{tabular}\\end{center} \n")
-efficiency_MCMC.close()
-
-random.seed(time())
-plain_text = data_generator.get_string_cleared(data_generator.generate_random_excerpt("../data/1984.txt", 1000)).upper()
-plain_text = re.sub('[^A-Z]+', '', plain_text)
-plain_text = alphabetic.StrippedText(plain_text, vigenere_alphabet)
-
-
-efficiency_MCMC = open("1984_vigenere_stripped_MCMC.txt", "w")
-efficiency_MCMC.write(str(len(plain_text))+"\n\n")
-
-efficiency_MCMC.write("\\begin{center}\\begin{tabular}{")
-efficiency_MCMC.write("|c|c|c|c|c|c|c|} \n")
-efficiency_MCMC.write("\\hline \\makecell{DŁUGOŚĆ\\\\KLUCZA} &  \\makecell{MONOGRAM\\\\CZAS} & "
-                      "\\makecell{MONOGRAM\\\\SKUTECZNOŚĆ} & \\makecell{BIGRAM\\\\CZAS} &  "
-                      "\\makecell{BIGRAM\\\\SKUTECZNOŚĆ} & \\makecell{TRIGRAM\\\\CZAS} & "
-                      "\\makecell{TRIGRAM\\\\SKUTECZNOŚĆ}"
-                     "\\\\ \hline \n")
-
-for key_length in range(40, 440, 40):
-    encoding_key = data_generator.generate_random_vigenere_key_fixed(vigenere_alphabet, key_length)
-    decoding_key = vigenere.reverse_key(encoding_key, vigenere_alphabet)
-    encryption = vigenere.encrypt_decrypt_text(plain_text, encoding_key, vigenere_alphabet)
-
-    efficiency_MCMC.write(str(key_length) + " & ")
-
-    start = time()
-    monogram_maximizer = vigenere_decoder.get_max_monogram_state(encryption, upper_monograms_distribution,
-                                                                 key_length, vigenere_alphabet)
-    interval = time() - start
-    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " +
-                          str(consistency(monogram_maximizer[0], decoding_key, vigenere_alphabet))
-                          + " & ")
-    steps = int(10*len(vigenere.get_all_mono_keys(vigenere_alphabet)) * key_length)
-    start = time()
-    decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, monogram_maximizer[0],
-                                                                [2], [1.0], [upper_bigrams_distribution], steps)
-    interval = time() - start
-
-    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key, vigenere_alphabet))[:4] +
-                          " & ")
-    start = time()
-    decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, decode[0],
-                                                                [3], [1.0], [upper_trigrams_distribution], steps)
-    interval = time() - start
-    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key,
-                                                                            vigenere_alphabet))[:4] +
-                          " \\\\ \\hline \n")
-    print(key_length)
-
-
-efficiency_MCMC.write("\\end{tabular}\\end{center} \n")
-efficiency_MCMC.close()
-
-random.seed(time())
-plain_text = data_generator.get_string_cleared(data_generator.generate_random_excerpt("../data/madame_bovary.txt", 1000)).upper()
-plain_text = alphabetic.StrippedText(plain_text, vigenere_alphabet)
-
-
-efficiency_MCMC = open("bovary_vigenere_classic_MCMC_const5.txt", "w")
-
-efficiency_MCMC.write("\\begin{center}\\begin{tabular}{")
-efficiency_MCMC.write("|c|c|c|c|c|c|c|} \n")
-efficiency_MCMC.write("\\hline \\makecell{DŁUGOŚĆ\\\\KLUCZA} &  \\makecell{MONOGRAM\\\\CZAS} & "
-                      "\\makecell{MONOGRAM\\\\SKUTECZNOŚĆ} & \\makecell{BIGRAM\\\\CZAS} &  "
-                      "\\makecell{BIGRAM\\\\SKUTECZNOŚĆ} & \\makecell{TRIGRAM\\\\CZAS} & "
-                      "\\makecell{TRIGRAM\\\\SKUTECZNOŚĆ}"
-                     "\\\\ \hline \n")
-
-for key_length in range(40, 440, 40):
-    encoding_key = data_generator.generate_random_vigenere_key_fixed(vigenere_alphabet, key_length)
-    decoding_key = vigenere.reverse_key(encoding_key, vigenere_alphabet)
-    encryption = vigenere.encrypt_decrypt_text(plain_text, encoding_key, vigenere_alphabet)
-
-    efficiency_MCMC.write(str(key_length) + " & ")
-
-    start = time()
-    monogram_maximizer = vigenere_decoder.get_max_monogram_state(encryption, upper_monograms_distribution,
-                                                                 key_length, vigenere_alphabet)
-    interval = time() - start
-    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " +
-                          str(consistency(monogram_maximizer[0], decoding_key, vigenere_alphabet))
-                          + " & ")
-    steps = int(5*len(vigenere.get_all_mono_keys(vigenere_alphabet)) * key_length)
-    start = time()
-    decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, monogram_maximizer[0],
-                                                                [2], [1.0], [upper_bigrams_distribution], steps)
-    interval = time() - start
-
-    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key, vigenere_alphabet))[:4] +
-                          " & ")
-    start = time()
-    decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, decode[0],
-                                                                [3], [1.0], [upper_trigrams_distribution], steps)
-    interval = time() - start
-    efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key,
-                                                                            vigenere_alphabet))[:4] +
-                          " \\\\ \\hline \n")
-    print(key_length)
-
-
-efficiency_MCMC.write("\\end{tabular}\\end{center} \n")
-efficiency_MCMC.close()
+# random.seed(time())
+# plain_text = data_generator.get_string_cleared(data_generator.generate_random_excerpt("../data/madame_bovary.txt", 1000)).upper()
+# plain_text = re.sub('[^A-Z]+', '', plain_text)
+# plain_text = alphabetic.StrippedText(plain_text, vigenere_alphabet)
+#
+#
+# efficiency_MCMC = open("bovary_vigenere_stripped_MCMC.txt", "w")
+# efficiency_MCMC.write(str(len(plain_text))+"\n\n")
+#
+# efficiency_MCMC.write("\\begin{center}\\begin{tabular}{")
+# efficiency_MCMC.write("|c|c|c|c|c|c|c|} \n")
+# efficiency_MCMC.write("\\hline \\makecell{DŁUGOŚĆ\\\\KLUCZA} &  \\makecell{MONOGRAM\\\\CZAS} & "
+#                       "\\makecell{MONOGRAM\\\\SKUTECZNOŚĆ} & \\makecell{BIGRAM\\\\CZAS} &  "
+#                       "\\makecell{BIGRAM\\\\SKUTECZNOŚĆ} & \\makecell{TRIGRAM\\\\CZAS} & "
+#                       "\\makecell{TRIGRAM\\\\SKUTECZNOŚĆ}"
+#                      "\\\\ \hline \n")
+#
+# for key_length in range(40, 440, 40):
+#     encoding_key = data_generator.generate_random_vigenere_key_fixed(vigenere_alphabet, key_length)
+#     decoding_key = vigenere.reverse_key(encoding_key, vigenere_alphabet)
+#     encryption = vigenere.encrypt_decrypt_text(plain_text, encoding_key, vigenere_alphabet)
+#
+#     efficiency_MCMC.write(str(key_length) + " & ")
+#
+#     start = time()
+#     monogram_maximizer = vigenere_decoder.get_max_monogram_state(encryption, upper_monograms_distribution,
+#                                                                  key_length, vigenere_alphabet)
+#     interval = time() - start
+#     efficiency_MCMC.write(str(interval)[:4] + "s" + " & " +
+#                           str(consistency(monogram_maximizer[0], decoding_key, vigenere_alphabet))
+#                           + " & ")
+#     steps = int(10*len(vigenere.get_all_mono_keys(vigenere_alphabet)) * key_length)
+#     start = time()
+#     decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, monogram_maximizer[0],
+#                                                                 [2], [1.0], [upper_bigrams_distribution], steps)
+#     interval = time() - start
+#
+#     efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key, vigenere_alphabet))[:4] +
+#                           " & ")
+#     start = time()
+#     decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, decode[0],
+#                                                                 [3], [1.0], [upper_trigrams_distribution], steps)
+#     interval = time() - start
+#     efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key,
+#                                                                             vigenere_alphabet))[:4] +
+#                           " \\\\ \\hline \n")
+#     print(key_length)
+#
+#
+# efficiency_MCMC.write("\\end{tabular}\\end{center} \n")
+# efficiency_MCMC.close()
+#
+# random.seed(time())
+# plain_text = data_generator.get_string_cleared(data_generator.generate_random_excerpt("../data/ice_hockey.txt", 1000)).upper()
+# plain_text = re.sub('[^A-Z]+', '', plain_text)
+# plain_text = alphabetic.StrippedText(plain_text, vigenere_alphabet)
+#
+#
+# efficiency_MCMC = open("hockey_vigenere_stripped_MCMC.txt", "w")
+# efficiency_MCMC.write(str(len(plain_text))+"\n\n")
+#
+# efficiency_MCMC.write("\\begin{center}\\begin{tabular}{")
+# efficiency_MCMC.write("|c|c|c|c|c|c|c|} \n")
+# efficiency_MCMC.write("\\hline \\makecell{DŁUGOŚĆ\\\\KLUCZA} &  \\makecell{MONOGRAM\\\\CZAS} & "
+#                       "\\makecell{MONOGRAM\\\\SKUTECZNOŚĆ} & \\makecell{BIGRAM\\\\CZAS} &  "
+#                       "\\makecell{BIGRAM\\\\SKUTECZNOŚĆ} & \\makecell{TRIGRAM\\\\CZAS} & "
+#                       "\\makecell{TRIGRAM\\\\SKUTECZNOŚĆ}"
+#                      "\\\\ \hline \n")
+#
+# for key_length in range(40, 440, 40):
+#     encoding_key = data_generator.generate_random_vigenere_key_fixed(vigenere_alphabet, key_length)
+#     decoding_key = vigenere.reverse_key(encoding_key, vigenere_alphabet)
+#     encryption = vigenere.encrypt_decrypt_text(plain_text, encoding_key, vigenere_alphabet)
+#
+#     efficiency_MCMC.write(str(key_length) + " & ")
+#
+#     start = time()
+#     monogram_maximizer = vigenere_decoder.get_max_monogram_state(encryption, upper_monograms_distribution,
+#                                                                  key_length, vigenere_alphabet)
+#     interval = time() - start
+#     efficiency_MCMC.write(str(interval)[:4] + "s" + " & " +
+#                           str(consistency(monogram_maximizer[0], decoding_key, vigenere_alphabet))
+#                           + " & ")
+#     steps = int(10*len(vigenere.get_all_mono_keys(vigenere_alphabet)) * key_length)
+#     start = time()
+#     decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, monogram_maximizer[0],
+#                                                                 [2], [1.0], [upper_bigrams_distribution], steps)
+#     interval = time() - start
+#
+#     efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key, vigenere_alphabet))[:4] +
+#                           " & ")
+#     start = time()
+#     decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, decode[0],
+#                                                                 [3], [1.0], [upper_trigrams_distribution], steps)
+#     interval = time() - start
+#     efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key,
+#                                                                             vigenere_alphabet))[:4] +
+#                           " \\\\ \\hline \n")
+#     print(key_length)
+#
+#
+# efficiency_MCMC.write("\\end{tabular}\\end{center} \n")
+# efficiency_MCMC.close()
+#
+# random.seed(time())
+# plain_text = data_generator.get_string_cleared(data_generator.generate_random_excerpt("../data/1984.txt", 1000)).upper()
+# plain_text = re.sub('[^A-Z]+', '', plain_text)
+# plain_text = alphabetic.StrippedText(plain_text, vigenere_alphabet)
+#
+#
+# efficiency_MCMC = open("1984_vigenere_stripped_MCMC.txt", "w")
+# efficiency_MCMC.write(str(len(plain_text))+"\n\n")
+#
+# efficiency_MCMC.write("\\begin{center}\\begin{tabular}{")
+# efficiency_MCMC.write("|c|c|c|c|c|c|c|} \n")
+# efficiency_MCMC.write("\\hline \\makecell{DŁUGOŚĆ\\\\KLUCZA} &  \\makecell{MONOGRAM\\\\CZAS} & "
+#                       "\\makecell{MONOGRAM\\\\SKUTECZNOŚĆ} & \\makecell{BIGRAM\\\\CZAS} &  "
+#                       "\\makecell{BIGRAM\\\\SKUTECZNOŚĆ} & \\makecell{TRIGRAM\\\\CZAS} & "
+#                       "\\makecell{TRIGRAM\\\\SKUTECZNOŚĆ}"
+#                      "\\\\ \hline \n")
+#
+# for key_length in range(40, 440, 40):
+#     encoding_key = data_generator.generate_random_vigenere_key_fixed(vigenere_alphabet, key_length)
+#     decoding_key = vigenere.reverse_key(encoding_key, vigenere_alphabet)
+#     encryption = vigenere.encrypt_decrypt_text(plain_text, encoding_key, vigenere_alphabet)
+#
+#     efficiency_MCMC.write(str(key_length) + " & ")
+#
+#     start = time()
+#     monogram_maximizer = vigenere_decoder.get_max_monogram_state(encryption, upper_monograms_distribution,
+#                                                                  key_length, vigenere_alphabet)
+#     interval = time() - start
+#     efficiency_MCMC.write(str(interval)[:4] + "s" + " & " +
+#                           str(consistency(monogram_maximizer[0], decoding_key, vigenere_alphabet))
+#                           + " & ")
+#     steps = int(10*len(vigenere.get_all_mono_keys(vigenere_alphabet)) * key_length)
+#     start = time()
+#     decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, monogram_maximizer[0],
+#                                                                 [2], [1.0], [upper_bigrams_distribution], steps)
+#     interval = time() - start
+#
+#     efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key, vigenere_alphabet))[:4] +
+#                           " & ")
+#     start = time()
+#     decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, decode[0],
+#                                                                 [3], [1.0], [upper_trigrams_distribution], steps)
+#     interval = time() - start
+#     efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key,
+#                                                                             vigenere_alphabet))[:4] +
+#                           " \\\\ \\hline \n")
+#     print(key_length)
+#
+#
+# efficiency_MCMC.write("\\end{tabular}\\end{center} \n")
+# efficiency_MCMC.close()
+#
+# random.seed(time())
+# plain_text = data_generator.get_string_cleared(data_generator.generate_random_excerpt("../data/madame_bovary.txt", 1000)).upper()
+# plain_text = alphabetic.StrippedText(plain_text, vigenere_alphabet)
+#
+#
+# efficiency_MCMC = open("bovary_vigenere_classic_MCMC_const5.txt", "w")
+#
+# efficiency_MCMC.write("\\begin{center}\\begin{tabular}{")
+# efficiency_MCMC.write("|c|c|c|c|c|c|c|} \n")
+# efficiency_MCMC.write("\\hline \\makecell{DŁUGOŚĆ\\\\KLUCZA} &  \\makecell{MONOGRAM\\\\CZAS} & "
+#                       "\\makecell{MONOGRAM\\\\SKUTECZNOŚĆ} & \\makecell{BIGRAM\\\\CZAS} &  "
+#                       "\\makecell{BIGRAM\\\\SKUTECZNOŚĆ} & \\makecell{TRIGRAM\\\\CZAS} & "
+#                       "\\makecell{TRIGRAM\\\\SKUTECZNOŚĆ}"
+#                      "\\\\ \hline \n")
+#
+# for key_length in range(40, 440, 40):
+#     encoding_key = data_generator.generate_random_vigenere_key_fixed(vigenere_alphabet, key_length)
+#     decoding_key = vigenere.reverse_key(encoding_key, vigenere_alphabet)
+#     encryption = vigenere.encrypt_decrypt_text(plain_text, encoding_key, vigenere_alphabet)
+#
+#     efficiency_MCMC.write(str(key_length) + " & ")
+#
+#     start = time()
+#     monogram_maximizer = vigenere_decoder.get_max_monogram_state(encryption, upper_monograms_distribution,
+#                                                                  key_length, vigenere_alphabet)
+#     interval = time() - start
+#     efficiency_MCMC.write(str(interval)[:4] + "s" + " & " +
+#                           str(consistency(monogram_maximizer[0], decoding_key, vigenere_alphabet))
+#                           + " & ")
+#     steps = int(5*len(vigenere.get_all_mono_keys(vigenere_alphabet)) * key_length)
+#     start = time()
+#     decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, monogram_maximizer[0],
+#                                                                 [2], [1.0], [upper_bigrams_distribution], steps)
+#     interval = time() - start
+#
+#     efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key, vigenere_alphabet))[:4] +
+#                           " & ")
+#     start = time()
+#     decode = vigenere_decoder.break_fixed_length_code_with_mcmc(encryption, vigenere_alphabet, decode[0],
+#                                                                 [3], [1.0], [upper_trigrams_distribution], steps)
+#     interval = time() - start
+#     efficiency_MCMC.write(str(interval)[:4] + "s" + " & " + str(consistency(decode[0], decoding_key,
+#                                                                             vigenere_alphabet))[:4] +
+#                           " \\\\ \\hline \n")
+#     print(key_length)
+#
+#
+# efficiency_MCMC.write("\\end{tabular}\\end{center} \n")
+# efficiency_MCMC.close()
