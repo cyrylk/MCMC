@@ -138,7 +138,6 @@ alpha_qwerty_space = alphabetic.Alphabet('''abcdefghijklmnopqrstuvwxyzABCDEFGHIJ
 #     interval = time() - start
 #
 #     steps_when_achieved = decode[2] + ["-" for i in range(len(effective) - len(decode[2]))]
-#     print(effective, steps_when_achieved)
 #     convergence_pairs = {str(effective[i]): str(steps_when_achieved[i])
 #                          for i in range(len(effective))}
 #     efficiency_MCMC.write(str(interval)[:4] + "s" + " & \\makecell{" +
