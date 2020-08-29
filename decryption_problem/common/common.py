@@ -4,9 +4,6 @@ from math import exp
 def number_code_from_letter_code(letter_code, alphabet):
     return [alphabet.letters_to_position[letter] for letter in letter_code]
 
-def get_zero_frequency(frequencies):
-    return min(frequencies.values())/2
-
 
 def is_word_end(text, index):
     try:

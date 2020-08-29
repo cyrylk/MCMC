@@ -130,6 +130,7 @@ def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_li
     current_state_weight = start[1]
     max_weight = current_state_weight
     max_state = current_state
+    max_step = 0
     for step in range(steps):
         candidate = neighbours.get_candidate(current_state, alphabet)
         frequency_and_weight_change = generate_frequency_and_weight_change(current_state, candidate, n_list, coefs,
@@ -150,6 +151,7 @@ def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_li
             if current_state_weight > max_weight:
                 max_state = current_state[:]
                 max_weight = current_state_weight
+                max_step = step
                 if true_decrypting_code and \
                         common.consistency(current_state, true_decrypting_code, alphabet) >= \
                         consistency_thresholds[consistency_index]:
@@ -157,7 +159,7 @@ def break_fixed_length_code_with_mcmc(encryption, alphabet, starting_state, n_li
                     consistency_list.append(step)
                     if consistency_index >= len(consistency_thresholds):
                         return max_state, max_weight, consistency_list
-    return max_state, max_weight, consistency_list
+    return max_state, max_weight, consistency_list, max_step
 
 
 def break_bounded_length_code_with_mcmc(encryption, alphabet, n_list, coefs, distributions, steps, boundary,

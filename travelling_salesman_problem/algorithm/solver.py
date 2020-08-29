@@ -16,13 +16,13 @@ def annealing2(i, c):
 def solve_max_steps1(filename_or_distances, steps):
     try:
         distances = get_data_from_file(filename_or_distances)
-    except:
+    except TypeError:
         distances = filename_or_distances
     size = len(distances)
     current_state = get_random_starting_state(size)
     current_state_func = calculator.calculate_distance(current_state, distances)
-    best_state = current_state[:]
     best_func = current_state_func
+    print(best_func)
     best_step = 0
     for step in range(0, steps):
         swap = get_random_swap(size)
@@ -40,7 +40,7 @@ def solve_max_steps1(filename_or_distances, steps):
 def solve_convergence1(filename_or_distances, c):
     try:
         distances = get_data_from_file(filename_or_distances)
-    except:
+    except TypeError:
         distances = filename_or_distances
     size = len(distances)
     current_state = get_random_starting_state(size)
@@ -69,7 +69,7 @@ def solve_convergence1(filename_or_distances, c):
 def solve_max_steps2(filename_or_distances, steps):
     try:
         distances = get_data_from_file(filename_or_distances)
-    except:
+    except TypeError:
         distances = filename_or_distances
     size = len(distances)
     current_state = get_random_starting_state(size)
@@ -92,7 +92,7 @@ def solve_max_steps2(filename_or_distances, steps):
 def solve_convergence2(filename_or_distances, c):
     try:
         distances = get_data_from_file(filename_or_distances)
-    except:
+    except TypeError:
         distances = filename_or_distances
     size = len(distances)
     current_state = get_random_starting_state(size)

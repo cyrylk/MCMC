@@ -16,12 +16,12 @@ def create_stripped_encryption_decryption(text, encryption_decryption, alphabet)
     return result
 
 
-def encrypt_decrypt_text(text, shift_key, alphabet, coprimes):
-    key_length = len(shift_key)
+def encrypt_decrypt_text(text, affine_key, alphabet, coprimes):
+    key_length = len(affine_key)
     current_key_ptr = 0
     encrypted_decrypted = []
     for index in range(len(text)):
-        encrypted_decrypted.append(encrypt_decrypt_single(text[index], shift_key[current_key_ptr], alphabet, coprimes))
+        encrypted_decrypted.append(encrypt_decrypt_single(text[index], affine_key[current_key_ptr], alphabet, coprimes))
         current_key_ptr = (current_key_ptr + 1) % key_length
     if type(text) is alphabetic.StrippedText:
         return create_stripped_encryption_decryption(text, encrypted_decrypted, alphabet)
