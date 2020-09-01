@@ -22,7 +22,6 @@ def solve_max_steps1(filename_or_distances, steps):
     current_state = get_random_starting_state(size)
     current_state_func = calculator.calculate_distance(current_state, distances)
     best_func = current_state_func
-    print(best_func)
     best_step = 0
     for step in range(0, steps):
         swap = get_random_swap(size)
@@ -32,7 +31,7 @@ def solve_max_steps1(filename_or_distances, steps):
             calculator.update_state(current_state, swap)
             current_state_func -= update
             if current_state_func < best_func:
-                best_step = step
+                best_step = step+1
                 best_func = current_state_func
     return best_func, best_step
 
@@ -84,7 +83,7 @@ def solve_max_steps2(filename_or_distances, steps):
             calculator.update_state_reverse_swap(current_state, swap)
             current_state_func -= update
             if current_state_func < best_func:
-                best_step = step
+                best_step = step+1
                 best_func = current_state_func
     return best_func, best_step
 
@@ -101,7 +100,7 @@ def solve_convergence2(filename_or_distances, c):
     best_step = 0
     step = 0
     current_stay = 0
-    while current_stay < 0.9*size*log(size) and step < min(10*size*size, 10000000):
+    while current_stay < 0.9*size*log2(size) and step < min(10*size*size, 10000000):
         step += 1
         swap = get_random_swap(size)
         update = calculator.get_state_function_update2(distances, current_state, swap)
@@ -116,3 +115,20 @@ def solve_convergence2(filename_or_distances, c):
         else:
             current_stay += 1
     return best_func, best_step, current_state_func, step
+
+
+def solve3(filename_or_distances, max_steps):
+    try:
+        distances = get_data_from_file(filename_or_distances)
+    except TypeError:
+        distances = filename_or_distances
+    size = len(distances)
+    current_state = get_random_starting_state(size)
+    best_state_func = calculator.calculate_distance(current_state, distances)
+    for step in range(max_steps):
+        current_state = get_random_starting_state(size)
+        current_func = calculator.calculate_distance(current_state, distances)
+        if current_func < best_state_func:
+            best_state_func = current_func
+    return best_state_func
+

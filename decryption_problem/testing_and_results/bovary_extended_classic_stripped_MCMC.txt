@@ -1,4 +1,5 @@
-779\begin{center}\begin{tabular}{|c|c|c|c|c|c|c|} 
+779
+\begin{center}\begin{tabular}{|c|c|c|c|c|c|c|}
 \hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
 40 & 0.20s & 0.77 & 33.0s & 1.0 & 43.7s & 1.0 \\ \hline 
 80 & 0.21s & 0.4 & 34.3s & 0.55 & 45.0s & 0.63 \\ \hline 

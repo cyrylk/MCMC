@@ -1,0 +1,128 @@
+dsj1000
+K1
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
+1 & $=1$ & 9992464 & 83143199.26 & 4.45 & 10000000 & - & 66.9s \\ \hline 
+1 & $=\frac{3}{\log(n+2)}$ & 1909253 & 96085056.78 & 5.14 & 1918223 & 96085056.78 & 14.1s \\  \hline 
+2 & $=1$ & 9996183 & 81799224.84 & 4.38 & 10000000 & - & 67.2s \\ \hline 
+2 & $=\frac{3}{\log(n+2)}$ & 2140958 & 88704358.44 & 4.75 & 2149928 & 88704358.44 & 15.8s \\  \hline 
+\end{longtable}\end{small}\end{center}
+
+
+K2
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
+1 & $=1$ & 5640347 & 21233340.16 & 1.13 & 10000000 & - & 72.0s \\ \hline 
+1 & $=\frac{3}{\log(n+2)}$ & 5840704 & 20931010.98 & 1.12 & 10000000 & - & 77.8s \\  \hline 
+2 & $=1$ & 4621762 & 20966014.89 & 1.12 & 10000000 & - & 68.2s \\ \hline 
+2 & $=\frac{3}{\log(n+2)}$ & 4494771 & 20838187.42 & 1.11 & 10000000 & - & 82.2s \\  \hline 
+\end{longtable}\end{small}\end{center}
+
+
+COMPLETELY RANDOM
+527495696.622384
+
+54.15885497001
+
+
+
+att532
+K1
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
+1 & $=1$ & 2757277 & 74449.00 & 2.68 & 2830240 & - & 21.9s \\ \hline 
+1 & $=\frac{3}{\log(n+2)}$ & 544654 & 92308.00 & 3.33 & 548990 & 92308.00 & 4.74s \\  \hline 
+2 & $=1$ & 2826828 & 76772.00 & 2.77 & 2830240 & - & 21.7s \\ \hline 
+2 & $=\frac{3}{\log(n+2)}$ & 369958 & 85992.00 & 3.10 & 374294 & 85992.00 & 3.08s \\  \hline 
+\end{longtable}\end{small}\end{center}
+
+
+K2
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
+1 & $=1$ & 1504333 & 31667.00 & 1.14 & 2830240 & - & 19.0s \\ \hline 
+1 & $=\frac{3}{\log(n+2)}$ & 1289131 & 30830.00 & 1.11 & 2830240 & - & 21.2s \\  \hline 
+2 & $=1$ & 2473277 & 31255.00 & 1.12 & 2830240 & - & 18.9s \\ \hline 
+2 & $=\frac{3}{\log(n+2)}$ & 1048840 & 31809.00 & 1.14 & 2830240 & - & 21.2s \\  \hline 
+\end{longtable}\end{small}\end{center}
+
+
+COMPLETELY RANDOM
+469337.0
+
+17.557879332016455
+
+
+
+kroA150
+K1
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
+1 & $=1$ & 189050 & 51646.54 & 1.94 & 225000 & - & 1.50s \\ \hline 
+1 & $=\frac{3}{\log(n+2)}$ & 27091 & 63529.15 & 2.39 & 28067 & 63529.15 & 0.19s \\  \hline 
+2 & $=1$ & 97227 & 54829.62 & 2.06 & 225000 & - & 1.35s \\ \hline 
+2 & $=\frac{3}{\log(n+2)}$ & 43274 & 61089.11 & 2.30 & 44250 & 61089.11 & 0.30s \\  \hline 
+\end{longtable}\end{small}\end{center}
+
+
+K2
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
+1 & $=1$ & 103718 & 29423.10 & 1.10 & 225000 & - & 1.38s \\ \hline 
+1 & $=\frac{3}{\log(n+2)}$ & 75045 & 29385.76 & 1.10 & 225000 & - & 1.43s \\  \hline 
+2 & $=1$ & 62128 & 29904.73 & 1.12 & 225000 & - & 1.53s \\ \hline 
+2 & $=\frac{3}{\log(n+2)}$ & 60307 & 28546.87 & 1.07 & 225000 & - & 1.47s \\  \hline 
+\end{longtable}\end{small}\end{center}
+
+
+COMPLETELY RANDOM
+221376.09437556815
+
+2.7417840259731747
+
+
+
+berlin52
+K1
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
+1 & $=1$ & 19578 & 9188.86 & 1.21 & 27040 & - & 0.14s \\ \hline 
+1 & $=\frac{3}{\log(n+2)}$ & 3186 & 12714.79 & 1.68 & 3453 & 12714.79 & 0.01s \\  \hline 
+2 & $=1$ & 12248 & 10282.28 & 1.36 & 27040 & - & 0.14s \\ \hline 
+2 & $=\frac{3}{\log(n+2)}$ & 2652 & 11732.84 & 1.55 & 2919 & 11732.84 & 0.01s \\  \hline 
+\end{longtable}\end{small}\end{center}
+
+
+K2
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
+1 & $=1$ & 6790 & 8593.15 & 1.13 & 27040 & - & 0.13s \\ \hline 
+1 & $=\frac{3}{\log(n+2)}$ & 9062 & 8399.97 & 1.11 & 27040 & - & 0.15s \\  \hline 
+2 & $=1$ & 6879 & 7960.15 & 1.05 & 27040 & - & 0.14s \\ \hline 
+2 & $=\frac{3}{\log(n+2)}$ & 9440 & 8151.08 & 1.08 & 27040 & - & 0.15s \\  \hline 
+\end{longtable}\end{small}\end{center}
+
+
+COMPLETELY RANDOM
+23004.484640487175
+
+0.7142615880002268
+
+
+
