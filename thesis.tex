@@ -896,7 +896,7 @@ Przed ostatecznym dowodem CTG dla JŁM zostaje nam jeszcze jeden lemat.\\
 \\
 \begin{lemma}\label{lemma2.6.4}
 Dla $F_i$, $i=2,3,4...$ jest
-$$\mathbb{E}(F_i) = \mu = \sum\limits_{j \in S} \pi_j f(j).$$
+$$\mathbb{E}(F_i) = \frac{\mu}{\pi_s} = \frac{1}{\pi_s}\sum\limits_{j \in S} \pi_j f(j).$$
 \end{lemma}
 Dowód lematu przeprowadza się, korzystając z tożsamości:
 $$ \frac{1}{n} \sum\limits_{i=0}^{n-1} f(X_i) \overset{\text{p.n.}}{\to} \sum\limits_{j \in S} \pi_j f(j)$$
@@ -908,21 +908,20 @@ $$ \frac{\sum\limits_{i=0}^{n-1} f(X_i) - n\mu}{\sqrt{n}} \overset{d}{\to} N(0, 
 dla pewnego $\sigma$ oraz $\mu = \sum\limits_{j \in S} \pi_j f(j)$.
 \end{theorem}
 \begin{proof}
-Bez straty ogólności przyjmijmy $\mu = 0$. Ustalmy $m_n$ podobne jak przy dowodzie MPWL (choć nieco różniące się):
+Ustalmy $m_n$ podobne jak przy dowodzie MPWL (choć nieco różniące się):
 $m_n = \inf \{k: \sum\limits_{i=0}^k \gamma_i^{(s)} > n\}$. Dostajemy wtedy:
 \begin{align*}
-    \frac{\sum\limits_{i=0}^{n-1} f(X_i) - n\mu}{\sqrt{n}} &= \frac{\sum\limits_{i=0}^{n-1} f(X_i)}{\sqrt{n}} = \frac{\sum\limits_{i=1}^{m_n-1} F_i + G_{m_n-1, n+ 1 - m_n}}{\sqrt{n}}\\
+    \frac{\sum\limits_{i=0}^{n-1} f(X_i) - n\mu}{\sqrt{n}} &= \frac{\sum\limits_{i=1}^{m_n-1} F_i + G_{m_n-1, n+ 1 - m_n} - \frac{n}{m_n-2}(m_n - 2)\mu}{\sqrt{n}}\\
     &= \frac{F_1 + \sum\limits_{i=2}^{m_n-1} F_i + G_{m_n-1, n+1 - m_n}}{\sqrt{n}}\\\\
-    &= \frac{F_1 + G_{m_n-1, n + 1 - m_n}}{\sqrt{n}} + \sqrt{\frac{m_n -2}{n}} \cdot \frac{\sum\limits_{i=2}^{m_n-1} F_i }{\sqrt{m_n-2}}
+    &= \frac{F_1 + G_{m_n-1, n + 1 - m_n} }{\sqrt{n}} + \sqrt{\frac{m_n -2}{n}} \cdot \frac{\sum\limits_{i=2}^{m_n-1} F_i  - \frac{n}{m_n-2}(m_n - 2)\mu}{\sqrt{m_n-2}}
 \end{align*}
-Podobnie jak poprzednio, elementy $$\frac{\sum\limits_{i=2}^{m_n-1} F_i }{\sqrt{m_n-2}}$$
-pokrywają się z elementami: 
-$$\frac{\sum\limits_{i=2}^{n-1} F_i }{\sqrt{n-2}}$$
-prawie na pewno. Ze względu na lemat (\ref{lemma2.6.4}) oraz udowodnioną wcześniej skończoność wariancji $F_i$ dla drugiego przypadku zachodzi klasyczne CTG. Zatem skoro elementy ciągów się pokrywają i $m_n \to \infty$, to CTG zachodzi również dla pierwszego przypadku. Ponadto $F$ i $G$ są skończone prawie na pewno, więc pierwszy składnik dąży do 0 prawie na pewno (czyli również wg rozkładu). Na mocy faktów udowodnionych przy okazji MPWL: 
-$$ \lim\limits_{n \to \infty} \frac{m_n -2}{n} = \pi_j \quad\quad p.n.$$
-Zatem ostatecznie na mocy klasycznego CTG:
+Ze względu na własności $m_n$ udowodnione przy okazji MPWL, wiemy, że:
+$$ \lim\limits_{n \to \infty} \frac{m_n -2}{n} = \pi_s \quad\quad p.n.,$$
+więc z arytmetyki granic:
+$$\lim\limits_{n \to \infty} \frac{\sum\limits_{i=2}^{m_n-1} F_i  - \frac{n}{m_n-2}(m_n - 2)\mu}{\sqrt{m_n-2}} = \lim\limits_{n \to \infty} \frac{\sum\limits_{i=2}^{n-1} F_i - (n-2)\frac{\mu}{\pi_s}}{\sqrt{n-2}}$$
+prawie na pewno. Ze względu na lemat (\ref{lemma2.6.4}) oraz udowodnioną wcześniej skończoność wariancji $F_i$ dla prawej strony zachodzi klasyczne CTG. Tak więc również lewa strona zbiega wg rozkładu do tej samej zmiennej losowej. Ponadto $F$ i $G$ są skończone prawie na pewno, więc pierwszy składnik dąży do 0 prawie na pewno (czyli również wg rozkładu).
+Toteż ostatecznie na mocy klasycznego CTG:
 $$\frac{\sum\limits_{i=0}^{n-1} f(X_i) - n\mu}{\sqrt{n}} \overset{d}{\to} N(0, \pi_s Var[F_2])$$
-(jeśli $\mu \neq 0$ to przyjęcie $g = f - \mu$ doprowadza nas do tego samego pożądanego wyniku). 
 \end{proof}
 Zwróćmy uwagę, że skoro zachodzi zbieżność wg rozkładu, to również zbiega ciąg wariancji:
 $$Var_f^{(n)} = \frac{1}{n} Var\left(\sum\limits_{i=0}^{n-1} f(X_i)\right) \to \pi_s Var[F_2]),$$
@@ -950,8 +949,8 @@ Potrzebujemy więc dwóch rzeczy: konstrukcji JŁM o proporcjonalnym do zadanej 
 \begin{lemma}\label{lemma2.7.1}
 Jeśli dla jednorodnego łańcucha Markowa o macierzy przejść $\mathbb{P} = (p_{ij})_{i, j \in S}$ rozkład $\boldsymbol{\pi}$ spełnia $$\pi_j p_{ji} = \pi_i p_{ij},  \forall i,j \in S$$ to $\boldsymbol{\pi}$ jest rozkładem stacjonarnym.
 \end{lemma}
-\begin{proof} Dodając stronami  tożsamości dla wszystkich $i \in S$ dostajemy: 
-$$\pi_j \sum\limits_{i \in S} p_{ji} = \pi_j \cdot 1 = \pi_j = \sum\limits_{i \in S} \pi_i p_{ij}$$ 
+\begin{proof} Dodając stronami  tożsamości dla wszystkich $i \in S$ dostajemy:
+$$\pi_j \sum\limits_{i \in S} p_{ji} = \pi_j \cdot 1 = \pi_j = \sum\limits_{i \in S} \pi_i p_{ij}$$
 \end{proof}
 Równości z lematu noszą nazwę \textit{detailed balance equations} i jak się okazuje są warunkiem koniecznym i wystarczającym na tzw. \textit{odwracalność} stacjonarnego JŁM $\{X_n\}$, tzn. dla każdego $n = 0,1,2,...$ i stacjonarnego JŁM $\{X_n\}$ równość rozkładów:
 $$(X_0, X_1, ..., X_n) \overset{d}{=} (X_n, X_{n-1}, ..., X_0)$$
@@ -990,9 +989,9 @@ Co do idei podejście do rozwiązania problemów w tej pracy jest podobne, jedna
 \\\\
 \subsection{Metody MCMC. Dlaczego ich potrzebujemy?}
 Z pewnych powodów, w większości przypadków, do problemów dekodowania i komiwojażera, co szerzej omówimy w odpowiadających im rozdziałach – nie możemy (albo przynajmniej jest to pod pewnym względem nieoptymalne) użyć metod analitycznych, gradientowych ani numerycznych (albo funkcja, którą chcemy maksymalizować, ma \textit{dziwną} i przede wszystkim nieznaną strukturę, albo przestrzeń, po której się poruszamy jest \textit{dziwna}, albo to i to – co skreśla te metody). Pozostaje nam więc podejście probabilistyczne (może ono przyjąć różne formy), ze względu na specyfikę zwłaszcza problemu dekodowania obieramy podejście Monte Carlo, tj. chcemy losować kolejne propozycje rozwiązań wg rozkładu takiego, że im rozwiązanie (stan w $S$) lepsze, tym większe powinno mieć prawdopodobieństwo wystąpienia.
-Chcemy wprowadzić pewną funkcję stanu (oddającą rzeczywistość, czyli np. częstość występowania danej sekwencji znaków w języku angielskim), taką że im większa jej wartość, tym stan jest \textit{lepszy}. Chcemy znaleźć stan, przy którym ta funkcja przyjmuje maksimum. Toteż im większa wartość funkcji stanu, tym większe ma być prawdopodobieństwo wylosowania. Idea jest zatem taka, że losujemy kolejno zmienne wg rozkładu, którego nie znamy, jednak wiemy, że jest proporcjonalny do wartości funkcji, którą umiemy obliczać. Problem jest taki, że w przeciwieństwie do przykładu z figurą rozkład ten jest dużo bardziej skomplikowany, moc przestrzeni stanów jest bardzo duża – – wykładniczego rzędu – $O(n!)$ lub $O(k^n)$ ($k, n$ rzędu kilkudziesięciu do kilkuset). Ideą jest losować kolejno z tego rozkładu i jeśli wartość funkcji dla \textit{poprawnego} rozwiązania jest duża – powinniśmy w pewnym rozsądnym czasie to rozwiązanie uzyskać (albo rozwiązanie w jakiś sposób \textit{zbliżone} do poprawnego). 
+Chcemy wprowadzić pewną funkcję stanu (oddającą rzeczywistość, czyli np. częstość występowania danej sekwencji znaków w języku angielskim), taką że im większa jej wartość, tym stan jest \textit{lepszy}. Chcemy znaleźć stan, przy którym ta funkcja przyjmuje maksimum. Toteż im większa wartość funkcji stanu, tym większe ma być prawdopodobieństwo wylosowania. Idea jest zatem taka, że losujemy kolejno zmienne wg rozkładu, którego nie znamy, jednak wiemy, że jest proporcjonalny do wartości funkcji, którą umiemy obliczać. Problem jest taki, że w przeciwieństwie do przykładu z figurą rozkład ten jest dużo bardziej skomplikowany, moc przestrzeni stanów jest bardzo duża – – wykładniczego rzędu – $O(n!)$ lub $O(k^n)$ ($k, n$ rzędu kilkudziesięciu do kilkuset). Ideą jest losować kolejno z tego rozkładu i jeśli wartość funkcji dla \textit{poprawnego} rozwiązania jest duża – powinniśmy w pewnym rozsądnym czasie to rozwiązanie uzyskać (albo rozwiązanie w jakiś sposób \textit{zbliżone} do poprawnego).
 Gdybyśmy jednak to chcieli zrobić podobnie jak z figurą, musielibyśmy przechowywać pełną informację o rozkładzie (w przypadku figury, tą informacją jest jej równanie), w naszych przypadkach, jak już powiedzieliśmy, rozkłady są skomplikowane i skupione na dużej przestrzeni stanów. Tak że samo przechowywanie informacji o rozkładzie  wymagałoby przynajmniej wykładniczej pamięci (i wykładniczego czasu obliczeń). Stąd próby losowania zmiennej losowej o \textit{dokładnie} tym rozkładzie są skazane na niepowodzenie ze względu na ograniczenia komputera (na dużej przestrzeni stanów umiemy losować \textit{wprost} tylko z pewnych specyficznych i w pełni znanych rozkładów np. jednostajnego)\\
-W dowolnym rozwiązaniu opierającym się na podejściu probabilistycznym należy zatem w jakiś sposób zredukować problem do niższego wymiaru. Będziemy to robić, używając metod MCMC. Dzięki tym metodom jesteśmy w stanie świetnie przybliżać dany rozkład, mając jedynie pewien stan początkowy i informację o tym, jak obliczać pewną funkcję (w wielomianowym, ew. pseudowielomianowym czasie) proporcjonalną do rozkładu, nie mając pełnej informacji o rozkładzie (chociażby nie znając stałej normalizującej, której należy użyć, by z funkcji dostać rozkład). Jest to ogólna nazwa metod, które (a) tak jak w klasycznej metodzie Monte Carlo komputerowo symulują pewne zdarzenia losowe (tak jak losowanie punktu z kwadratu w przykładzie) (b) następnie używają tych zasymulowanych zdarzeń do generacji łańcucha Markowa o pożądanym rozkładzie stacjonarnym. Z wcześniej wyprowadzonych twierdzeń o zbieżności takiego łańcucha do rozkładu stacjonarnego, wiemy, że możemy badać własności związane z rozkładem stacjonarnym, badając zachowanie tego łańcucha. 
+W dowolnym rozwiązaniu opierającym się na podejściu probabilistycznym należy zatem w jakiś sposób zredukować problem do niższego wymiaru. Będziemy to robić, używając metod MCMC. Dzięki tym metodom jesteśmy w stanie świetnie przybliżać dany rozkład, mając jedynie pewien stan początkowy i informację o tym, jak obliczać pewną funkcję (w wielomianowym, ew. pseudowielomianowym czasie) proporcjonalną do rozkładu, nie mając pełnej informacji o rozkładzie (chociażby nie znając stałej normalizującej, której należy użyć, by z funkcji dostać rozkład). Jest to ogólna nazwa metod, które (a) tak jak w klasycznej metodzie Monte Carlo komputerowo symulują pewne zdarzenia losowe (tak jak losowanie punktu z kwadratu w przykładzie) (b) następnie używają tych zasymulowanych zdarzeń do generacji łańcucha Markowa o pożądanym rozkładzie stacjonarnym. Z wcześniej wyprowadzonych twierdzeń o zbieżności takiego łańcucha do rozkładu stacjonarnego, wiemy, że możemy badać własności związane z rozkładem stacjonarnym, badając zachowanie tego łańcucha.
 
 
 \subsection{Algorytm Metropolisa i algorytm Metropolisa-Hastingsa}
@@ -1088,7 +1087,7 @@ Ostatecznie więc jest to rodzina symetrycznych nieujemnych funkcji $s_{ij}$, ta
 
 Po pierwsze zauważmy, że $\alpha$ w wersji z algorytmu Metropolisa-Hastingsa należy do tej rodziny. Rzeczywiście, przyjmując dla $i,j \in S,\,\, i \neq j$, że $q_{ij} \neq 0$:
 $$s_{ij} = 1 + \min(t_{ij}, t_{ji}) = 1 + \min\left(\frac{\pi_i q_{ij}}{\pi_j q_{ji}}, \frac{\pi_j q_{ji}}{\pi_i q_{ij}}\right).$$
-i $s_{ij} = 1$ tam, gdzie $q_{ij} = 0$ 
+i $s_{ij} = 1$ tam, gdzie $q_{ij} = 0$
 mamy:
 $$\alpha_{ij} = 1.$$
 Dla $i \neq j \in S$, że $q_{ij} \neq 0$ przyjmijmy natomiast bez straty ogólności:
@@ -1097,7 +1096,7 @@ Wtedy:
 $$0 < \frac{\pi_i q_{ij}}{\pi_j q_{ji}} \leq 1 \leq \frac{\pi_j q_{ji}}{\pi_i q_{ij}}.$$
 Zatem:
 $$\alpha_{ij} = \frac{1 + \frac{\pi_i q_{ij}}{\pi_j q_{ji}}}{1 + \frac{\pi_i q_{ij}}{\pi_j q_{ji}}} = 1 = \min(1, \frac{\pi_j q_{ji}}{\pi_i q_{ij}})$$
-oraz 
+oraz
 $$\alpha_{ji} = \frac{1 + \frac{\pi_i q_{ij}}{\pi_j q_{ji}}}{1 + \frac{\pi_j q_{ji}}{\pi_i q_{ij}}} = \frac{\frac{\pi_i q_{ij} + \pi_j q_{ji}}{\pi_j q_{ji}}}{\frac{\pi_i q_{ij} + \pi_j q_{ji}}{\pi_i q_{ij}}} = \frac{\pi_i q_{ij}}{\pi_j q_{ji}} = \min(1, \frac{\pi_i q_{ij}}{\pi_j q_{ji}}).$$
 \\
 Oczywiście tak zdefiniowana $s_{ij}$ jest symetryczna, zatem algorytm Metropolisa-Hastingsa (i Metropolisa) należy do tej rodziny. Ponadto można pokazać, że dla wszystkich $\boldsymbol{\alpha}$ z tej rodziny, jeśli tylko dla wszystkich $i \neq j \in S$ zachodzi $0 < \alpha_{ij} \leq 1$, to wynikowa macierz $\mathbb{P}$ jest nieredukowalna i ma rozkład stacjonarny $\boldsymbol{\pi}$. Istotnie, ponieważ $p_{ij} = \alpha_{ij}q_{ij}$ są dodatnie, jeśli tylko $q_{ij}$ są dodatnie, więc nieredukowalność jest zachowana. Natomiast dzięki definicji $\boldsymbol{\alpha}$ jest spełnione \textit{detailed balance equation} (\ref{lemma2.7.1}): dla $i = j$, jest to oczywiste, jeśli $q_{ij} = 0$, po obu stronach równości dostajemy $0$, pozostaje więc przypadek, gdy $q_{ij} > 0$:
@@ -1132,10 +1131,10 @@ Mamy do dyspozycji tablicę alfabetów:\\
 \begin{longtable}
 {|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|}
 \hline
- & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N} & \textbf{O} & \textbf{P} & \textbf{Q} & \textbf{R} & \textbf{S} & \textbf{T} & \textbf{U} & \textbf{V} & 
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N} & \textbf{O} & \textbf{P} & \textbf{Q} & \textbf{R} & \textbf{S} & \textbf{T} & \textbf{U} & \textbf{V} &
 \textbf{W} & \textbf{X} & \textbf{Y} & \textbf{Z} \\
 \hline
-\textbf{A} & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V & 
+\textbf{A} & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O & P & Q & R & S & T & U & V &
 W & X & Y & Z
 \\
 \hline
@@ -1283,12 +1282,12 @@ Przejdźmy teraz do następnego rozdziału, w którym opiszę, jakimi będę si�
 
 \subsection{Przedstawienie analizowanych szyfrów}
 Chcemy użyć idei szyfru przesuwnego. Szyfr Cezara jest zbyt prosty, ale umiemy również w prosty sposób go skomplikować. Wystarczy zestawić kilka ($k$) szyfrów Cezara w następujący sposób:
-wróćmy do naszej wcześniejszej wiadomości: MONTE CARLO MARKOV CHAINZ (w zapisie liczbowym $\mathbb{Z}_{26}$: 
+wróćmy do naszej wcześniejszej wiadomości: MONTE CARLO MARKOV CHAINZ (w zapisie liczbowym $\mathbb{Z}_{26}$:
 $$[12, 14, 13, 19, 4, ' ', 2, 0, 17, 11, 14, ' ', 12, 0, 17, 10, 14, 21, ' ', 2, 7, 0, 8, 13, 25]$$
 Wcześniej szyfrowaliśmy ją za pomocą klucza 'B' (odpowiadającego 1 w $\mathbb{Z}_{26}^+$). Rozważmy teraz klucz 'BC' (czyli $[1, 2]$). Szyfrowanie przeprowadzamy w następujący sposób:
 \begin{center}\begin{tabular}{|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|}
     M & O & N & T & E & & C & A & R & L & O & & M & A & R & K & O & V & & C & H & A & I & N & Z \\
-    B & C & B & C & B & & C & B & C & B & C & & B & C & B & C & B & C & & B & C & B & C & B & C 
+    B & C & B & C & B & & C & B & C & B & C & & B & C & B & C & B & C & & B & C & B & C & B & C
 \end{tabular}
 \end{center}
 Tj. dla zerowej litery (numerujemy od zera, bo jest to wygodniejsze z punktu widzenia dodawania indeksów \textit{modulo}), czyli M, używamy klucza B (inaczej 1), dostając N, dla pierwszej litery, czyli O, używamy klucza C (2) i dostajemy Q itd., spacje jako znaki spoza alfabetu zostawiamy bez zmian. Ostatecznie szyfrogram ma postać:
@@ -1307,7 +1306,7 @@ Możemy zatem wprowadzić rodzinę szyfrów: szyfry z tej rodziny nazywamy szyfr
 Opiszmy teraz szyfr z autokluczem, ten, którego autorem istotnie jest Blaise de Vigenère. Zaczniemy od przykładu, znów chcemy zakodować wiadomość MONTE CARLO MARKOV CHAINZ. Szyfr Vigenère'a z autokluczem wyraża się podobnie jak zwykły szyfr Vigenère'a przez ciąg liter lub elementów $\mathbb{Z}_l$. Użyjmy znów klucza szyfrującego $(1, 2)$ (BC) i sporządźmy tabelę szyfrowania:
 \begin{center}\begin{tabular}{|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|}
     M & O & N & T & E & & C & A & R & L & O & & M & A & R & K & O & V & & C & H & A & I & N & Z \\
-    B & C & M & O & N & & T & E & C & A & R & & L & O & M & A & R & K & & O & V & C & H & A & I 
+    B & C & M & O & N & & T & E & C & A & R & & L & O & M & A & R & K & & O & V & C & H & A & I
 \end{tabular}
 \end{center}
 Gdzie szyfr możemy zapisać również jako:
@@ -1320,17 +1319,17 @@ Możemy sformalizować definicję szyfru (Vigenère'a) z autokluczem. \\\\
 \begin{defn}\label{defn4.2.2}
 \textit{Szyframi (Vigènere'a) z autokluczem} długości $n$ nad tekstem $\boldsymbol{T}$ o ciągu liter $\beta_0, ..., \beta_k$ nazywamy szyfry $\boldsymbol{\Sigma} = \sigma_0, \sigma_1, ..., \sigma_k$ wyznaczane przez ciągi funkcji szyfrujących Cezara $i_0, ..., i_{n-1}$ w następujący sposób:
 \begin{align*}
-\sigma_m = 
+\sigma_m =
 \begin{cases}
   i_m \text{ jeśli } m < n  \\
   \beta_{m-n} \text{ w przeciwnym wypadku},
 \end{cases}
 \end{align*}
-gdzie $\beta_{m-n}$ utożsamiamy z odpowiadającą tej literze funkcją Cezara (podobnie będziemy utożsamiać litery i funkcje Cezara z elementami grupy addytywnej $\mathbb{Z}_l$ wszędzie później, np. dla klasycznego alfabetu -A=A, bo $-0 \equiv 0 \mod 26$, natomiast -B=Z, bo $-1 \equiv 25 \mod 26$). 
+gdzie $\beta_{m-n}$ utożsamiamy z odpowiadającą tej literze funkcją Cezara (podobnie będziemy utożsamiać litery i funkcje Cezara z elementami grupy addytywnej $\mathbb{Z}_l$ wszędzie później, np. dla klasycznego alfabetu -A=A, bo $-0 \equiv 0 \mod 26$, natomiast -B=Z, bo $-1 \equiv 25 \mod 26$).
 \end{defn}\
 Istotną kwestią jest teraz to, że do dekodowania szyfrogramu (który powstał przy użyciu klucza kodującego wygenerowanego przy pomocy ciągu Cezara $i_0, ..., i_{n-1}$) o ciągu liter $\gamma_0, ... \gamma_k$ należy użyć klucza $\delta_0, ..., \delta_k$ postaci:
 \begin{align*}
-\delta_m = 
+\delta_m =
 \begin{cases}
   -i_m \text{ jeśli } m < n  \\
   -\delta_{m-n}(\gamma_{m-n}) \text{ w przeciwnym wypadku}.
@@ -1376,7 +1375,7 @@ $$ \argmax_{\boldsymbol{k}} w_n(\boldsymbol{k}) $$
 dla różnych $n$. Jeśli znajdziemy taki klucz, który maksymalizuje $n$-gramową wagę, odszyfrowany tekst powinien być blisko języka angielskiego, a skoro tak, to jest to prawdopodobnie poprawnie odszyfrowana wiadomość.\\
 Koncepcja tu zaprezentowana słusznie może kojarzyć się z wnioskowaniem Bayesowskim, bo jest jego wersją. Rozkładem \textit{a priori} jest tutaj jednostajny rozkład na zbiorze kluczy z danej rodziny (nic nam nie wiadomo o tym, żeby np. przesunięcia o parzystą liczbę były stosowane częściej). Doświadczeniem czy obserwacją jest dany nam szyfrogram. Nieznanym parametrem jest klucz $\boldsymbol{k}$, natomiast waga – po znormalizowaniu – jest naszym rozkładem \textit{a posteriori}.\\
 W następnym podrozdziale opowiem, jak poszukiwać klucza maksymalizującego prawdopodobieństwo \textit{a posteriori}, co będzie rozwiązaniem problemu dekodowania.\\\\
-Istotna uwaga: ze względów numerycznych dużo lepszą opcją jest badanie $$\log w_n(\boldsymbol{k}) = \sum\limits_{i=0}^{|T|-n} \log f_n(d_i^{\boldsymbol{k}}(n)) = \sum\limits_{g \in G}{r_D(g)} f_n(g).$$ 
+Istotna uwaga: ze względów numerycznych dużo lepszą opcją jest badanie $$\log w_n(\boldsymbol{k}) = \sum\limits_{i=0}^{|T|-n} \log f_n(d_i^{\boldsymbol{k}}(n)) = \sum\limits_{g \in G}{r_D(g)} f_n(g).$$
 Oczywiście jako że logarytm jest funkcją rosnącą, to $\argmax$ będzie w obu przypadkach ten sam, więc są to opcje równoważne. Toteż lepiej jest przechowywać słownik logarytmów częstości – (1) dodawanie jest tańsze, (2) operujemy na mniejszych wartościach, więc są też mniejsze błędy związane z arytmetyką zmiennoprzecinkową i nie ma ryzyka przekroczenia maksymalnej/minimalnej reprezentowalnej przez liczby zmiennoprzecinkowe wartości.\\\\
 Ostatecznie więc zakładamy, że przechowujemy taki (wyliczony ze zbioru uczącego bądź w jakiś sposób dany z góry) słownik log-częstości (dla $n$-gramów) i mamy do niego dostęp w czasie stałym.
 \\
@@ -1496,7 +1495,7 @@ $\log w_2^{(i,i+1)}(k_i, k_{i+1}) := 0$\;
 \For{$j = i, i+n_k, ... < m$}{
 \quad \tcc{możliwe, że używając wcześniej odkodowanych elementów na pozycjach $\equiv i$, $\equiv i+1$}
 \quad   odkoduj($e_j$)\;
-\quad   odkoduj($e_{j+1})$\; 
+\quad   odkoduj($e_{j+1})$\;
  \quad  b = bigramy\_po\_odkodowaniu($j,j+1$)\;
 \quad    sum\_log = suma log-wag(b)\;
 \quad    $\log w_2^{(i,i+1)}(k_i, k_{i+1})$ += sum\_log\;
@@ -1526,7 +1525,7 @@ Skupiamy się nadal na metodach $n$-gramowych. Dzięki wyprowadzeniu algorytmów
 Przeprowadziłem testy dla szyfru Vigenère'a z klasycznym 26-znakowym alfabetem, żeby to zobrazować, a także, żeby dać pewne wyobrażenie o granicach skuteczności metod bigramowych i monogramowych. Testy będą przeprowadzane przy użyciu alfabetu Vigenère'a (duże angielskie litery), szyfrując i deszyfrując, zachowujemy niekodowane znaki – jak w klasycznym opisie szyfru Vigenère'a, który znajdziemy na polskiej Wikipedii \cite{vigenere}. Jak już wcześniej wspomniałem, słownik log-częstości uni- (mono-) bi- (di-) i trigramów wygenerowałem na podstawie trzech książek (w języku angielskim): \textit{Duma i uprzedzenie} Jane Austen, \textit{Oliver Twist} Karola Dickensa oraz \textit{Wojna i pokój} Lwa Tołstoja pobranych z \cite{gutenberg}. Klucze szyfrujące generujemy losowo (przy użyciu metod z biblioteki \textit{random} w Pythonie – po prostu losowo generujemy każdą kolejną współrzędną). Test przeprowadzamy na losowo wybranych fragmentach długości $m$ książki \textit{Rok 1984} George'a Orwella (gdzie oczywiście małe litery są wcześniej skonwertowane na wielkie, podobnie tekst jest wcześniej oczyszczony z podwójnych spacji itd. – mogłaby to być równie dobrze część działania algorytmu dekodującego, nie robi to różnicy). Skuteczność dekodowania jest dana stosunkiem zaszyfrowanych pól, które udało się odszyfrować poprawnie do wszystkich zaszyfrowanych pól. I tak dostajemy skuteczności:\\
 \begin{center}\begin{longtable}{
 |c|c|c|}
-\hline   &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\ 
+\hline   &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
 \hline  DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
 1
  & 1.0 & 1.0\\ \hline
@@ -1573,7 +1572,7 @@ Przeprowadziłem testy dla szyfru Vigenère'a z klasycznym 26-znakowym alfabetem
 
 \begin{center}\begin{longtable}{
 |c|c|c|}
-\hline   &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\ 
+\hline   &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
 \hline DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
 1
  & 1.0 & 1.0\\ \hline
@@ -1630,7 +1629,7 @@ Przeprowadziłem testy dla szyfru Vigenère'a z klasycznym 26-znakowym alfabetem
 
 \begin{center}\begin{longtable}{
 |c|c|c|}
-\hline   &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\ 
+\hline   &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
 \hline  DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
 1
  & 1.0 & 1.0\\ \hline
@@ -1735,7 +1734,7 @@ Przeprowadziłem testy dla szyfru Vigenère'a z klasycznym 26-znakowym alfabetem
 
 \begin{center}\begin{longtable}{
 |c|c|c|}
-\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\ 
+\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
 \hline DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
 20
  & 0.95 & 1.0\\ \hline
@@ -1772,7 +1771,7 @@ Przeprowadziłem testy dla szyfru Vigenère'a z klasycznym 26-znakowym alfabetem
 
 \begin{center}\begin{longtable}{
 |c|c|c|}
-\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\ 
+\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
 \hline DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
 20
  & 1.0 & 1.0\\ \hline
@@ -1837,7 +1836,7 @@ Przeprowadziłem testy dla szyfru Vigenère'a z klasycznym 26-znakowym alfabetem
 
 \begin{center}\begin{longtable}{
 |c|c|c|}
-\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\ 
+\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
 \hline DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
 50
  & 1.0 & 1.0\\ \hline
@@ -1884,7 +1883,7 @@ Przeprowadziłem testy dla szyfru Vigenère'a z klasycznym 26-znakowym alfabetem
 
 \begin{center}\begin{longtable}{
 |c|c|c|}
-\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\ 
+\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
 \hline DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
 500
  & 0.92 & 1.0\\ \hline
@@ -1919,28 +1918,28 @@ Przypomnijmy sobie, że szyfr (kodujący czy dekodujący) Vigenère'a i opisanyc
 
 \begin{figure}[!h]
 \centering
-\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt
 
 \begin{tikzpicture}[x=0.7pt,y=0.7pt,yscale=-0.9,xscale=0.9]
 %uncomment if require: \path (0,534); %set diagram left start at 0, and has height of 534
 
-%Flowchart: Connector [id:dp7835083832008738] 
+%Flowchart: Connector [id:dp7835083832008738]
 \draw   (329,265.75) .. controls (329,253.46) and (339.3,243.5) .. (352,243.5) .. controls (364.7,243.5) and (375,253.46) .. (375,265.75) .. controls (375,278.04) and (364.7,288) .. (352,288) .. controls (339.3,288) and (329,278.04) .. (329,265.75) -- cycle ;
-%Straight Lines [id:da9297247359786245] 
+%Straight Lines [id:da9297247359786245]
 \draw    (225,191.5) -- (332,255.5) ;
-%Straight Lines [id:da05933674554300983] 
+%Straight Lines [id:da05933674554300983]
 \draw    (466,190.5) -- (374,255.5) ;
-%Straight Lines [id:da018381659989454402] 
+%Straight Lines [id:da018381659989454402]
 \draw    (352,288) -- (241,379.5) ;
-%Straight Lines [id:da39990929363034433] 
+%Straight Lines [id:da39990929363034433]
 \draw    (371,279.5) -- (479,355.5) ;
-%Shape: Circle [id:dp31181695161976863] 
+%Shape: Circle [id:dp31181695161976863]
 \draw   (205.5,379.5) .. controls (205.5,369.7) and (213.45,361.75) .. (223.25,361.75) .. controls (233.05,361.75) and (241,369.7) .. (241,379.5) .. controls (241,389.3) and (233.05,397.25) .. (223.25,397.25) .. controls (213.45,397.25) and (205.5,389.3) .. (205.5,379.5) -- cycle ;
-%Flowchart: Connector [id:dp3620572510382867] 
+%Flowchart: Connector [id:dp3620572510382867]
 \draw   (182,191.5) .. controls (182,179.97) and (191.63,170.63) .. (203.5,170.63) .. controls (215.37,170.63) and (225,179.97) .. (225,191.5) .. controls (225,203.03) and (215.37,212.38) .. (203.5,212.38) .. controls (191.63,212.38) and (182,203.03) .. (182,191.5) -- cycle ;
-%Flowchart: Connector [id:dp7681292142849967] 
+%Flowchart: Connector [id:dp7681292142849967]
 \draw   (479,355.5) .. controls (479,342.8) and (489.07,332.5) .. (501.5,332.5) .. controls (513.93,332.5) and (524,342.8) .. (524,355.5) .. controls (524,368.2) and (513.93,378.5) .. (501.5,378.5) .. controls (489.07,378.5) and (479,368.2) .. (479,355.5) -- cycle ;
-%Shape: Circle [id:dp08521014029208818] 
+%Shape: Circle [id:dp08521014029208818]
 \draw   (466,190.5) .. controls (466,176.69) and (477.19,165.5) .. (491,165.5) .. controls (504.81,165.5) and (516,176.69) .. (516,190.5) .. controls (516,204.31) and (504.81,215.5) .. (491,215.5) .. controls (477.19,215.5) and (466,204.31) .. (466,190.5) -- cycle ;
 
 % Text Node
@@ -2002,9 +2001,9 @@ maks\_log\_waga := aktualna\_log\_waga := log\_waga(stan\_aktualny)\;
 \Return{maks\_stan}
 \end{algorithm}
 Omówmy teraz nieco dokładniej implementację poszczególnych kroków. By móc skutecznie i szybko obliczać \textit{log-wagi} ($n$-gramowe) trzymamy w słowniku $n$-gramów aktualne informacje: ile razy $n$-gram wystąpił w danym odszyfrowaniu (za pomocą aktualnego stanu/klucza). Korzystając z tego i drugiego wzoru na \textit{wagę}
-$$\log w_n(\boldsymbol{k}) =\sum\limits_{g \in G}  {r_D(g)} f_n(g),$$ 
-jesteśmy w stanie najpierw obliczyć log-wagę stanu początkowego ($r$ bierzemy z właśnie wspomnianego słownika). Następnie, gdy dostajemy kandydata generujemy różnicę log-wag. Korzystamy tu z faktu, że zmieniamy klucz tylko na jednej współrzędnej, więc zgodnie z rozważaniami z poprzedniego rozdziału możemy brać pod uwagę tylko te $n$-gramy, które mają w sobie pozycję równą \textit{modulo} zmienianej pozycji klucza. (w każdej grupie kolejnych $n_k$ znaków będzie tylko 1 taki monogram, 2 takie bigramy itd.). Na ich podstawie wyliczamy słownik różnic wystąpień $n$-gramów między aktualnym odszyfrowaniem, a potencjalnym odszyfrowaniem przez kandydata. Na tej podstawie możemy wyliczyć też różnicę wag, jeśli liczba wystąpień $g$ zmieniła się o $c(g)$, różnica log-wag będzie wynosić 
-$$\Delta_{w_n}(\boldsymbol{i},\boldsymbol{j}) = \sum\limits_{\text{zmienione } g}  {c(g)} f_n(g).$$ 
+$$\log w_n(\boldsymbol{k}) =\sum\limits_{g \in G}  {r_D(g)} f_n(g),$$
+jesteśmy w stanie najpierw obliczyć log-wagę stanu początkowego ($r$ bierzemy z właśnie wspomnianego słownika). Następnie, gdy dostajemy kandydata generujemy różnicę log-wag. Korzystamy tu z faktu, że zmieniamy klucz tylko na jednej współrzędnej, więc zgodnie z rozważaniami z poprzedniego rozdziału możemy brać pod uwagę tylko te $n$-gramy, które mają w sobie pozycję równą \textit{modulo} zmienianej pozycji klucza. (w każdej grupie kolejnych $n_k$ znaków będzie tylko 1 taki monogram, 2 takie bigramy itd.). Na ich podstawie wyliczamy słownik różnic wystąpień $n$-gramów między aktualnym odszyfrowaniem, a potencjalnym odszyfrowaniem przez kandydata. Na tej podstawie możemy wyliczyć też różnicę wag, jeśli liczba wystąpień $g$ zmieniła się o $c(g)$, różnica log-wag będzie wynosić
+$$\Delta_{w_n}(\boldsymbol{i},\boldsymbol{j}) = \sum\limits_{\text{zmienione } g}  {c(g)} f_n(g).$$
 Iterujemy oczywiście tylko po \textit{gramach} powiązanych ze zmienioną współrzędną kandydata (tylko te należą do słownika różnic wystąpień). Następnie, zgodnie z algorytmem Metropolisa (po nałożeniu na obie strony nierówności logarytmu) przechodzimy z aktualnego stanu (klucza) $i$ do stanu kandydata $j$, jeśli:
 $$\Delta_{w_n}(\boldsymbol{i},\boldsymbol{j}) =\log(w_n(\boldsymbol{j})) - \log(w_n(\boldsymbol{i})) > log(U),$$ gdzie $U$ jest oczywiście z rozkładu jednostajnego na $[0,1]$. Update'ujemy aktualną wagę i aktualny słownik (dodajemy do wpisów słownika wystąpień wpisy ze słownika różnic). Jeśli nowa waga jest większa niż największa dotychczas, aktualizujemy maksymalną wagę i maksymalizujący klucz. Na koniec zwracamy klucz dekodujący, który zmaksymalizował wartość wagi w trakcie wędrówki łańcucha – widać, że nie bierzemy tu ostatniego odwiedzonego \textit{stanu}, tylko najlepszy – pomysł przejęty od \cite{Chen&Rosenthal}. W ten sposób nie musimy się martwić o kryteria zbieżności – arbitralnie po prostu ustalamy liczbę kroków i mamy nadzieję, że w tym czasie łańcuch odwiedzi maksymalizujący klucz. Chcę ocenić liczbę kroków, która jest niezbędna do tych odwiedzin (mając pewne heurystyczne podejrzenia). Dalej w praktyce można wprowadzać 'zbieżnościowe' rozwiązania, aby łańcuch nie kontynuował niepotrzebnie swojego przebiegu, takie jak procent odrzucanych kandydatów (gdy kandydaci są odrzucani bardzo często albo wręcz cały czas, to znak, że łańcuch osiągnął stabilność – trafił na maksimum lokalne (możemy mieć nadzieję, że również globalne)), można też oczekiwać pewnej wartości funkcji stanu (log-wagi), która nas satysfakcjonuje itd. W wersji zbieżnościowej po spełnieniu pewnego kryterium 'zatrzymujemy łańcuch'. W części pracy dotyczącej dekodowania jednak nie będę się na tym skupiał. Nieco więcej będzie wspomniane na ten temat przy okazji problemu komiwojażera – stosowane tam symulowane wyżarzanie jest metodą, która bardziej skupia się na zbieżności (sama z siebie ogranicza też 'ruchliwość' łańcucha wraz z upływem czasu).
 \\
@@ -2041,9 +2040,9 @@ dostajemy więc ostatecznie $d(t) \leq \frac{O(n_k \log n_k)}{t}$. Widać więc,
 \end{align*}
 Tak więc $d(n_k \log n_k + cn_k) < e^{-c}$, jak również ostatecznie $t_{mix}(e^{-c}) < n_k \log n_k + cn_k = O(n_k \log n_k)$. \\
 Był to oczywiście nie do końca nasz łańcuch – nasz jest bardziej skomplikowany, ale czyniąc pewne heurystyczne założenia możemy coś oszacować i w tym przypadku. Załóżmy więc, że nasz poszukiwany stan \textit{dominuje} łańcuch po współrzędnych w tym sensie, że współrzędne które pokrywają się ze współrzędnymi poszukiwanego stanu: jeśli zostaną podstawione jako kandydat są przyjmowane, natomiast łańcuch 'bardzo niechętnie' je opuszcza. Tak że bardzo długo tam pozostaje, gdy raz już trafi. Efekt ten na początku może być niewidoczny, ale powinien się kaskadowo potęgować wraz z kolejnymi trafieniami. Wtedy możemy przeprowadzić to samo rozumowanie co dla łańcucha 'jednostajnego' tylko pamiętając, że trafienie na współrzędnej musi być trafieniem we współrzędną taką jak w kluczu maksymalnym, stąd prawdopodobieństwa są przemnażane przez $\frac{1}{s}$, więc wynikowa wartość oczekiwana rozkładów geometrycznych będzie przemnożona przez s, tak samo $s$ trzeba wziąć pod uwagę przy późniejszym szacowaniu. Ostatecznie dostajemy przy oznaczeniu $\tau_{max}$ dla pierwszego osiągnięcia stanu maksymalnego więc (heurystycznie) zbieżność:
-$$P(\tau_{max} > C(n_k \log n_k + cn_k)) < e^{-\frac{c}{s}},$$ 
+$$P(\tau_{max} > C(n_k \log n_k + cn_k)) < e^{-\frac{c}{s}},$$
 czyli
-$$P(\tau_{max} > Cs(n_k \log n_k + cn_k) < e^{-c},$$ 
+$$P(\tau_{max} > Cs(n_k \log n_k + cn_k) < e^{-c},$$
 gdzie $C$ jest pewną stałą związaną zwłaszcza z początkowym 'błądzeniem' łańcucha – zanim zaczął trafiać w kolejne współrzędne – a także z potencjalnymi maksimami lokalnymi. Jeśliby ta heurystyczna analiza miała pokrycie w rzeczywistości (chociaż w jakiejś części) – pamiętając, że dla tekstu o długości $m$ i klucza długości $n_k$ krok iteracyjny miał złożoność $O(m/n_k)$ – dostaniemy zbieżność (gdzie kolejne przedziały czasowe tej długości niosą wykładniczą poprawę zbieżności) w $O(m \cdot s \cdot \log n_k)$ co oczywiście jest znaczącą poprawą w porównaniu z algorytmem deterministycznym.
 \\
 
@@ -2067,14 +2066,14 @@ W praktyce rozumowanie to jest poprawne przede wszystkim dla nie największych d
     mark=square,
     ]
     coordinates {
-    (1, 135) (2, 16) (3, 42) (4, 204) (5, 67) (6, 140) (7, 627) (8, 635) (9, 683) (10, 469) (11, 804) (12, 1509) (13, 783) (14, 911) (15, 1023) (16, 1480) (17, 1948) (18, 2169) (19, 1329) (20, 2625) (21, 1785) (22, 2523) (23, 4768) (24, 2323) (25, 2184) (26, 1466) (27, 2629) (28, 2354) (29, 1497) (30, 2204) (31, 2235) (32, 2533) (33, 2941) (34, 3178) (35, 2993) (36, 3606) (37, 6767) (38, 5175) (39, 4418) (40, 4728) (41, 4192) (42, 2642) (43, 8477) (44, 6848) (45, 3604) (46, 6819) (47, 4693) (48, 4754) (49, 5866) (50, 6026) (51, 5701) (52, 7503) (53, 5102) (54, 7701) (55, 5861) (56, 4420) (57, 16487) (58, 6761) (59, 12837) (60, 6796) (61, 8214) (62, 5994) (63, 17214) (64, 9483) (65, 7816) (66, 9436) (67, 10497) (68, 7939) (69, 10253) (70, 11112) (71, 5981) (72, 11508) (73, 12783) (74, 12060) (75, 10048) (76, 7650) (77, 9359) (78, 11814) (79, 12467) (80, 18817) (81, 11959) (82, 12799) (83, 14380) (84, 10311) (85, 135424) (86, 138694) (87, 44171) (88, 20389) (89, 59446) (90, 15503) (91, 25131) (92, 14485) (93, 81254) (94, 177803) (95, 231658) (96, 21215) (97, 12953) (98, 63555) (99, 211481) (100, 105375) (101, 241215) (102, 30553) (103, 104504) (104, 29000) (105, 14627) (106, 85312) (107, 113495) (108, 45122) (109, 19571) (110, 205643) (111, 68655) (112, 45222) (113, 44002) (114, 278663) (115, 171528) (116, 259513) (117, 262773) (118, 61996) (119, 143975) (120, 225501) (121, 164090) (122, 112045) (123, 122108) (124, 239557) (125, 273757) (126, 284169) (127, 115257) (128, 25979) (129, 270550) (130, 317606) (131, 246928) (132, 232893) (133, 308497) (134, 328601) (135, 201080) (136, 321008) (137, 230258) (138, 293757) (139, 135364) (140, 191016) (141, 236578) (142, 222711) (143, 353673) (144, 280538) (145, 152322) (146, 320267) (147, 353298) (148, 325716) (149, 358680) (150, 374654) (151, 353810) (152, 192364) (153, 311447) (154, 352835) (155, 311187) (156, 268636) (157, 326091) (158, 233002) (159, 297450) (160, 389625) (161, 187899) (162, 403188) (163, 391906) (164, 400320) (165, 298209) (166, 347986) (167, 264813) (168, 205733) (169, 417159) (170, 403814) (171, 304742) (172, 413696) (173, 338968) (174, 408721) (175, 425401) (176, 275870) (177, 315507) (178, 355745) (179, 440572) (180, 344229) (181, 452278) (182, 423283) (183, 366139) (184, 154521) (185, 412309) (186, 284331) (187, 445911) (188, 463560) (189, 434541) (190, 316051) (191, 381473) (192, 416296) (193, 242460) (194, 230870) (195, 476962) (196, 334245) (197, 264337) (198, 434713) (199, 380771) (200, 344997) (201, 384313) (202, 424901) (203, 507457) (204, 313620) (205, 328163) (206, 475433) (207, 505995) (208, 496834) (209, 488838) (210, 460570) (211, 215505) (212, 365568) (213, 497616) (214, 296602) (215, 230910) (216, 496432) (217, 457166) (218, 481000) (219, 397256) (220, 520344) (221, 538977) (222, 504143) (223, 454866) (224, 551743) (225, 471676) (226, 481372) (227, 457373) (228, 490449) (229, 450232) (230, 407929) (231, 449144) (232, 543138) (233, 569625) (234, 545426) (235, 526253) (236, 438510) (237, 567654) (238, 462163) (239, 381561) (240, 547147) (241, 435689) (242, 278611) (243, 414129) (244, 510575) (245, 589938) (246, 598787) (247, 483312) (248, 581632) (249, 364825) (250, 334656) (251, 555947) (252, 573628) (253, 545836) (254, 586544) (255, 624245) (256, 502077) (257, 301171) (258, 636988) (259, 290082) (260, 443742) (261, 481039) (262, 651411) (263, 615477) (264, 471984) (265, 418095) (266, 585709) (267, 342895) (268, 412886) (269, 190619) (270, 564121) (271, 670504) (272, 563488) (273, 373671) (274, 529779) (275, 586217) (276, 522926) (277, 648546) (278, 465350) (279, 460796) (280, 526328) (281, 566985) (282, 340156) (283, 517493) (284, 644042) (285, 243879) (286, 697562) (287, 481992) (288, 718795) (289, 482622) (290, 511702) (291, 410123) (292, 608503) (293, 602762) (294, 551193) (295, 537951) (296, 526661) (297, 578077) (298, 627559) (299, 710082) (300, 709674) (301, 580483) (302, 490589) (303, 589687) (304, 437918) (305, 664713) (306, 436419) (307, 702581) (308, 603330) (309, 697341) (310, 694426) (311, 362794) (312, 526195) (313, 740115) (314, 491118) (315, 762295) (316, 608153) (317, 474248) (318, 497456) (319, 250110) (320, 463276) (321, 777097) (322, 470609) (323, 600819) (324, 730304) (325, 683202) (326, 695124) (327, 605955) (328, 373141) (329, 477482) (330, 767355) (331, 552072) (332, 603037) (333, 753896) (334, 451632) (335, 758707) (336, 185657) (337, 681744) (338, 551309) (339, 683533) (340, 804722) (341, 739035) (342, 769736) (343, 605555) (344, 317290) (345, 553276) (346, 728252) (347, 819759) (348, 294349) (349, 424356) (350, 509156) (351, 580437) (352, 578646) (353, 657577) (354, 733452) (355, 433984) (356, 485020) (357, 521289) (358, 746860) (359, 620164) (360, 359793) (361, 581789) (362, 516415) (363, 310278) (364, 868015) (365, 682340) (366, 476637) (367, 713833) (368, 878236) (369, 618959) (370, 405753) (371, 807217) (372, 748221) (373, 531374) (374, 885171) (375, 750211) (376, 868955) (377, 632696) (378, 867856) (379, 617863) (380, 316239) (381, 705441) (382, 947768) (383, 455842) (384, 797624) (385, 265576) (386, 294355) (387, 849103) (388, 647945) (389, 803633) (390, 762400) (391, 720417) (392, 483968) (393, 390464) (394, 742981) (395, 860166) (396, 812166) (397, 382712) (398, 728274) (399, 918313) (400, 823793) 
+    (1, 135) (2, 16) (3, 42) (4, 204) (5, 67) (6, 140) (7, 627) (8, 635) (9, 683) (10, 469) (11, 804) (12, 1509) (13, 783) (14, 911) (15, 1023) (16, 1480) (17, 1948) (18, 2169) (19, 1329) (20, 2625) (21, 1785) (22, 2523) (23, 4768) (24, 2323) (25, 2184) (26, 1466) (27, 2629) (28, 2354) (29, 1497) (30, 2204) (31, 2235) (32, 2533) (33, 2941) (34, 3178) (35, 2993) (36, 3606) (37, 6767) (38, 5175) (39, 4418) (40, 4728) (41, 4192) (42, 2642) (43, 8477) (44, 6848) (45, 3604) (46, 6819) (47, 4693) (48, 4754) (49, 5866) (50, 6026) (51, 5701) (52, 7503) (53, 5102) (54, 7701) (55, 5861) (56, 4420) (57, 16487) (58, 6761) (59, 12837) (60, 6796) (61, 8214) (62, 5994) (63, 17214) (64, 9483) (65, 7816) (66, 9436) (67, 10497) (68, 7939) (69, 10253) (70, 11112) (71, 5981) (72, 11508) (73, 12783) (74, 12060) (75, 10048) (76, 7650) (77, 9359) (78, 11814) (79, 12467) (80, 18817) (81, 11959) (82, 12799) (83, 14380) (84, 10311) (85, 135424) (86, 138694) (87, 44171) (88, 20389) (89, 59446) (90, 15503) (91, 25131) (92, 14485) (93, 81254) (94, 177803) (95, 231658) (96, 21215) (97, 12953) (98, 63555) (99, 211481) (100, 105375) (101, 241215) (102, 30553) (103, 104504) (104, 29000) (105, 14627) (106, 85312) (107, 113495) (108, 45122) (109, 19571) (110, 205643) (111, 68655) (112, 45222) (113, 44002) (114, 278663) (115, 171528) (116, 259513) (117, 262773) (118, 61996) (119, 143975) (120, 225501) (121, 164090) (122, 112045) (123, 122108) (124, 239557) (125, 273757) (126, 284169) (127, 115257) (128, 25979) (129, 270550) (130, 317606) (131, 246928) (132, 232893) (133, 308497) (134, 328601) (135, 201080) (136, 321008) (137, 230258) (138, 293757) (139, 135364) (140, 191016) (141, 236578) (142, 222711) (143, 353673) (144, 280538) (145, 152322) (146, 320267) (147, 353298) (148, 325716) (149, 358680) (150, 374654) (151, 353810) (152, 192364) (153, 311447) (154, 352835) (155, 311187) (156, 268636) (157, 326091) (158, 233002) (159, 297450) (160, 389625) (161, 187899) (162, 403188) (163, 391906) (164, 400320) (165, 298209) (166, 347986) (167, 264813) (168, 205733) (169, 417159) (170, 403814) (171, 304742) (172, 413696) (173, 338968) (174, 408721) (175, 425401) (176, 275870) (177, 315507) (178, 355745) (179, 440572) (180, 344229) (181, 452278) (182, 423283) (183, 366139) (184, 154521) (185, 412309) (186, 284331) (187, 445911) (188, 463560) (189, 434541) (190, 316051) (191, 381473) (192, 416296) (193, 242460) (194, 230870) (195, 476962) (196, 334245) (197, 264337) (198, 434713) (199, 380771) (200, 344997) (201, 384313) (202, 424901) (203, 507457) (204, 313620) (205, 328163) (206, 475433) (207, 505995) (208, 496834) (209, 488838) (210, 460570) (211, 215505) (212, 365568) (213, 497616) (214, 296602) (215, 230910) (216, 496432) (217, 457166) (218, 481000) (219, 397256) (220, 520344) (221, 538977) (222, 504143) (223, 454866) (224, 551743) (225, 471676) (226, 481372) (227, 457373) (228, 490449) (229, 450232) (230, 407929) (231, 449144) (232, 543138) (233, 569625) (234, 545426) (235, 526253) (236, 438510) (237, 567654) (238, 462163) (239, 381561) (240, 547147) (241, 435689) (242, 278611) (243, 414129) (244, 510575) (245, 589938) (246, 598787) (247, 483312) (248, 581632) (249, 364825) (250, 334656) (251, 555947) (252, 573628) (253, 545836) (254, 586544) (255, 624245) (256, 502077) (257, 301171) (258, 636988) (259, 290082) (260, 443742) (261, 481039) (262, 651411) (263, 615477) (264, 471984) (265, 418095) (266, 585709) (267, 342895) (268, 412886) (269, 190619) (270, 564121) (271, 670504) (272, 563488) (273, 373671) (274, 529779) (275, 586217) (276, 522926) (277, 648546) (278, 465350) (279, 460796) (280, 526328) (281, 566985) (282, 340156) (283, 517493) (284, 644042) (285, 243879) (286, 697562) (287, 481992) (288, 718795) (289, 482622) (290, 511702) (291, 410123) (292, 608503) (293, 602762) (294, 551193) (295, 537951) (296, 526661) (297, 578077) (298, 627559) (299, 710082) (300, 709674) (301, 580483) (302, 490589) (303, 589687) (304, 437918) (305, 664713) (306, 436419) (307, 702581) (308, 603330) (309, 697341) (310, 694426) (311, 362794) (312, 526195) (313, 740115) (314, 491118) (315, 762295) (316, 608153) (317, 474248) (318, 497456) (319, 250110) (320, 463276) (321, 777097) (322, 470609) (323, 600819) (324, 730304) (325, 683202) (326, 695124) (327, 605955) (328, 373141) (329, 477482) (330, 767355) (331, 552072) (332, 603037) (333, 753896) (334, 451632) (335, 758707) (336, 185657) (337, 681744) (338, 551309) (339, 683533) (340, 804722) (341, 739035) (342, 769736) (343, 605555) (344, 317290) (345, 553276) (346, 728252) (347, 819759) (348, 294349) (349, 424356) (350, 509156) (351, 580437) (352, 578646) (353, 657577) (354, 733452) (355, 433984) (356, 485020) (357, 521289) (358, 746860) (359, 620164) (360, 359793) (361, 581789) (362, 516415) (363, 310278) (364, 868015) (365, 682340) (366, 476637) (367, 713833) (368, 878236) (369, 618959) (370, 405753) (371, 807217) (372, 748221) (373, 531374) (374, 885171) (375, 750211) (376, 868955) (377, 632696) (378, 867856) (379, 617863) (380, 316239) (381, 705441) (382, 947768) (383, 455842) (384, 797624) (385, 265576) (386, 294355) (387, 849103) (388, 647945) (389, 803633) (390, 762400) (391, 720417) (392, 483968) (393, 390464) (394, 742981) (395, 860166) (396, 812166) (397, 382712) (398, 728274) (399, 918313) (400, 823793)
 
     };
-    
+
 \end{axis}
 \end{tikzpicture}
 \end{center}
-Widać, że wykres wyraźnie dzieli się na dwie części – do ok. 85. kroku wygląda stabilnie (niewielka wariancja) i płasko, po tym czasie wariancja się znacząco zwiększa, a liczba kroków, po której został osiągnięty \textit{najlepszy stan} gwałtownie rośnie – następnie (choć z dużo większą wariancją) rośnie \textit{mniej więcej} liniowo. Zobaczmy osobno część wykresu, która rozpoczyna się od długości 85. 
+Widać, że wykres wyraźnie dzieli się na dwie części – do ok. 85. kroku wygląda stabilnie (niewielka wariancja) i płasko, po tym czasie wariancja się znacząco zwiększa, a liczba kroków, po której został osiągnięty \textit{najlepszy stan} gwałtownie rośnie – następnie (choć z dużo większą wariancją) rośnie \textit{mniej więcej} liniowo. Zobaczmy osobno część wykresu, która rozpoczyna się od długości 85.
 \begin{center}
 \begin{tikzpicture}
 \begin{axis}[
@@ -2094,12 +2093,12 @@ Widać, że wykres wyraźnie dzieli się na dwie części – do ok. 85. kroku w
     mark=square,
     ]
     coordinates {
-    (85, 135424) (86, 138694) (87, 44171) (88, 20389) (89, 59446) 
+    (85, 135424) (86, 138694) (87, 44171) (88, 20389) (89, 59446)
     (90, 15503) (91, 25131) (92, 14485) (93, 81254) (94, 177803) (95, 231658) (96, 21215) (97, 12953) (98, 63555) (99, 211481)
-    (100, 105375) (101, 241215) (102, 30553) (103, 104504) (104, 29000) (105, 14627) (106, 85312) (107, 113495) (108, 45122) (109, 19571) (110, 205643) (111, 68655) (112, 45222) (113, 44002) (114, 278663) (115, 171528) (116, 259513) (117, 262773) (118, 61996) (119, 143975) (120, 225501) (121, 164090) (122, 112045) (123, 122108) (124, 239557) (125, 273757) (126, 284169) (127, 115257) (128, 25979) (129, 270550) (130, 317606) (131, 246928) (132, 232893) (133, 308497) (134, 328601) (135, 201080) (136, 321008) (137, 230258) (138, 293757) (139, 135364) (140, 191016) (141, 236578) (142, 222711) (143, 353673) (144, 280538) (145, 152322) (146, 320267) (147, 353298) (148, 325716) (149, 358680) (150, 374654) (151, 353810) (152, 192364) (153, 311447) (154, 352835) (155, 311187) (156, 268636) (157, 326091) (158, 233002) (159, 297450) (160, 389625) (161, 187899) (162, 403188) (163, 391906) (164, 400320) (165, 298209) (166, 347986) (167, 264813) (168, 205733) (169, 417159) (170, 403814) (171, 304742) (172, 413696) (173, 338968) (174, 408721) (175, 425401) (176, 275870) (177, 315507) (178, 355745) (179, 440572) (180, 344229) (181, 452278) (182, 423283) (183, 366139) (184, 154521) (185, 412309) (186, 284331) (187, 445911) (188, 463560) (189, 434541) (190, 316051) (191, 381473) (192, 416296) (193, 242460) (194, 230870) (195, 476962) (196, 334245) (197, 264337) (198, 434713) (199, 380771) (200, 344997) (201, 384313) (202, 424901) (203, 507457) (204, 313620) (205, 328163) (206, 475433) (207, 505995) (208, 496834) (209, 488838) (210, 460570) (211, 215505) (212, 365568) (213, 497616) (214, 296602) (215, 230910) (216, 496432) (217, 457166) (218, 481000) (219, 397256) (220, 520344) (221, 538977) (222, 504143) (223, 454866) (224, 551743) (225, 471676) (226, 481372) (227, 457373) (228, 490449) (229, 450232) (230, 407929) (231, 449144) (232, 543138) (233, 569625) (234, 545426) (235, 526253) (236, 438510) (237, 567654) (238, 462163) (239, 381561) (240, 547147) (241, 435689) (242, 278611) (243, 414129) (244, 510575) (245, 589938) (246, 598787) (247, 483312) (248, 581632) (249, 364825) (250, 334656) (251, 555947) (252, 573628) (253, 545836) (254, 586544) (255, 624245) (256, 502077) (257, 301171) (258, 636988) (259, 290082) (260, 443742) (261, 481039) (262, 651411) (263, 615477) (264, 471984) (265, 418095) (266, 585709) (267, 342895) (268, 412886) (269, 190619) (270, 564121) (271, 670504) (272, 563488) (273, 373671) (274, 529779) (275, 586217) (276, 522926) (277, 648546) (278, 465350) (279, 460796) (280, 526328) (281, 566985) (282, 340156) (283, 517493) (284, 644042) (285, 243879) (286, 697562) (287, 481992) (288, 718795) (289, 482622) (290, 511702) (291, 410123) (292, 608503) (293, 602762) (294, 551193) (295, 537951) (296, 526661) (297, 578077) (298, 627559) (299, 710082) (300, 709674) (301, 580483) (302, 490589) (303, 589687) (304, 437918) (305, 664713) (306, 436419) (307, 702581) (308, 603330) (309, 697341) (310, 694426) (311, 362794) (312, 526195) (313, 740115) (314, 491118) (315, 762295) (316, 608153) (317, 474248) (318, 497456) (319, 250110) (320, 463276) (321, 777097) (322, 470609) (323, 600819) (324, 730304) (325, 683202) (326, 695124) (327, 605955) (328, 373141) (329, 477482) (330, 767355) (331, 552072) (332, 603037) (333, 753896) (334, 451632) (335, 758707) (336, 185657) (337, 681744) (338, 551309) (339, 683533) (340, 804722) (341, 739035) (342, 769736) (343, 605555) (344, 317290) (345, 553276) (346, 728252) (347, 819759) (348, 294349) (349, 424356) (350, 509156) (351, 580437) (352, 578646) (353, 657577) (354, 733452) (355, 433984) (356, 485020) (357, 521289) (358, 746860) (359, 620164) (360, 359793) (361, 581789) (362, 516415) (363, 310278) (364, 868015) (365, 682340) (366, 476637) (367, 713833) (368, 878236) (369, 618959) (370, 405753) (371, 807217) (372, 748221) (373, 531374) (374, 885171) (375, 750211) (376, 868955) (377, 632696) (378, 867856) (379, 617863) (380, 316239) (381, 705441) (382, 947768) (383, 455842) (384, 797624) (385, 265576) (386, 294355) (387, 849103) (388, 647945) (389, 803633) (390, 762400) (391, 720417) (392, 483968) (393, 390464) (394, 742981) (395, 860166) (396, 812166) (397, 382712) (398, 728274) (399, 918313) (400, 823793) 
+    (100, 105375) (101, 241215) (102, 30553) (103, 104504) (104, 29000) (105, 14627) (106, 85312) (107, 113495) (108, 45122) (109, 19571) (110, 205643) (111, 68655) (112, 45222) (113, 44002) (114, 278663) (115, 171528) (116, 259513) (117, 262773) (118, 61996) (119, 143975) (120, 225501) (121, 164090) (122, 112045) (123, 122108) (124, 239557) (125, 273757) (126, 284169) (127, 115257) (128, 25979) (129, 270550) (130, 317606) (131, 246928) (132, 232893) (133, 308497) (134, 328601) (135, 201080) (136, 321008) (137, 230258) (138, 293757) (139, 135364) (140, 191016) (141, 236578) (142, 222711) (143, 353673) (144, 280538) (145, 152322) (146, 320267) (147, 353298) (148, 325716) (149, 358680) (150, 374654) (151, 353810) (152, 192364) (153, 311447) (154, 352835) (155, 311187) (156, 268636) (157, 326091) (158, 233002) (159, 297450) (160, 389625) (161, 187899) (162, 403188) (163, 391906) (164, 400320) (165, 298209) (166, 347986) (167, 264813) (168, 205733) (169, 417159) (170, 403814) (171, 304742) (172, 413696) (173, 338968) (174, 408721) (175, 425401) (176, 275870) (177, 315507) (178, 355745) (179, 440572) (180, 344229) (181, 452278) (182, 423283) (183, 366139) (184, 154521) (185, 412309) (186, 284331) (187, 445911) (188, 463560) (189, 434541) (190, 316051) (191, 381473) (192, 416296) (193, 242460) (194, 230870) (195, 476962) (196, 334245) (197, 264337) (198, 434713) (199, 380771) (200, 344997) (201, 384313) (202, 424901) (203, 507457) (204, 313620) (205, 328163) (206, 475433) (207, 505995) (208, 496834) (209, 488838) (210, 460570) (211, 215505) (212, 365568) (213, 497616) (214, 296602) (215, 230910) (216, 496432) (217, 457166) (218, 481000) (219, 397256) (220, 520344) (221, 538977) (222, 504143) (223, 454866) (224, 551743) (225, 471676) (226, 481372) (227, 457373) (228, 490449) (229, 450232) (230, 407929) (231, 449144) (232, 543138) (233, 569625) (234, 545426) (235, 526253) (236, 438510) (237, 567654) (238, 462163) (239, 381561) (240, 547147) (241, 435689) (242, 278611) (243, 414129) (244, 510575) (245, 589938) (246, 598787) (247, 483312) (248, 581632) (249, 364825) (250, 334656) (251, 555947) (252, 573628) (253, 545836) (254, 586544) (255, 624245) (256, 502077) (257, 301171) (258, 636988) (259, 290082) (260, 443742) (261, 481039) (262, 651411) (263, 615477) (264, 471984) (265, 418095) (266, 585709) (267, 342895) (268, 412886) (269, 190619) (270, 564121) (271, 670504) (272, 563488) (273, 373671) (274, 529779) (275, 586217) (276, 522926) (277, 648546) (278, 465350) (279, 460796) (280, 526328) (281, 566985) (282, 340156) (283, 517493) (284, 644042) (285, 243879) (286, 697562) (287, 481992) (288, 718795) (289, 482622) (290, 511702) (291, 410123) (292, 608503) (293, 602762) (294, 551193) (295, 537951) (296, 526661) (297, 578077) (298, 627559) (299, 710082) (300, 709674) (301, 580483) (302, 490589) (303, 589687) (304, 437918) (305, 664713) (306, 436419) (307, 702581) (308, 603330) (309, 697341) (310, 694426) (311, 362794) (312, 526195) (313, 740115) (314, 491118) (315, 762295) (316, 608153) (317, 474248) (318, 497456) (319, 250110) (320, 463276) (321, 777097) (322, 470609) (323, 600819) (324, 730304) (325, 683202) (326, 695124) (327, 605955) (328, 373141) (329, 477482) (330, 767355) (331, 552072) (332, 603037) (333, 753896) (334, 451632) (335, 758707) (336, 185657) (337, 681744) (338, 551309) (339, 683533) (340, 804722) (341, 739035) (342, 769736) (343, 605555) (344, 317290) (345, 553276) (346, 728252) (347, 819759) (348, 294349) (349, 424356) (350, 509156) (351, 580437) (352, 578646) (353, 657577) (354, 733452) (355, 433984) (356, 485020) (357, 521289) (358, 746860) (359, 620164) (360, 359793) (361, 581789) (362, 516415) (363, 310278) (364, 868015) (365, 682340) (366, 476637) (367, 713833) (368, 878236) (369, 618959) (370, 405753) (371, 807217) (372, 748221) (373, 531374) (374, 885171) (375, 750211) (376, 868955) (377, 632696) (378, 867856) (379, 617863) (380, 316239) (381, 705441) (382, 947768) (383, 455842) (384, 797624) (385, 265576) (386, 294355) (387, 849103) (388, 647945) (389, 803633) (390, 762400) (391, 720417) (392, 483968) (393, 390464) (394, 742981) (395, 860166) (396, 812166) (397, 382712) (398, 728274) (399, 918313) (400, 823793)
 
     };
-    
+
 \end{axis}
 \end{tikzpicture}
 \end{center}
@@ -2123,18 +2122,18 @@ Zaprezentuję jeszcze wykres, w którym widać, na ile jest związany najlepszy 
     mark=square,
     ]
     coordinates {
-    (1, 135) (2, 16) (3, 42) (4, 204) (5, 67) (6, 140) (7, 627) (8, 635) (9, 683) (10, 469) (11, 804) (12, 1509) (13, 783) (14, 911) (15, 1023) (16, 1480) (17, 1948) (18, 2169) (19, 1329) (20, 2625) (21, 1785) (22, 2523) (23, 4768) (24, 2323) (25, 2184) (26, 1466) (27, 2629) (28, 2354) (29, 1497) (30, 2204) (31, 2235) (32, 2533) (33, 2941) (34, 3178) (35, 2993) (36, 3606) (37, 6767) (38, 5175) (39, 4418) (40, 4728) (41, 4192) (42, 2642) (43, 8477) (44, 6848) (45, 3604) (46, 6819) (47, 4693) (48, 4754) (49, 5866) (50, 6026) (51, 5701) (52, 7503) (53, 5102) (54, 7701) (55, 5861) (56, 4420) (57, 16487) (58, 6761) (59, 12837) (60, 6796) (61, 8214) (62, 5994) (63, 17214) (64, 9483) (65, 7816) (66, 9436) (67, 10497) (68, 7939) (69, 10253) (70, 11112) (71, 5981) (72, 11508) (73, 12783) (74, 12060) (75, 10048) (76, 7650) (77, 9359) (78, 11814) (79, 12467) (80, 18817) (81, 11959) (82, 12799) (83, 14380) (84, 10311) 
+    (1, 135) (2, 16) (3, 42) (4, 204) (5, 67) (6, 140) (7, 627) (8, 635) (9, 683) (10, 469) (11, 804) (12, 1509) (13, 783) (14, 911) (15, 1023) (16, 1480) (17, 1948) (18, 2169) (19, 1329) (20, 2625) (21, 1785) (22, 2523) (23, 4768) (24, 2323) (25, 2184) (26, 1466) (27, 2629) (28, 2354) (29, 1497) (30, 2204) (31, 2235) (32, 2533) (33, 2941) (34, 3178) (35, 2993) (36, 3606) (37, 6767) (38, 5175) (39, 4418) (40, 4728) (41, 4192) (42, 2642) (43, 8477) (44, 6848) (45, 3604) (46, 6819) (47, 4693) (48, 4754) (49, 5866) (50, 6026) (51, 5701) (52, 7503) (53, 5102) (54, 7701) (55, 5861) (56, 4420) (57, 16487) (58, 6761) (59, 12837) (60, 6796) (61, 8214) (62, 5994) (63, 17214) (64, 9483) (65, 7816) (66, 9436) (67, 10497) (68, 7939) (69, 10253) (70, 11112) (71, 5981) (72, 11508) (73, 12783) (74, 12060) (75, 10048) (76, 7650) (77, 9359) (78, 11814) (79, 12467) (80, 18817) (81, 11959) (82, 12799) (83, 14380) (84, 10311)
 
     };
 \addplot [
-    domain=1:84, 
-    samples=84, 
+    domain=1:84,
+    samples=84,
     color=red,
 ]
 {1.5*26*x*ln(x)};
 \addlegendentry{krok($n_k$)}
 \addlegendentry{$1.5\cdot 26n_k\log(n_k)$}
-    
+
 \end{axis}
 \end{tikzpicture}
 \end{center}
@@ -2164,7 +2163,7 @@ Na koniec zobaczmy, jak się miały uzyskane wyniki do rzeczywistego klucza deko
 
 
     };
-    
+
 \end{axis}
 \end{tikzpicture}
 \end{center}
@@ -2190,7 +2189,7 @@ Wracając do tematu nieznanej długości klucza,  biorąc pod uwagę heurystyczn
 Na początek tego rozdziału uwaga. Do tej pory w pracy czyniliśmy założenie, że dekodowane teksty są rzeczywiście fragmentami tekstów w poprawnym języku angielskim. Oznaczało to, że poza – możliwe – pierwszym i ostatnim, wszystkie \textit{słowa} pochodzą z języka angielskiego, więc i wszystkie \textit{n-gramy} są dla tego języka naturalne. Czasami przy badaniu szyfru Vigenère'a, usuwa się po prostu niekodowane znaki w oryginalnym tekście, m.in. spacje, co powoduje, że zamiast wielu, dostajemy jedno bardzo długie słowo, w którym występują 'oszukane' $n$-gramy, jeśli $n>1$. 'Oszukane', ponieważ są to $n$-gramy powstałe z liter wziętych z końcówki jednego słowa i początku następnego, czyli 'niesłownikowe'. Można się zastanawiać, co stanie się, jeśli do odszyfrowania dostaniemy taki właśnie tekst, na ile to osłabi moc metody bigramowej (na metodę monogramową, łatwo zauważyć, nie ma to żadnego wpływu). Jak się okazuje, pewien wpływ jest, jednak nie jest on wielki – metoda bigramowa cały czas ma dużą moc. Poniżej przykładowe wyniki dla losowo wygenerowanego 814-znakowego tekstu (powstałego przez usunięcie niekodowanych znaków z losowego 1000-znakowego tekstu) z  \textit{Roku 1984}. Użyłem tych samych co wcześniej słowników log-częstości wygenerowanych na bazie \textit{Wojny i pokoju}, \textit{Dumy i uprzedzenia} oraz \textit{Olivera Twista} z projektu Gutenberg \cite{gutenberg}:\\
 \begin{center}\begin{longtable}{
 |c|c|c|}
-\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\ 
+\hline &\multicolumn{2}{|c|}{SKUTECZNOŚĆ} \\
 \hline DŁUGOŚĆ KLUCZA & METODA MONOGRAMOWA & METODA BIGRAMOWA\\ \hline
 20
  & 1.0 & 1.0\\ \hline
@@ -2238,13 +2237,13 @@ Widać więc pewne niewielkie osłabienie metody bigramowej, jednak cały czas z
 Następnym pobocznym punktem, który chciałbym poruszyć, jest możliwość, że szyfr nakładamy również na znaki niekodowane. O co chodzi? Przypomnijmy sobie przykład pokazujący ideę Vigenère'a z jednego z poprzednich podrozdziałów, kodowanie następowało wg poniższej tabeli:
 \begin{center}\begin{tabular}{|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|}
     M & O & N & T & E & & C & A & R & L & O & & M & A & R & K & O & V & & C & H & A & I & N & Z \\
-    B & C & B & C & B & & C & B & C & B & C & & B & C & B & C & B & C & & B & C & B & C & B & C 
+    B & C & B & C & B & & C & B & C & B & C & & B & C & B & C & B & C & & B & C & B & C & B & C
 \end{tabular}
 \end{center}
 Ale można by też podkładać znaki szyfru pod niekodowane spacje (oczywiście wynikiem kodowania nadal byłaby spacja):\\
 \begin{center}\begin{tabular}{|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|p{1.5mm}|}
     M & O & N & T & E & & C & A & R & L & O & & M & A & R & K & O & V & & C & H & A & I & N & Z \\
-    B & C & B & C & B & C & B & C & B & C & B & C & B & C & B & C & B & C & B & C & B & C & B & C & B 
+    B & C & B & C & B & C & B & C & B & C & B & C & B & C & B & C & B & C & B & C & B & C & B & C & B
 \end{tabular}
 \end{center}
 Algorytm zadziała wtedy praktycznie bez różnicy, jeśli tylko zmodyfikujemy go tak, by brał pod uwagę inny sposób podkładania szyfru. Gdy nie wiemy, który sposób został użyty należy przeprowadzić dwie próby ataku (na opcję nr 1 i opcję nr 2). Stąd też szybkość ma znaczenie: im szybciej jesteśmy w stanie przeprowadzić próbę ataku na pojedynczy typ szyfru, tym więcej typów będziemy w stanie zaatakować w rozsądnym czasie.\\\\
@@ -2260,362 +2259,362 @@ Będziemy pracować głównie na trzech alfabetach:\\
 Przypomnijmy jeszcze raz, że używamy słowników log-częstości wygenerowanych na bazie \textit{Wojny i pokoju}, \textit{Dumy i uprzedzenia} oraz \textit{Olivera Twista}. Słowniki są różne dla dwu alfabetów, dla (1) bowiem oczywiście małe litery musiały być przekształcone na wielkie.\\\\
 Zanim przejdziemy do głównego tematu pracy: łamania długich w stosunku do długości zaszyfrowanego tekstu szyfrów, zaprezentuję pokrótce wyniki dekodowania szyfrogramu (zakodowanego zwykłym szyfrem Vigenère'a, gdzie długość klucza jest nieznana, ale mniejsza od $q=1/4$ długości tekstu). Losujemy 1000-znakowy fragment z \textit{Roku 1984} (oczywiście z małymi literami przekształconymi na wielkie) i szyfrujemy kolejno kluczami o długości 10, 50, 100, 150, 200, 240. Następnie próbujemy rozszyfrować tekst zgodnie z opisaną w poprzednim podrozdziale metodą, nie znając długości klucza. Przyjmujemy próg $p=1/8$, dla którego wstępne sprawdzenie wykonujemy jedynie algorytmem monogramowym, dalej $q=1/4$, a następnie, że wykonujemy $\frac{1}{4} \cdot 26\cdot (n_k \log n_k + 1\cdot n_k)$ kroków w celu wstępnego sprawdzenia dla długości większych niż 1/8, czyli przyjmujemy $C=\frac{1}{4}$ i $c=1$ dla oznaczeń z rozdziału o \textit{mixing time}, natomiast $s=26$ – jest to długość angielskiego alfabetu. Jeśli udało się uzyskać wstępnym dekodowaniem powyżej 50\% słów istniejących w języku angielskim (jako zbioru słów angielskich używamy \cite{scrabble}), uznajemy, że odgadliśmy poprawną długość i nie sprawdzamy większych. Nominalnie, odgadnięta długość klucza jest tą, dla której używając metod $n$-gramowych dostaliśmy najwięcej poprawnych słów. Następnie dla wybranej długości dodatkowo ulepszamy rozwiązanie metodą bigramową MCMC dla $\frac{1}{4} \cdot 26\cdot (n_k \log n_k + 10\cdot n_k)$ kroków, czyli przyjmujemy $c=10$, $C=\frac{1}{4}$. Ogólnie złożoność $O(s \cdot m \cdot \log^2 q)$ dostaje stałą $\frac{1}{4}$ (dodatkowe wywołanie algorytmu bigramowego nie zwiększa istotnie złożoności czasowej).  Otrzymujemy wyniki jak poniżej:
 \begin{center}\begin{longtable}{|c|c|c|}
-\hline RZECZYWISTA DŁUGOŚĆ & ODGADNIĘTA DŁUGOŚĆ & SKUTECZNOŚĆ\\ \hline 
-10 & 10 & 1.0\\ \hline 
-50 & 50 & 1.0\\ \hline 
-100 & 100 & 0.95\\ \hline 
-150 & 150 & 0.86\\ \hline 
-200 & 200 & 0.65\\ \hline 
-240 & 240 & 0.5\\ \hline 
+\hline RZECZYWISTA DŁUGOŚĆ & ODGADNIĘTA DŁUGOŚĆ & SKUTECZNOŚĆ\\ \hline
+10 & 10 & 1.0\\ \hline
+50 & 50 & 1.0\\ \hline
+100 & 100 & 0.95\\ \hline
+150 & 150 & 0.86\\ \hline
+200 & 200 & 0.65\\ \hline
+240 & 240 & 0.5\\ \hline
 \caption{1000-znakowy fragment \textit{Roku 1984}, klasyczny szyfr Vigenère'a z 26-znakowym alfabetem o nieznanej długości klucza}
-\end{longtable}\end{center} 
+\end{longtable}\end{center}
 Są to naprawdę niezłe wyniki. Stała $C$ jest dobrana raczej losowo, a mimo to dostajemy dobry poziom dekodowania (w przyzwoitym czasie kilku minut). Ogólnie różne wartości zostały tu dobrane \textit{a priori} i można je zoptymalizować, można też użyć innych \textit{gramów}. Jest to jedynie poboczny wynik tej pracy i tylko ocieram się o ten temat, natomiast widać, że za pomocą samych metod $n$-gramowych można wiele w dekodowaniu osiągnąć. Widać tutaj znowu jak ważna jest szybkość dekodowania: użycie deterministycznej metody bigramowej, nie pozwoliłoby nam uzyskać wyniku w sensownym czasie. Użycie samej metody monogramowej do odgadnięcia długości regularnie zawodziło dla 240. Stąd metody MCMC okazują się w tym miejscu nieodzowne.
 \\\\
 Przechodzę teraz do głównej części testowania, czyli testowania różnych szyfrów przy założeniu znajomości długości klucza.
- Testy przeprowadzimy na wygenerowanych losowych 1000-znakowych fragmentach \textit{Roku 1984}, \textit{Madame Bovary}  Gustave'a Flauberta \cite{gutenberg} oraz artykułu \textit{Ice hockey} \cite{hockey} z angielskiej Wikipedii. 
+ Testy przeprowadzimy na wygenerowanych losowych 1000-znakowych fragmentach \textit{Roku 1984}, \textit{Madame Bovary}  Gustave'a Flauberta \cite{gutenberg} oraz artykułu \textit{Ice hockey} \cite{hockey} z angielskiej Wikipedii.
 Ostatecznie decydujemy się na następujące podejście: deterministycznie wybieramy stan maksymalizujący log-wagę monogramową i z niego zaczynamy bigramową wędrówkę MCMC przez liczbę kroków ustaloną \textit{a priori} na wielokrotność $s \cdot n_k \log n_k$, $s \cdot n_k$ lub kombinację dwóch. Zaczniemy od stałych $C=5$  i $c=5$ zastosowanych do wzoru z heurystycznych rozważań (a więc $5s(n_k\log n_k + 5n_k)$), następnie będzie można ograniczenie to zaktualizować. Dekodowanie bigramowe jest wynikiem pierwszej wędrówki (\textit{bigram skuteczność} to skuteczność po zakończeniu tej wędrówki). Potem wędrówkę jeszcze przedłużamy o spacer na trigramach, startując w ostatnim stanie wędrówki bigramowej (wędrówka trigramowa potrwa początkowo $1/4$ liczby kroków na z wędrówki bigramowej) i dostajemy informację o skuteczności (\textit{trigram skuteczność} to skuteczność po zakończeniu wędrówki trigramowej). Testy przeprowadzamy najpierw dla klasycznego szyfru Vigenère'a i długości klucza zmieniających się co od 40 do 400 (co 40). Dla alfabetu nr 1 (klasycznego) z oczywistych powodów małe litery są przekształcane na wielkie.\\
 Korzystając z tego, że dla 26-elementowego alfabetu i szyfru Vigenère'a (jest to prawdą także dla szyfru z autokluczem) jesteśmy jeszcze w stanie wyliczyć \textit{argmax} w sensownym czasie, to dla pierwszego testu (\textit{Rok 1984} i klasyczny szyfr Vigenère'a) zbadamy zbieżność wędrówki bigramowej do \textit{argmax}, tj. będą podane kroki, w których MCMC osiągnął daną zgodność z bigramowym kluczem \textit{argmaxowym}, przy czym jeśli \textit{argmax} zostaje osiągnięty, to kończymy wędrówkę. Ponadto wskażemy czasy działania obu algorytmów, aby pokazać jak istotna jest różnica w ich złożoności czasowej.\\\\
 Zaczęliśmy od przetestowania 1000-znakowego urywku z \textit{Roku 1984} dla szyfru Vigenère'a, dostając najpierw wyniki jak poniżej dla algorytmu deterministycznego:
-\begin{center}\begin{longtable}{|c|c|c|} 
-\hline DŁUGOŚĆ KLUCZA & CZAS & SKUTECZNOŚĆ \\ \hline 
-40 & 88.7s & 1.0 \\ \hline 
-80 & 87.0s & 1.0 \\ \hline 
-120 & 90.1s & 0.98 \\ \hline 
-160 & 92.8s & 0.96 \\ \hline 
-200 & 90.0s & 0.82 \\ \hline 
-240 & 91.3s & 0.68 \\ \hline 
-280 & 90.5s & 0.53 \\ \hline 
-320 & 91.5s & 0.48 \\ \hline 
-360 & 91.4s & 0.3 \\ \hline 
-400 & 92.0s & 0.35 \\ \hline 
+\begin{center}\begin{longtable}{|c|c|c|}
+\hline DŁUGOŚĆ KLUCZA & CZAS & SKUTECZNOŚĆ \\ \hline
+40 & 88.7s & 1.0 \\ \hline
+80 & 87.0s & 1.0 \\ \hline
+120 & 90.1s & 0.98 \\ \hline
+160 & 92.8s & 0.96 \\ \hline
+200 & 90.0s & 0.82 \\ \hline
+240 & 91.3s & 0.68 \\ \hline
+280 & 90.5s & 0.53 \\ \hline
+320 & 91.5s & 0.48 \\ \hline
+360 & 91.4s & 0.3 \\ \hline
+400 & 92.0s & 0.35 \\ \hline
 \caption{\textit{Rok 1984} klasyczny szyfr Vigenère'a (alfabet (1)), deterministyczny algorytm bigramowy}
-\end{longtable}\end{center} 
+\end{longtable}\end{center}
 Natomiast dla algorytmu MCMC:
 \begin{center}\begin{tiny}\begin{longtable}{|c|c|c|c|c|c|c|c|}
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} & \makecell{BIGRAM\\ZBIEŻNOŚĆ} & \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ} \\ \hline 
-40 & 0.01s & 0.925 & 0.39s & \makecell{0.95: 152\\1.0: 1021\\ max kroków: 45182} & 1.0 & 4.53s & 1.0 \\ \hline 
-80 & 0.01s & 0.725 & 0.94s & \makecell{0.75: 238\\0.8: 954\\0.85: 1518\\0.9: 1939\\0.95: 2360\\1.0: 6473\\ max kroków: 97573} & 1.0 & 4.73s & 1.0 \\ \hline 
-120 & 0.01s & 0.47 & 15.2s & \makecell{0.5: 1067\\0.55: 3330\\0.6: 3689\\0.65: 4736\\0.7: 5927\\0.75: 8135\\0.8: 10909\\0.85: 22794\\0.9: 112101\\0.95: -\\1.0: -\\ max kroków: 152684} & 0.90 & 5.03s & 0.92 \\ \hline 
-160 & 0.01s & 0.46875 & 16.0s & \makecell{0.5: 1471\\0.55: 3573\\0.6: 6947\\0.65: 8352\\0.7: 13283\\0.75: 14948\\0.8: 30025\\0.85: 44571\\0.9: 68164\\0.95: -\\1.0: -\\ max kroków: 209563} & 0.90 & 5.19s & 0.96 \\ \hline 
-200 & 0.01s & 0.34 & 16.6s & \makecell{0.45: 566\\0.5: 2548\\0.55: 4026\\0.6: 6480\\0.65: 17549\\0.7: 39572\\0.75: 63315\\0.8: 115273\\0.85: -\\0.9: -\\0.95: -\\1.0: -\\ max kroków: 267756} & 0.74 & 5.44s & 0.83 \\ \hline 
-240 & 0.02s & 0.32 & 17.2s & \makecell{0.45: 7368\\0.5: 9315\\0.55: 31877\\0.6: 86299\\0.65: 224267\\0.7: -\\0.75: -\\0.8: -\\0.85: -\\0.9: -\\0.95: -\\1.0: -\\ max kroków: 326995} & 0.54 & 5.58s & 0.68 \\ \hline 
-280 & 0.01s & 0.28 & 17.9s & \makecell{0.5: 7355\\0.55: 11911\\0.6: 28644\\0.65: 76892\\0.7: 205922\\0.75: -\\0.8: -\\0.85: -\\0.9: -\\0.95: -\\1.0: -\\ max kroków: 387106} & 0.50 & 5.73s & 0.63 \\ \hline 
-320 & 0.01s & 0.26 & 18.9s & \makecell{0.4: 10821\\0.45: 60024\\0.5: 111411\\0.55: -\\0.6: -\\0.65: -\\0.7: -\\0.75: -\\0.8: -\\0.85: -\\0.9: -\\0.95: -\\1.0: -\\ max kroków: 447962} & 0.36 & 5.93s & 0.47 \\ \hline 
-360 & 0.02s & 0.20 & 19.1s & \makecell{0.4: 39469\\0.45: 107998\\0.5: 221492\\0.55: -\\0.6: -\\0.65: -\\0.7: -\\0.75: -\\0.8: -\\0.85: -\\0.9: -\\0.95: -\\1.0: -\\ max kroków: 509469} & 0.28 & 6.06s & 0.37 \\ \hline 
-400 & 0.02s & 0.21 & 19.6s & \makecell{0.4: 28323\\0.45: 47567\\0.5: 200121\\0.55: -\\0.6: -\\0.65: -\\0.7: -\\0.75: -\\0.8: -\\0.85: -\\0.9: -\\0.95: -\\1.0: -\\ max kroków: 571556} & 0.29 & 6.23s & 0.34 \\ \hline 
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} & \makecell{BIGRAM\\ZBIEŻNOŚĆ} & \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ} \\ \hline
+40 & 0.01s & 0.925 & 0.39s & \makecell{0.95: 152\\1.0: 1021\\ max kroków: 45182} & 1.0 & 4.53s & 1.0 \\ \hline
+80 & 0.01s & 0.725 & 0.94s & \makecell{0.75: 238\\0.8: 954\\0.85: 1518\\0.9: 1939\\0.95: 2360\\1.0: 6473\\ max kroków: 97573} & 1.0 & 4.73s & 1.0 \\ \hline
+120 & 0.01s & 0.47 & 15.2s & \makecell{0.5: 1067\\0.55: 3330\\0.6: 3689\\0.65: 4736\\0.7: 5927\\0.75: 8135\\0.8: 10909\\0.85: 22794\\0.9: 112101\\0.95: -\\1.0: -\\ max kroków: 152684} & 0.90 & 5.03s & 0.92 \\ \hline
+160 & 0.01s & 0.46875 & 16.0s & \makecell{0.5: 1471\\0.55: 3573\\0.6: 6947\\0.65: 8352\\0.7: 13283\\0.75: 14948\\0.8: 30025\\0.85: 44571\\0.9: 68164\\0.95: -\\1.0: -\\ max kroków: 209563} & 0.90 & 5.19s & 0.96 \\ \hline
+200 & 0.01s & 0.34 & 16.6s & \makecell{0.45: 566\\0.5: 2548\\0.55: 4026\\0.6: 6480\\0.65: 17549\\0.7: 39572\\0.75: 63315\\0.8: 115273\\0.85: -\\0.9: -\\0.95: -\\1.0: -\\ max kroków: 267756} & 0.74 & 5.44s & 0.83 \\ \hline
+240 & 0.02s & 0.32 & 17.2s & \makecell{0.45: 7368\\0.5: 9315\\0.55: 31877\\0.6: 86299\\0.65: 224267\\0.7: -\\0.75: -\\0.8: -\\0.85: -\\0.9: -\\0.95: -\\1.0: -\\ max kroków: 326995} & 0.54 & 5.58s & 0.68 \\ \hline
+280 & 0.01s & 0.28 & 17.9s & \makecell{0.5: 7355\\0.55: 11911\\0.6: 28644\\0.65: 76892\\0.7: 205922\\0.75: -\\0.8: -\\0.85: -\\0.9: -\\0.95: -\\1.0: -\\ max kroków: 387106} & 0.50 & 5.73s & 0.63 \\ \hline
+320 & 0.01s & 0.26 & 18.9s & \makecell{0.4: 10821\\0.45: 60024\\0.5: 111411\\0.55: -\\0.6: -\\0.65: -\\0.7: -\\0.75: -\\0.8: -\\0.85: -\\0.9: -\\0.95: -\\1.0: -\\ max kroków: 447962} & 0.36 & 5.93s & 0.47 \\ \hline
+360 & 0.02s & 0.20 & 19.1s & \makecell{0.4: 39469\\0.45: 107998\\0.5: 221492\\0.55: -\\0.6: -\\0.65: -\\0.7: -\\0.75: -\\0.8: -\\0.85: -\\0.9: -\\0.95: -\\1.0: -\\ max kroków: 509469} & 0.28 & 6.06s & 0.37 \\ \hline
+400 & 0.02s & 0.21 & 19.6s & \makecell{0.4: 28323\\0.45: 47567\\0.5: 200121\\0.55: -\\0.6: -\\0.65: -\\0.7: -\\0.75: -\\0.8: -\\0.85: -\\0.9: -\\0.95: -\\1.0: -\\ max kroków: 571556} & 0.29 & 6.23s & 0.34 \\ \hline
 \caption{\textit{Rok 1984}, 1000 znaków, klasyczny szyfr Vigenère'a (alfabet (1), skuteczność metod 1,2,3-gramowych MCMC. Zbieżność metody bigramowej MCMC}
-\end{longtable}\end{tiny}\end{center} 
+\end{longtable}\end{tiny}\end{center}
 Zauważmy, że na pewno łańcuch bigramowy od pewnej długości klucza nie zbiega prosto do \textit{argmax}, a raczej do pewnego maksimum lokalnego –  od pewnej długości klucza pojawiają się maksima lokalne (w nie aż tak dalekim otoczeniu rzeczywistego \textit{argmaxu}, bo w dużej mierze są z nim zgodne). Widać, jak już było wspomniane, że język angielski zdaje się mieć właściwość, że jeszcze dla całkiem długich kluczy, maksima lokalne mają sporą zgodność z rzeczywistością (prawdziwym kluczem dekodującym). Dokładniejsze teoretyczne przeanalizowanie zachowania łańcucha dla sytuacji, gdy klucze zaczynają być bardzo długie, pozostaje zadaniem do zrealizowania. My jednak w inny sposób skorzystajmy z wyniku powyżej. (1) zwróćmy uwagę, że użycie wędrówki trigramowej jako kontynuacji bigramowej dało świetne rezultaty (często wyniki lepsze niż bigramowy algorytm deterministyczny). (2) Jeśliby używać takich ograniczeń jak w tym teście na liczbę kroków, zysk czasowy – jeden z ważniejszych celów – byłby stosunkowo niewielki (choć oczywiście znacząco by wzrósł dla większych $s$), więc musimy tę liczbę kroków zmniejszyć, (3) metoda bigramowa 'zatrzymuje się' zwykle wcześniej niż my ją zatrzymujemy. Odtąd przyjmujemy więc uproszczoną wartość $n_k \cdot s \cdot 10$, przy czym tyle samo kroków wykonujemy najpierw w wędrówce bi-, a potem trigramowej. Tak kontynuujemy testy już dla wszystkich przypadków.\\\\
 Dla losowego 1000-znakowego fragmentu \textit{Madame Bovary} (dekodowanie tekstu to jednocześnie świetna okazja, żeby obcować z klasyczną literaturą) dla klasycznego szyfrowania Vigenère'a przy alfabecie (1) dostajemy :\\
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.01s & 1.0 & 2.76s & 1.0 & 3.66s & 1.0 \\ \hline 
-80 & 0.01s & 0.83 & 2.82s & 1.0 & 3.71s & 1.0 \\ \hline 
-120 & 0.01s & 0.6 & 2.91s & 0.89 & 3.96s & 0.98 \\ \hline 
-160 & 0.01s & 0.46 & 2.99s & 0.83 & 3.88s & 0.91 \\ \hline 
-200 & 0.01s & 0.44 & 3.02s & 0.66 & 3.96s & 0.76 \\ \hline 
-240 & 0.01s & 0.35 & 3.08s & 0.62 & 3.96s & 0.70 \\ \hline 
-280 & 0.01s & 0.28 & 3.17s & 0.46 & 4.07s & 0.62 \\ \hline 
-320 & 0.01s & 0.26 & 3.19s & 0.35 & 4.10s & 0.41 \\ \hline 
-360 & 0.01s & 0.27 & 3.29s & 0.30 & 4.22s & 0.34 \\ \hline 
-400 & 0.02s & 0.25 & 3.36s & 0.26 & 4.28s & 0.3 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.01s & 1.0 & 2.76s & 1.0 & 3.66s & 1.0 \\ \hline
+80 & 0.01s & 0.83 & 2.82s & 1.0 & 3.71s & 1.0 \\ \hline
+120 & 0.01s & 0.6 & 2.91s & 0.89 & 3.96s & 0.98 \\ \hline
+160 & 0.01s & 0.46 & 2.99s & 0.83 & 3.88s & 0.91 \\ \hline
+200 & 0.01s & 0.44 & 3.02s & 0.66 & 3.96s & 0.76 \\ \hline
+240 & 0.01s & 0.35 & 3.08s & 0.62 & 3.96s & 0.70 \\ \hline
+280 & 0.01s & 0.28 & 3.17s & 0.46 & 4.07s & 0.62 \\ \hline
+320 & 0.01s & 0.26 & 3.19s & 0.35 & 4.10s & 0.41 \\ \hline
+360 & 0.01s & 0.27 & 3.29s & 0.30 & 4.22s & 0.34 \\ \hline
+400 & 0.02s & 0.25 & 3.36s & 0.26 & 4.28s & 0.3 \\ \hline
 \caption{\textit{Madame Bovary} dł. 1000, klasyczny szyfr Vigenère'a (alfabet (1))}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 Jak widzimy wyniki są jak najbardziej zadowalające i co ważne – szybkie (w sumie mniej niż 8s). Małe różnice w czasie działania algorytmu (teoretycznie dla każdej długości klucza, którą testujemy złożoność jest ta sama) wynikają ze specyfiki zbieżności. W początkowych przypadkach łańcuch zbiega bardzo szybko, więc dalej przejścia do innych stanów są bardzo rzadkie. Przejścia do innych stanów wiążą się z m.in. z update'em dekodowania czy słownika częstości \textit{gramów} w dekodowaniu, co kosztuje. Stąd krótszy czas wykonania dla małych kluczy, przejścia bowiem są tam rzadsze.\\
 Wyniki dla \textit{Ice hockey} prezentują się natomiast jak poniżej:
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.02s & 0.97 & 2.77s & 1.0 & 3.69s & 1.0 \\ \hline 
-80 & 0.01s & 0.81 & 2.87s & 1.0 & 3.76s & 1.0 \\ \hline 
-120 & 0.01s & 0.6 & 2.94s & 0.98 & 3.93s & 1.0 \\ \hline 
-160 & 0.01s & 0.51 & 2.99s & 0.78 & 3.90s & 0.95 \\ \hline 
-200 & 0.01s & 0.44 & 3.19s & 0.67 & 4.01s & 0.87 \\ \hline 
-240 & 0.01s & 0.38 & 3.10s & 0.57 & 4.01s & 0.7 \\ \hline 
-280 & 0.01s & 0.31 & 3.19s & 0.47 & 4.10s & 0.52 \\ \hline 
-320 & 0.01s & 0.27 & 3.27s & 0.38 & 4.20s & 0.45 \\ \hline 
-360 & 0.02s & 0.25 & 3.35s & 0.36 & 4.29s & 0.46 \\ \hline 
-400 & 0.02s & 0.24 & 3.38s & 0.27 & 4.33s & 0.37 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.02s & 0.97 & 2.77s & 1.0 & 3.69s & 1.0 \\ \hline
+80 & 0.01s & 0.81 & 2.87s & 1.0 & 3.76s & 1.0 \\ \hline
+120 & 0.01s & 0.6 & 2.94s & 0.98 & 3.93s & 1.0 \\ \hline
+160 & 0.01s & 0.51 & 2.99s & 0.78 & 3.90s & 0.95 \\ \hline
+200 & 0.01s & 0.44 & 3.19s & 0.67 & 4.01s & 0.87 \\ \hline
+240 & 0.01s & 0.38 & 3.10s & 0.57 & 4.01s & 0.7 \\ \hline
+280 & 0.01s & 0.31 & 3.19s & 0.47 & 4.10s & 0.52 \\ \hline
+320 & 0.01s & 0.27 & 3.27s & 0.38 & 4.20s & 0.45 \\ \hline
+360 & 0.02s & 0.25 & 3.35s & 0.36 & 4.29s & 0.46 \\ \hline
+400 & 0.02s & 0.24 & 3.38s & 0.27 & 4.33s & 0.37 \\ \hline
 \caption{\textit{Ice hockey} dł. 1000, klasyczny szyfr Vigenère'a (alfabet (1))}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 Teraz zaprezentujmy ten sam algorytm dla 1000-znakowego fragmentu z każdej testowanej pozycji dla szyfru z autokluczem (nie ma tu wielkiej różnicy w działaniu, jednak warto to przynajmniej zaprezentować).\\\\
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.01s & 0.97 & 2.80s & 1.0 & 3.71s & 1.0 \\ \hline 
-80 & 0.01s & 0.82 & 2.88s & 1.0 & 3.84s & 1.0 \\ \hline 
-120 & 0.01s & 0.56 & 2.95s & 0.9 & 3.84s & 0.95 \\ \hline 
-160 & 0.01s & 0.51 & 3.01s & 0.83 & 3.91s & 0.97 \\ \hline 
-200 & 0.01s & 0.38 & 3.10s & 0.69 & 4.36s & 0.83 \\ \hline 
-240 & 0.02s & 0.34 & 3.19s & 0.55 & 4.06s & 0.69 \\ \hline 
-280 & 0.02s & 0.27 & 3.50s & 0.46 & 5.34s & 0.54 \\ \hline 
-320 & 0.02s & 0.25 & 4.05s & 0.36 & 4.48s & 0.48 \\ \hline 
-360 & 0.02s & 0.19 & 3.71s & 0.28 & 4.49s & 0.34 \\ \hline 
-400 & 0.02s & 0.16 & 3.60s & 0.22 & 4.87s & 0.29 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.01s & 0.97 & 2.80s & 1.0 & 3.71s & 1.0 \\ \hline
+80 & 0.01s & 0.82 & 2.88s & 1.0 & 3.84s & 1.0 \\ \hline
+120 & 0.01s & 0.56 & 2.95s & 0.9 & 3.84s & 0.95 \\ \hline
+160 & 0.01s & 0.51 & 3.01s & 0.83 & 3.91s & 0.97 \\ \hline
+200 & 0.01s & 0.38 & 3.10s & 0.69 & 4.36s & 0.83 \\ \hline
+240 & 0.02s & 0.34 & 3.19s & 0.55 & 4.06s & 0.69 \\ \hline
+280 & 0.02s & 0.27 & 3.50s & 0.46 & 5.34s & 0.54 \\ \hline
+320 & 0.02s & 0.25 & 4.05s & 0.36 & 4.48s & 0.48 \\ \hline
+360 & 0.02s & 0.19 & 3.71s & 0.28 & 4.49s & 0.34 \\ \hline
+400 & 0.02s & 0.16 & 3.60s & 0.22 & 4.87s & 0.29 \\ \hline
 \caption{Klasyczny alfabet (1), szyfr z autokluczem \textit{Rok 1984} 1000 znaków}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.01s & 0.97 & 2.81s & 1.0 & 3.80s & 1.0 \\ \hline 
-80 & 0.01s & 0.78 & 2.89s & 1.0 & 3.80s & 1.0 \\ \hline 
-120 & 0.01s & 0.6 & 2.98s & 0.9 & 3.85s & 0.97 \\ \hline 
-160 & 0.01s & 0.46 & 3.01s & 0.88 & 3.95s & 0.97 \\ \hline 
-200 & 0.01s & 0.36 & 3.10s & 0.65 & 4.02s & 0.76 \\ \hline 
-240 & 0.02s & 0.34 & 3.14s & 0.52 & 4.13s & 0.63 \\ \hline 
-280 & 0.02s & 0.31 & 3.24s & 0.45 & 4.15s & 0.56 \\ \hline 
-320 & 0.02s & 0.21 & 3.30s & 0.35 & 4.20s & 0.43 \\ \hline 
-360 & 0.02s & 0.20 & 3.37s & 0.27 & 4.32s & 0.30 \\ \hline 
-400 & 0.02s & 0.18 & 3.42s & 0.29 & 4.36s & 0.29 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.01s & 0.97 & 2.81s & 1.0 & 3.80s & 1.0 \\ \hline
+80 & 0.01s & 0.78 & 2.89s & 1.0 & 3.80s & 1.0 \\ \hline
+120 & 0.01s & 0.6 & 2.98s & 0.9 & 3.85s & 0.97 \\ \hline
+160 & 0.01s & 0.46 & 3.01s & 0.88 & 3.95s & 0.97 \\ \hline
+200 & 0.01s & 0.36 & 3.10s & 0.65 & 4.02s & 0.76 \\ \hline
+240 & 0.02s & 0.34 & 3.14s & 0.52 & 4.13s & 0.63 \\ \hline
+280 & 0.02s & 0.31 & 3.24s & 0.45 & 4.15s & 0.56 \\ \hline
+320 & 0.02s & 0.21 & 3.30s & 0.35 & 4.20s & 0.43 \\ \hline
+360 & 0.02s & 0.20 & 3.37s & 0.27 & 4.32s & 0.30 \\ \hline
+400 & 0.02s & 0.18 & 3.42s & 0.29 & 4.36s & 0.29 \\ \hline
 \caption{Klasyczny alfabet (1), szyfr z autokluczem \textit{Madame Bovary} 1000 znaków}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.01s & 0.95 & 3.10s & 1.0 & 4.11s & 1.0 \\ \hline 
-80 & 0.01s & 0.68 & 4.05s & 0.93 & 3.96s & 0.95 \\ \hline 
-120 & 0.01s & 0.52 & 3.06s & 0.87 & 4.04s & 0.91 \\ \hline 
-160 & 0.02s & 0.33 & 3.44s & 0.66 & 4.34s & 0.83 \\ \hline 
-200 & 0.01s & 0.32 & 4.11s & 0.55 & 6.17s & 0.66 \\ \hline 
-240 & 0.04s & 0.28 & 3.42s & 0.39 & 4.21s & 0.52 \\ \hline 
-280 & 0.02s & 0.27 & 3.54s & 0.37 & 4.35s & 0.45 \\ \hline 
-320 & 0.02s & 0.17 & 3.41s & 0.28 & 4.29s & 0.31 \\ \hline 
-360 & 0.02s & 0.18 & 3.65s & 0.23 & 4.43s & 0.28 \\ \hline 
-400 & 0.02s & 0.15 & 3.45s & 0.2 & 4.41s & 0.26 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.01s & 0.95 & 3.10s & 1.0 & 4.11s & 1.0 \\ \hline
+80 & 0.01s & 0.68 & 4.05s & 0.93 & 3.96s & 0.95 \\ \hline
+120 & 0.01s & 0.52 & 3.06s & 0.87 & 4.04s & 0.91 \\ \hline
+160 & 0.02s & 0.33 & 3.44s & 0.66 & 4.34s & 0.83 \\ \hline
+200 & 0.01s & 0.32 & 4.11s & 0.55 & 6.17s & 0.66 \\ \hline
+240 & 0.04s & 0.28 & 3.42s & 0.39 & 4.21s & 0.52 \\ \hline
+280 & 0.02s & 0.27 & 3.54s & 0.37 & 4.35s & 0.45 \\ \hline
+320 & 0.02s & 0.17 & 3.41s & 0.28 & 4.29s & 0.31 \\ \hline
+360 & 0.02s & 0.18 & 3.65s & 0.23 & 4.43s & 0.28 \\ \hline
+400 & 0.02s & 0.15 & 3.45s & 0.2 & 4.41s & 0.26 \\ \hline
 \caption{Klasyczny alfabet (1), szyfr z autokluczem \textit{Ice hockey} 1000 znaków}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 Widzimy, że szyfr z autokluczem – jak można było się domyślać – nie różni się z punktu widzenia zautomatyzowanego deszyfrowania od klasycznego szyfru Vigenère'a, dalej nie będziemy się więc nim już osobno zajmować. Jak widać metoda MCMC jest dla niego skuteczna.\\
 Zobaczmy teraz wyniki dla wersji \textit{rozszerzonej/afinicznej} szyfru Vigenère'a: $s$ zmienia się tu na $26\cdot \phi(26) = 26 \cdot 12 = 312$. Stąd deterministyczny algorytm bigramowy wydłużyłby swoje działanie $12^3 = 1728$ razy. Co oznacza, biorąc pod uwagę wcześniejsze wyniki, 1,8 dnia oczekiwania na rozwiązanie. Traci więc on jakiekolwiek praktyczne zastosowanie. Możemy natomiast znowu zastosować podejście MCMC.
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.20s & 0.77 & 34.3s & 1.0 & 45.3s & 1.0 \\ \hline 
-80 & 0.21s & 0.36 & 35.6s & 0.78 & 46.1s & 0.85 \\ \hline 
-120 & 0.22s & 0.13 & 36.5s & 0.43 & 50.4s & 0.55 \\ \hline 
-160 & 0.22s & 0.09 & 39.1s & 0.21 & 48.2s & 0.26 \\ \hline 
-200 & 0.23s & 0.11 & 38.4s & 0.16 & 49.4s & 0.21 \\ \hline 
-240 & 0.24s & 0.06 & 39.6s & 0.06 & 50.1s & 0.10 \\ \hline 
-280 & 0.24s & 0.03 & 43.5s & 0.04 & 52.0s & 0.08 \\ \hline 
-320 & 0.25s & 0.02 & 42.0s & 0.05 & 53.0s & 0.08 \\ \hline 
-360 & 0.26s & 0.03 & 45.5s & 0.03 & 52.9s & 0.05 \\ \hline 
-400 & 0.26s & 0.01 & 43.7s & 0.02 & 54.4s & 0.04 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.20s & 0.77 & 34.3s & 1.0 & 45.3s & 1.0 \\ \hline
+80 & 0.21s & 0.36 & 35.6s & 0.78 & 46.1s & 0.85 \\ \hline
+120 & 0.22s & 0.13 & 36.5s & 0.43 & 50.4s & 0.55 \\ \hline
+160 & 0.22s & 0.09 & 39.1s & 0.21 & 48.2s & 0.26 \\ \hline
+200 & 0.23s & 0.11 & 38.4s & 0.16 & 49.4s & 0.21 \\ \hline
+240 & 0.24s & 0.06 & 39.6s & 0.06 & 50.1s & 0.10 \\ \hline
+280 & 0.24s & 0.03 & 43.5s & 0.04 & 52.0s & 0.08 \\ \hline
+320 & 0.25s & 0.02 & 42.0s & 0.05 & 53.0s & 0.08 \\ \hline
+360 & 0.26s & 0.03 & 45.5s & 0.03 & 52.9s & 0.05 \\ \hline
+400 & 0.26s & 0.01 & 43.7s & 0.02 & 54.4s & 0.04 \\ \hline
 \caption{Klasyczny alfabet (1), szyfr rozszerzony/afiniczny \textit{Rok 1984} 1000 znaków}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.19s & 0.67 & 36.2s & 1.0 & 50.5s & 1.0 \\ \hline 
-80 & 0.20s & 0.27 & 41.0s & 0.61 & 48.2s & 0.8 \\ \hline 
-120 & 0.21s & 0.18 & 41.2s & 0.31 & 51.6s & 0.46 \\ \hline 
-160 & 0.21s & 0.11 & 41.0s & 0.26 & 54.7s & 0.28 \\ \hline 
-200 & 0.23s & 0.06 & 41.7s & 0.11 & 52.7s & 0.15 \\ \hline 
-240 & 0.24s & 0.06 & 43.8s & 0.07 & 59.3s & 0.1 \\ \hline 
-280 & 0.25s & 0.03 & 45.6s & 0.05 & 55.7s & 0.06 \\ \hline 
-320 & 0.40s & 0.05 & 45.1s & 0.03 & 60.5s & 0.04 \\ \hline 
-360 & 0.40s & 0.03 & 49.7s & 0.04 & 62.5s & 0.04 \\ \hline 
-400 & 0.27s & 0.02 & 49.2s & 0.02 & 64.5s & 0.03 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.19s & 0.67 & 36.2s & 1.0 & 50.5s & 1.0 \\ \hline
+80 & 0.20s & 0.27 & 41.0s & 0.61 & 48.2s & 0.8 \\ \hline
+120 & 0.21s & 0.18 & 41.2s & 0.31 & 51.6s & 0.46 \\ \hline
+160 & 0.21s & 0.11 & 41.0s & 0.26 & 54.7s & 0.28 \\ \hline
+200 & 0.23s & 0.06 & 41.7s & 0.11 & 52.7s & 0.15 \\ \hline
+240 & 0.24s & 0.06 & 43.8s & 0.07 & 59.3s & 0.1 \\ \hline
+280 & 0.25s & 0.03 & 45.6s & 0.05 & 55.7s & 0.06 \\ \hline
+320 & 0.40s & 0.05 & 45.1s & 0.03 & 60.5s & 0.04 \\ \hline
+360 & 0.40s & 0.03 & 49.7s & 0.04 & 62.5s & 0.04 \\ \hline
+400 & 0.27s & 0.02 & 49.2s & 0.02 & 64.5s & 0.03 \\ \hline
 \caption{Klasyczny alfabet (1), szyfr rozszerzony/afiniczny \textit{Ice hockey} 1000 znaków}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.21s & 0.85 & 37.3s & 1.0 & 48.9s & 1.0 \\ \hline 
-80 & 0.23s & 0.33 & 40.3s & 0.73 & 55.7s & 0.88 \\ \hline 
-120 & 0.26s & 0.19 & 40.7s & 0.53 & 55.2s & 0.66 \\ \hline 
-160 & 0.22s & 0.07 & 43.1s & 0.22 & 58.4s & 0.3 \\ \hline 
-200 & 0.25s & 0.09 & 43.6s & 0.08 & 56.5s & 0.11 \\ \hline 
-240 & 0.29s & 0.03 & 44.5s & 0.06 & 57.4s & 0.09 \\ \hline 
-280 & 0.39s & 0.03 & 45.7s & 0.03 & 61.9s & 0.11 \\ \hline 
-320 & 0.29s & 0.04 & 46.6s & 0.04 & 61.1s & 0.07 \\ \hline 
-360 & 0.31s & 0.03 & 48.8s & 0.02 & 56.7s & 0.06 \\ \hline 
-400 & 0.27s & 0.02 & 45.3s & 0.01 & 60.1s & 0.02 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.21s & 0.85 & 37.3s & 1.0 & 48.9s & 1.0 \\ \hline
+80 & 0.23s & 0.33 & 40.3s & 0.73 & 55.7s & 0.88 \\ \hline
+120 & 0.26s & 0.19 & 40.7s & 0.53 & 55.2s & 0.66 \\ \hline
+160 & 0.22s & 0.07 & 43.1s & 0.22 & 58.4s & 0.3 \\ \hline
+200 & 0.25s & 0.09 & 43.6s & 0.08 & 56.5s & 0.11 \\ \hline
+240 & 0.29s & 0.03 & 44.5s & 0.06 & 57.4s & 0.09 \\ \hline
+280 & 0.39s & 0.03 & 45.7s & 0.03 & 61.9s & 0.11 \\ \hline
+320 & 0.29s & 0.04 & 46.6s & 0.04 & 61.1s & 0.07 \\ \hline
+360 & 0.31s & 0.03 & 48.8s & 0.02 & 56.7s & 0.06 \\ \hline
+400 & 0.27s & 0.02 & 45.3s & 0.01 & 60.1s & 0.02 \\ \hline
 \caption{Klasyczny alfabet (1), szyfr rozszerzony/afiniczny \textit{Madame Bovary} 1000 znaków}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
 Trzeba wprost powiedzieć, że działanie nie jest już tak dobre jak dla \textit{przesuwnych} szyfrów Vigenère'a. Albo może powiedzmy inaczej, na początku jest równie dobre, ale szybciej przestaje takie być. Jednak cały czas widzimy, że jest to podejście niezwykle użyteczne. Zbieżność w istocie jest liniowa ze względu na \textit{s}, widzimy, że tam gdzie był w stanie, algorytm zbiegł w oczekiwanym czasie. Jednak dla bardziej skomplikowanych podstawień na współrzędnych zwyczajnie zmniejsza się moc metody \textit{n-gramowej}. Możemy myśleć sobie, że coraz bardziej zmierzamy do tego, że na współrzędnych mamy dowolne permutacje alfabetu – w takiej, granicznej, sytuacji, przy już nie tak dużej jak wcześniej długości klucza, szyfr zbliża się do szyfru nie do złamania (permutacje dają dużo większe możliwości manipulacji tekstem niż przesunięcia, stąd jesteśmy w stanie wygenerować bardzo prawdopodobną, acz kompletnie niezgodną z zaszyfrowaną sekwencję znaków). Zwróćmy jednak przede wszystkim uwagę, że użycie metod MCMC w powyższych przypadkach dla pewnych długości szyfru zwiększa w porównaniu z metodą monogramową skuteczność nawet 4-5-krotnie. Co oznacza, że z poziomu zupełnej niezdolności odszyfrowania, przechodzimy na poziom, na którym wiadomość odszyfrujemy w zasadzie na pewno.\\\\
 Przeprowadźmy jeszcze na koniec testy dla szyfru Vigenère'a z rozszerzonym alfabetem z dodatkową spacją (2) i (3) bez dodatkowej spacji. Zacznijmy od (2): dla \textit{Madame Bovary}
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.06s & 1.0 & 12.2s & 1.0 & 16.5s & 1.0 \\ \hline 
-80 & 0.06s & 0.96 & 13.2s & 1.0 & 16.9s & 1.0 \\ \hline 
-120 & 0.07s & 0.91 & 12.9s & 1.0 & 17.2s & 1.0 \\ \hline 
-160 & 0.07s & 0.81 & 13.3s & 0.97 & 17.3s & 0.98 \\ \hline 
-200 & 0.07s & 0.76 & 13.3s & 0.98 & 17.5s & 0.99 \\ \hline 
-240 & 0.07s & 0.64 & 13.4s & 0.88 & 17.6s & 0.96 \\ \hline 
-280 & 0.07s & 0.55 & 13.7s & 0.73 & 18.0s & 0.78 \\ \hline 
-320 & 0.08s & 0.56 & 13.9s & 0.70 & 18.4s & 0.78 \\ \hline 
-360 & 0.08s & 0.48 & 14.2s & 0.65 & 18.4s & 0.72 \\ \hline 
-400 & 0.08s & 0.42 & 14.3s & 0.50 & 18.8s & 0.57 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.06s & 1.0 & 12.2s & 1.0 & 16.5s & 1.0 \\ \hline
+80 & 0.06s & 0.96 & 13.2s & 1.0 & 16.9s & 1.0 \\ \hline
+120 & 0.07s & 0.91 & 12.9s & 1.0 & 17.2s & 1.0 \\ \hline
+160 & 0.07s & 0.81 & 13.3s & 0.97 & 17.3s & 0.98 \\ \hline
+200 & 0.07s & 0.76 & 13.3s & 0.98 & 17.5s & 0.99 \\ \hline
+240 & 0.07s & 0.64 & 13.4s & 0.88 & 17.6s & 0.96 \\ \hline
+280 & 0.07s & 0.55 & 13.7s & 0.73 & 18.0s & 0.78 \\ \hline
+320 & 0.08s & 0.56 & 13.9s & 0.70 & 18.4s & 0.78 \\ \hline
+360 & 0.08s & 0.48 & 14.2s & 0.65 & 18.4s & 0.72 \\ \hline
+400 & 0.08s & 0.42 & 14.3s & 0.50 & 18.8s & 0.57 \\ \hline
 \caption{Alfabet (2), szyfr Vigenère'a, 1000 znaków, \textit{Madame Bovary}}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.07s & 1.0 & 12.2s & 1.0 & 16.5s & 1.0 \\ \hline 
-80 & 0.06s & 0.98 & 12.6s & 1.0 & 16.9s & 1.0 \\ \hline 
-120 & 0.07s & 0.9 & 12.8s & 0.98 & 17.4s & 1.0 \\ \hline 
-160 & 0.07s & 0.81 & 13.1s & 0.99 & 17.4s & 1.0 \\ \hline 
-200 & 0.07s & 0.75 & 13.4s & 0.96 & 18.1s & 0.98 \\ \hline 
-240 & 0.10s & 0.65 & 15.4s & 0.87 & 20.6s & 0.95 \\ \hline 
-280 & 0.09s & 0.57 & 19.3s & 0.78 & 19.6s & 0.86 \\ \hline 
-320 & 0.08s & 0.53 & 14.1s & 0.77 & 20.4s & 0.86 \\ \hline 
-360 & 0.09s & 0.48 & 17.3s & 0.68 & 20.9s & 0.77 \\ \hline 
-400 & 0.09s & 0.42 & 17.5s & 0.59 & 18.8s & 0.66 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.07s & 1.0 & 12.2s & 1.0 & 16.5s & 1.0 \\ \hline
+80 & 0.06s & 0.98 & 12.6s & 1.0 & 16.9s & 1.0 \\ \hline
+120 & 0.07s & 0.9 & 12.8s & 0.98 & 17.4s & 1.0 \\ \hline
+160 & 0.07s & 0.81 & 13.1s & 0.99 & 17.4s & 1.0 \\ \hline
+200 & 0.07s & 0.75 & 13.4s & 0.96 & 18.1s & 0.98 \\ \hline
+240 & 0.10s & 0.65 & 15.4s & 0.87 & 20.6s & 0.95 \\ \hline
+280 & 0.09s & 0.57 & 19.3s & 0.78 & 19.6s & 0.86 \\ \hline
+320 & 0.08s & 0.53 & 14.1s & 0.77 & 20.4s & 0.86 \\ \hline
+360 & 0.09s & 0.48 & 17.3s & 0.68 & 20.9s & 0.77 \\ \hline
+400 & 0.09s & 0.42 & 17.5s & 0.59 & 18.8s & 0.66 \\ \hline
 \caption{Alfabet (2), szyfr Vigenère'a, 1000 znaków, \textit{1984}}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.06s & 1.0 & 12.5s & 1.0 & 16.8s & 1.0 \\ \hline 
-80 & 0.06s & 0.97 & 12.6s & 1.0 & 16.9s & 1.0 \\ \hline 
-120 & 0.07s & 0.85 & 12.9s & 0.98 & 17.1s & 0.98 \\ \hline 
-160 & 0.07s & 0.81 & 13.4s & 0.97 & 17.3s & 0.98 \\ \hline 
-200 & 0.07s & 0.65 & 13.3s & 0.9 & 17.8s & 0.95 \\ \hline 
-240 & 0.07s & 0.6 & 14.4s & 0.86 & 18.3s & 0.93 \\ \hline 
-280 & 0.08s & 0.55 & 14.2s & 0.74 & 18.9s & 0.83 \\ \hline 
-320 & 0.08s & 0.49 & 14.5s & 0.64 & 18.2s & 0.74 \\ \hline 
-360 & 0.08s & 0.42 & 14.2s & 0.63 & 18.5s & 0.72 \\ \hline 
-400 & 0.08s & 0.37 & 14.3s & 0.55 & 18.6s & 0.63 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.06s & 1.0 & 12.5s & 1.0 & 16.8s & 1.0 \\ \hline
+80 & 0.06s & 0.97 & 12.6s & 1.0 & 16.9s & 1.0 \\ \hline
+120 & 0.07s & 0.85 & 12.9s & 0.98 & 17.1s & 0.98 \\ \hline
+160 & 0.07s & 0.81 & 13.4s & 0.97 & 17.3s & 0.98 \\ \hline
+200 & 0.07s & 0.65 & 13.3s & 0.9 & 17.8s & 0.95 \\ \hline
+240 & 0.07s & 0.6 & 14.4s & 0.86 & 18.3s & 0.93 \\ \hline
+280 & 0.08s & 0.55 & 14.2s & 0.74 & 18.9s & 0.83 \\ \hline
+320 & 0.08s & 0.49 & 14.5s & 0.64 & 18.2s & 0.74 \\ \hline
+360 & 0.08s & 0.42 & 14.2s & 0.63 & 18.5s & 0.72 \\ \hline
+400 & 0.08s & 0.37 & 14.3s & 0.55 & 18.6s & 0.63 \\ \hline
 \caption{Alfabet (2), szyfr Vigenère'a, 1000 znaków, \textit{Ice hockey}}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 Zwraca tu uwagę bardzo (!) wysoka skuteczność już metody monogramowej, choć teoretycznie szyfr wydawałby się trudniejszy, skoro operuje na większej liczbie znaków. Ma to jednak swoje proste uzasadnienie – jest to spacja (oraz dodatkowy powód, o którym powiem zaraz przy okazji alfabetu (3)). W przeciwieństwie do liter alfabetu, w których częstościach występują regularnie fluktuacje, spacja jest niekwestionową 'królową', jeśli idzie o częstość. Metoda monogramowa 'odgaduje' więc jak zakodowana jest spacja, co pozwala zdekodować jej bardzo często poprawnie wiele monoalfabetycznych części szyfrogramu. Można zobaczyć, że podobnie bardzo dobre wyniki otrzymujemy, gdy do alfabetu (1) również dodamy na koniec spację:
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.01s & 0.97 & 3.30s & 1.0 & 4.42s & 1.0 \\ \hline 
-80 & 0.01s & 0.93 & 3.38s & 1.0 & 4.48s & 1.0 \\ \hline 
-120 & 0.01s & 0.80 & 3.44s & 1.0 & 4.54s & 1.0 \\ \hline 
-160 & 0.02s & 0.7 & 3.53s & 0.94 & 4.58s & 0.96 \\ \hline 
-200 & 0.02s & 0.54 & 3.58s & 0.79 & 4.69s & 0.88 \\ \hline 
-240 & 0.02s & 0.51 & 3.68s & 0.77 & 4.82s & 0.86 \\ \hline 
-280 & 0.02s & 0.46 & 3.72s & 0.62 & 4.83s & 0.68 \\ \hline 
-320 & 0.02s & 0.36 & 3.82s & 0.53 & 4.93s & 0.63 \\ \hline 
-360 & 0.02s & 0.35 & 3.88s & 0.43 & 4.94s & 0.51 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.01s & 0.97 & 3.30s & 1.0 & 4.42s & 1.0 \\ \hline
+80 & 0.01s & 0.93 & 3.38s & 1.0 & 4.48s & 1.0 \\ \hline
+120 & 0.01s & 0.80 & 3.44s & 1.0 & 4.54s & 1.0 \\ \hline
+160 & 0.02s & 0.7 & 3.53s & 0.94 & 4.58s & 0.96 \\ \hline
+200 & 0.02s & 0.54 & 3.58s & 0.79 & 4.69s & 0.88 \\ \hline
+240 & 0.02s & 0.51 & 3.68s & 0.77 & 4.82s & 0.86 \\ \hline
+280 & 0.02s & 0.46 & 3.72s & 0.62 & 4.83s & 0.68 \\ \hline
+320 & 0.02s & 0.36 & 3.82s & 0.53 & 4.93s & 0.63 \\ \hline
+360 & 0.02s & 0.35 & 3.88s & 0.43 & 4.94s & 0.51 \\ \hline
 400 & 0.02s & 0.33 & 3.88s & 0.39 & 4.98s & 0.40 \\ \hline
 \caption{\textit{Madame Bovary}, 1000 znaków, klasyczny alfabet (1) z dodaną spacją na koniec – szyfr Vigenère'a}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
 Wyniki także ulegają znaczącej poprawie, jednak są trochę gorsze niż dla alfabetu (2). By zobaczyć dlaczego, spójrzmy na wyniki dla alfabetu (3):\\
 \textit{1984}
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.06s & 1.0 & 10.2s & 1.0 & 13.7s & 1.0 \\ \hline 
-80 & 0.05s & 0.95 & 10.6s & 1.0 & 14.0s & 1.0 \\ \hline 
-120 & 0.05s & 0.84 & 10.8s & 0.99 & 14.2s & 1.0 \\ \hline 
-160 & 0.06s & 0.68 & 11.1s & 0.95 & 14.4s & 0.98 \\ \hline 
-200 & 0.06s & 0.60 & 11.4s & 0.92 & 14.7s & 0.96 \\ \hline 
-240 & 0.06s & 0.52 & 11.5s & 0.80 & 14.9s & 0.91 \\ \hline 
-280 & 0.06s & 0.42 & 11.8s & 0.67 & 15.1s & 0.79 \\ \hline 
-320 & 0.06s & 0.38 & 12.1s & 0.56 & 15.6s & 0.69 \\ \hline 
-360 & 0.07s & 0.32 & 12.1s & 0.52 & 15.6s & 0.61 \\ \hline 
-400 & 0.07s & 0.30 & 12.3s & 0.44 & 15.9s & 0.55 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.06s & 1.0 & 10.2s & 1.0 & 13.7s & 1.0 \\ \hline
+80 & 0.05s & 0.95 & 10.6s & 1.0 & 14.0s & 1.0 \\ \hline
+120 & 0.05s & 0.84 & 10.8s & 0.99 & 14.2s & 1.0 \\ \hline
+160 & 0.06s & 0.68 & 11.1s & 0.95 & 14.4s & 0.98 \\ \hline
+200 & 0.06s & 0.60 & 11.4s & 0.92 & 14.7s & 0.96 \\ \hline
+240 & 0.06s & 0.52 & 11.5s & 0.80 & 14.9s & 0.91 \\ \hline
+280 & 0.06s & 0.42 & 11.8s & 0.67 & 15.1s & 0.79 \\ \hline
+320 & 0.06s & 0.38 & 12.1s & 0.56 & 15.6s & 0.69 \\ \hline
+360 & 0.07s & 0.32 & 12.1s & 0.52 & 15.6s & 0.61 \\ \hline
+400 & 0.07s & 0.30 & 12.3s & 0.44 & 15.9s & 0.55 \\ \hline
 \caption{Alfabet (3), szyfr Vigenère'a, 1000 znaków, \textit{Rok 1984}}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.05s & 1.0 & 10.7s & 1.0 & 15.2s & 1.0 \\ \hline 
-80 & 0.05s & 0.98 & 10.8s & 1.0 & 14.3s & 1.0 \\ \hline 
-120 & 0.05s & 0.78 & 11.4s & 0.95 & 14.5s & 1.0 \\ \hline 
-160 & 0.06s & 0.67 & 11.2s & 0.98 & 14.8s & 1.0 \\ \hline 
-200 & 0.06s & 0.61 & 11.4s & 0.93 & 15.2s & 0.95 \\ \hline 
-240 & 0.06s & 0.51 & 11.7s & 0.78 & 15.4s & 0.9 \\ \hline 
-280 & 0.07s & 0.43 & 12.0s & 0.64 & 15.6s & 0.78 \\ \hline 
-320 & 0.06s & 0.37 & 12.4s & 0.56 & 15.7s & 0.67 \\ \hline 
-360 & 0.07s & 0.30 & 12.2s & 0.50 & 16.1s & 0.63 \\ \hline 
-400 & 0.07s & 0.28 & 12.5s & 0.40 & 16.3s & 0.51 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.05s & 1.0 & 10.7s & 1.0 & 15.2s & 1.0 \\ \hline
+80 & 0.05s & 0.98 & 10.8s & 1.0 & 14.3s & 1.0 \\ \hline
+120 & 0.05s & 0.78 & 11.4s & 0.95 & 14.5s & 1.0 \\ \hline
+160 & 0.06s & 0.67 & 11.2s & 0.98 & 14.8s & 1.0 \\ \hline
+200 & 0.06s & 0.61 & 11.4s & 0.93 & 15.2s & 0.95 \\ \hline
+240 & 0.06s & 0.51 & 11.7s & 0.78 & 15.4s & 0.9 \\ \hline
+280 & 0.07s & 0.43 & 12.0s & 0.64 & 15.6s & 0.78 \\ \hline
+320 & 0.06s & 0.37 & 12.4s & 0.56 & 15.7s & 0.67 \\ \hline
+360 & 0.07s & 0.30 & 12.2s & 0.50 & 16.1s & 0.63 \\ \hline
+400 & 0.07s & 0.28 & 12.5s & 0.40 & 16.3s & 0.51 \\ \hline
 \caption{Alfabet (3), szyfr Vigenère'a, 1000 znaków, \textit{Madame Bovary}}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.05s & 0.97 & 11.2s & 1.0 & 14.8s & 1.0 \\ \hline 
-80 & 0.05s & 0.82 & 11.8s & 1.0 & 15.6s & 1.0 \\ \hline 
-120 & 0.06s & 0.68 & 11.5s & 0.90 & 15.1s & 0.96 \\ \hline 
-160 & 0.06s & 0.6 & 11.8s & 0.86 & 19.1s & 0.95 \\ \hline 
-200 & 0.07s & 0.43 & 13.2s & 0.76 & 17.4s & 0.84 \\ \hline 
-240 & 0.06s & 0.37 & 12.2s & 0.62 & 15.7s & 0.75 \\ \hline 
-280 & 0.06s & 0.35 & 12.5s & 0.58 & 16.3s & 0.68 \\ \hline 
-320 & 0.07s & 0.29 & 12.5s & 0.49 & 16.2s & 0.6 \\ \hline 
-360 & 0.07s & 0.27 & 12.6s & 0.44 & 16.5s & 0.52 \\ \hline 
-400 & 0.07s & 0.25 & 13.5s & 0.34 & 16.7s & 0.36 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.05s & 0.97 & 11.2s & 1.0 & 14.8s & 1.0 \\ \hline
+80 & 0.05s & 0.82 & 11.8s & 1.0 & 15.6s & 1.0 \\ \hline
+120 & 0.06s & 0.68 & 11.5s & 0.90 & 15.1s & 0.96 \\ \hline
+160 & 0.06s & 0.6 & 11.8s & 0.86 & 19.1s & 0.95 \\ \hline
+200 & 0.07s & 0.43 & 13.2s & 0.76 & 17.4s & 0.84 \\ \hline
+240 & 0.06s & 0.37 & 12.2s & 0.62 & 15.7s & 0.75 \\ \hline
+280 & 0.06s & 0.35 & 12.5s & 0.58 & 16.3s & 0.68 \\ \hline
+320 & 0.07s & 0.29 & 12.5s & 0.49 & 16.2s & 0.6 \\ \hline
+360 & 0.07s & 0.27 & 12.6s & 0.44 & 16.5s & 0.52 \\ \hline
+400 & 0.07s & 0.25 & 13.5s & 0.34 & 16.7s & 0.36 \\ \hline
 \caption{Alfabet (3), szyfr Vigenère'a, 1000 znaków, \textit{Ice hockey}}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 Wyniki są trochę gorsze niż dla (2), ale również bardzo dobre – lepsze niż w klasycznym szyfrowaniu Vigenère'a. Dlaczego? Odpowiedzią w tym wypadku jest (a) występowanie dużej liczby \textit{n-gramów}, które w języku (np. -\&) nie istnieją w ogóle (dla zwykłego alfabetu Vigenère'a ogromna większość możliwych \textit{n-gramów} występuje w języku regularnie – tylko w różnej częstotliwości), (b) najczęściej w języku angielskim występują litery, więc zdecydowanie wagą dominują przesunięcia dekodujące, które najczęściej występujące znaki przenoszą na litery – a takich przesunięć dla alfabetu (3) czy (2) ((2) łączył w sobie kodowanie spacji i omawianą teraz cechę, stąd te świetne wyniki) nie ma za wiele. Powoduje to, że algorytm deszyfrujący w zasadzie operuje koniec końców na bardzo ograniczonym zbiorze – mniejszym niż dla zwykłego szyfru Vigenère'a – bowiem mnóstwo możliwości może zostać odrzuconych od razu z racji niskiej wagi. Stąd należy pamiętać, przy projektowaniu/stosowaniu szyfru, że występowanie w przestrzeni związanej z szyfrem struktur, które pozwalają bardzo łatwo zredukować przestrzeń poszukiwanych rozwiązań, znacząco osłabia moc szyfru. Szyfr taki jak ten nieźle się nada natomiast do szyfrowania rzeczy 'dziwnych'. Jeśli rzecz będzie spoza naturalnego języka, atak częstościowy, a więc i \textit{n-gramowy} zawiedzie – choć jak już wspomnieliśmy, ta uwaga dotyczy wszystkich szyfrów. Wyniki, które uzyskałem na dłuższych alfabetach są ważne, bo pokazują, że heurystycznie wyprowadzone założenie o \textit{liniowości} MCMC względem $s$ przynajmniej w dużej mierze jest poprawne, jeśli tylko poziom skomplikowania szyfru nie zwiększa się.\\\\
 Już prawie koniec testów, zobaczmy jeszcze tylko jak radzą sobie metody MCMC z zakodowanym szyfrem Vigenère'a (wracamy do alfabetu (1)) tekstem, z którego wcześniej wszystkie znaki nieszyfrowane zostały usunięte – problem, który poruszyliśmy na początku podrozdziału:\\
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.02s & 1.0 & 2.80s & 1.0 & 3.70s & 1.0 \\ \hline 
-80 & 0.01s & 0.75 & 2.90s & 0.97 & 3.79s & 0.97 \\ \hline 
-120 & 0.01s & 0.6 & 2.97s & 0.83 & 3.82s & 0.84 \\ \hline 
-160 & 0.01s & 0.5 & 3.02s & 0.6 & 3.90s & 0.64 \\ \hline 
-200 & 0.01s & 0.42 & 3.08s & 0.5 & 3.99s & 0.57 \\ \hline 
-240 & 0.01s & 0.34 & 3.15s & 0.42 & 4.07s & 0.47 \\ \hline 
-280 & 0.01s & 0.28 & 3.53s & 0.33 & 4.08s & 0.31 \\ \hline 
-320 & 0.01s & 0.29 & 3.26s & 0.3 & 4.16s & 0.29 \\ \hline 
-360 & 0.02s & 0.24 & 3.33s & 0.2 & 4.17s & 0.21 \\ \hline 
-400 & 0.02s & 0.21 & 3.38s & 0.18 & 4.25s & 0.16 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.02s & 1.0 & 2.80s & 1.0 & 3.70s & 1.0 \\ \hline
+80 & 0.01s & 0.75 & 2.90s & 0.97 & 3.79s & 0.97 \\ \hline
+120 & 0.01s & 0.6 & 2.97s & 0.83 & 3.82s & 0.84 \\ \hline
+160 & 0.01s & 0.5 & 3.02s & 0.6 & 3.90s & 0.64 \\ \hline
+200 & 0.01s & 0.42 & 3.08s & 0.5 & 3.99s & 0.57 \\ \hline
+240 & 0.01s & 0.34 & 3.15s & 0.42 & 4.07s & 0.47 \\ \hline
+280 & 0.01s & 0.28 & 3.53s & 0.33 & 4.08s & 0.31 \\ \hline
+320 & 0.01s & 0.29 & 3.26s & 0.3 & 4.16s & 0.29 \\ \hline
+360 & 0.02s & 0.24 & 3.33s & 0.2 & 4.17s & 0.21 \\ \hline
+400 & 0.02s & 0.21 & 3.38s & 0.18 & 4.25s & 0.16 \\ \hline
 \caption{\textit{Rok 1984}, fragment dł. 799, usunięte przerwy między słowami, szyfr Vigenère'a, klasyczny alfabet (1)}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.02s & 0.95 & 2.80s & 1.0 & 3.73s & 1.0 \\ \hline 
-80 & 0.01s & 0.82 & 2.88s & 0.96 & 3.76s & 1.0 \\ \hline 
-120 & 0.01s & 0.69 & 2.94s & 0.89 & 3.79s & 0.95 \\ \hline 
-160 & 0.01s & 0.49 & 3.00s & 0.68 & 3.88s & 0.76 \\ \hline 
-200 & 0.01s & 0.44 & 3.06s & 0.59 & 3.99s & 0.61 \\ \hline 
-240 & 0.01s & 0.33 & 3.13s & 0.42 & 4.23s & 0.47 \\ \hline 
-280 & 0.01s & 0.32 & 3.85s & 0.35 & 4.29s & 0.35 \\ \hline 
-320 & 0.01s & 0.29 & 3.67s & 0.29 & 4.40s & 0.30 \\ \hline 
-360 & 0.02s & 0.25 & 3.81s & 0.26 & 4.28s & 0.25 \\ \hline 
-400 & 0.02s & 0.21 & 3.43s & 0.19 & 4.28s & 0.17 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.02s & 0.95 & 2.80s & 1.0 & 3.73s & 1.0 \\ \hline
+80 & 0.01s & 0.82 & 2.88s & 0.96 & 3.76s & 1.0 \\ \hline
+120 & 0.01s & 0.69 & 2.94s & 0.89 & 3.79s & 0.95 \\ \hline
+160 & 0.01s & 0.49 & 3.00s & 0.68 & 3.88s & 0.76 \\ \hline
+200 & 0.01s & 0.44 & 3.06s & 0.59 & 3.99s & 0.61 \\ \hline
+240 & 0.01s & 0.33 & 3.13s & 0.42 & 4.23s & 0.47 \\ \hline
+280 & 0.01s & 0.32 & 3.85s & 0.35 & 4.29s & 0.35 \\ \hline
+320 & 0.01s & 0.29 & 3.67s & 0.29 & 4.40s & 0.30 \\ \hline
+360 & 0.02s & 0.25 & 3.81s & 0.26 & 4.28s & 0.25 \\ \hline
+400 & 0.02s & 0.21 & 3.43s & 0.19 & 4.28s & 0.17 \\ \hline
 \caption{\textit{Ice hockey}, fragment dł. 802, usunięte przerwy między słowami, szyfr Vigenère'a, klasyczny alfabet (1)}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.01s & 0.9 & 2.69s & 1.0 & 3.56s & 1.0 \\ \hline 
-80 & 0.01s & 0.72 & 2.77s & 0.96 & 3.69s & 0.98 \\ \hline 
-120 & 0.01s & 0.58 & 2.89s & 0.69 & 3.75s & 0.74 \\ \hline 
-160 & 0.01s & 0.48 & 2.88s & 0.58 & 3.77s & 0.65 \\ \hline 
-200 & 0.01s & 0.37 & 2.98s & 0.39 & 4.22s & 0.41 \\ \hline 
-240 & 0.03s & 0.31 & 3.42s & 0.35 & 4.50s & 0.32 \\ \hline 
-280 & 0.01s & 0.30 & 3.13s & 0.32 & 3.94s & 0.34 \\ \hline 
-320 & 0.01s & 0.27 & 3.14s & 0.21 & 3.99s & 0.24 \\ \hline 
-360 & 0.01s & 0.23 & 3.20s & 0.20 & 4.05s & 0.19 \\ \hline 
-400 & 0.02s & 0.21 & 3.27s & 0.17 & 4.11s & 0.20 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.01s & 0.9 & 2.69s & 1.0 & 3.56s & 1.0 \\ \hline
+80 & 0.01s & 0.72 & 2.77s & 0.96 & 3.69s & 0.98 \\ \hline
+120 & 0.01s & 0.58 & 2.89s & 0.69 & 3.75s & 0.74 \\ \hline
+160 & 0.01s & 0.48 & 2.88s & 0.58 & 3.77s & 0.65 \\ \hline
+200 & 0.01s & 0.37 & 2.98s & 0.39 & 4.22s & 0.41 \\ \hline
+240 & 0.03s & 0.31 & 3.42s & 0.35 & 4.50s & 0.32 \\ \hline
+280 & 0.01s & 0.30 & 3.13s & 0.32 & 3.94s & 0.34 \\ \hline
+320 & 0.01s & 0.27 & 3.14s & 0.21 & 3.99s & 0.24 \\ \hline
+360 & 0.01s & 0.23 & 3.20s & 0.20 & 4.05s & 0.19 \\ \hline
+400 & 0.02s & 0.21 & 3.27s & 0.17 & 4.11s & 0.20 \\ \hline
 \caption{\textit{Madame Bovary}, fragment dł. 773, usunięte przerwy między słowami, szyfr Vigenère'a, klasyczny alfabet (1)}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 Zobaczmy jeszcze jak to wygląda dla szyfru afinicznego:
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.20s & 0.77 & 33.0s & 1.0 & 43.7s & 1.0 \\ \hline 
-80 & 0.21s & 0.4 & 34.3s & 0.55 & 45.0s & 0.63 \\ \hline 
-120 & 0.21s & 0.22 & 35.3s & 0.20 & 45.8s & 0.21 \\ \hline 
-160 & 0.22s & 0.08 & 35.9s & 0.08 & 46.8s & 0.08 \\ \hline 
-200 & 0.23s & 0.09 & 37.5s & 0.07 & 58.1s & 0.05 \\ \hline 
-240 & 0.31s & 0.06 & 49.0s & 0.05 & 59.9s & 0.02 \\ \hline 
-280 & 0.26s & 0.06 & 41.7s & 0.02 & 50.4s & 0.02 \\ \hline 
-320 & 0.26s & 0.02 & 40.5s & 0.01 & 54.0s & 0.01 \\ \hline 
-360 & 0.27s & 0.01 & 41.8s & 0.01 & 53.4s & 0.01 \\ \hline 
-400 & 0.27s & 0.01 & 41.7s & 0.01 & 54.6s & 0.01 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.20s & 0.77 & 33.0s & 1.0 & 43.7s & 1.0 \\ \hline
+80 & 0.21s & 0.4 & 34.3s & 0.55 & 45.0s & 0.63 \\ \hline
+120 & 0.21s & 0.22 & 35.3s & 0.20 & 45.8s & 0.21 \\ \hline
+160 & 0.22s & 0.08 & 35.9s & 0.08 & 46.8s & 0.08 \\ \hline
+200 & 0.23s & 0.09 & 37.5s & 0.07 & 58.1s & 0.05 \\ \hline
+240 & 0.31s & 0.06 & 49.0s & 0.05 & 59.9s & 0.02 \\ \hline
+280 & 0.26s & 0.06 & 41.7s & 0.02 & 50.4s & 0.02 \\ \hline
+320 & 0.26s & 0.02 & 40.5s & 0.01 & 54.0s & 0.01 \\ \hline
+360 & 0.27s & 0.01 & 41.8s & 0.01 & 53.4s & 0.01 \\ \hline
+400 & 0.27s & 0.01 & 41.7s & 0.01 & 54.6s & 0.01 \\ \hline
 \caption{\textit{Madame Bovary}, fragment dł. 779, usunięte przerwy między słowami, szyfr afiniczny/rozszerzony, klasyczny alfabet (1)}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 
 Choć oczywiście moc metody jest mniejsza, to cały czas pozwala w istotny sposób poprawić uzyskane rozwiązania, co w pewnych przypadkach może być kluczowe dla skutecznego odszyfrowania.\\\\
 Koniec końców, wszystkie wyniki pokazują, że zastosowanie metod MCMC (wraz z teorią \textit{n-gramów} jest dobrym wyborem przy dekodowaniu szyfrów polialfabetycznych z opisanych rodzin – w wielu punktach to podejście może zostać jeszcze rozwinięte. Może też być jeszcze szybsze. Wybrałem dość bezpieczną stałą $10$ na liczbę kroków ($10 \cdot n_k \cdot s$). Jednak przykład dekodowania \textit{Madame Bovary} ze stałą 5 wyniki były niewiele gorsze:
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|} 
-\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline 
-40 & 0.01s & 0.92 & 1.34s & 1.0 & 1.78s & 1.0 \\ \hline 
-80 & 0.01s & 0.73 & 1.39s & 0.98 & 1.87s & 1.0 \\ \hline 
-120 & 0.01s & 0.5 & 1.44s & 0.89 & 1.87s & 0.91 \\ \hline 
-160 & 0.01s & 0.38 & 1.46s & 0.65 & 1.90s & 0.86 \\ \hline 
-200 & 0.01s & 0.38 & 1.49s & 0.53 & 1.93s & 0.67 \\ \hline 
-240 & 0.01s & 0.26 & 1.53s & 0.4 & 1.95s & 0.50 \\ \hline 
-280 & 0.01s & 0.27 & 1.56s & 0.38 & 1.98s & 0.52 \\ \hline 
-320 & 0.01s & 0.24 & 1.59s & 0.28 & 2.03s & 0.35 \\ \hline 
-360 & 0.01s & 0.22 & 1.62s & 0.30 & 2.34s & 0.37 \\ \hline 
-400 & 0.02s & 0.18 & 1.66s & 0.23 & 2.11s & 0.26 \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|}
+\hline \makecell{DŁUGOŚĆ\\KLUCZA} &  \makecell{MONOGRAM\\CZAS} & \makecell{MONOGRAM\\SKUTECZNOŚĆ} & \makecell{BIGRAM\\CZAS} &  \makecell{BIGRAM\\SKUTECZNOŚĆ} & \makecell{TRIGRAM\\CZAS} & \makecell{TRIGRAM\\SKUTECZNOŚĆ}\\ \hline
+40 & 0.01s & 0.92 & 1.34s & 1.0 & 1.78s & 1.0 \\ \hline
+80 & 0.01s & 0.73 & 1.39s & 0.98 & 1.87s & 1.0 \\ \hline
+120 & 0.01s & 0.5 & 1.44s & 0.89 & 1.87s & 0.91 \\ \hline
+160 & 0.01s & 0.38 & 1.46s & 0.65 & 1.90s & 0.86 \\ \hline
+200 & 0.01s & 0.38 & 1.49s & 0.53 & 1.93s & 0.67 \\ \hline
+240 & 0.01s & 0.26 & 1.53s & 0.4 & 1.95s & 0.50 \\ \hline
+280 & 0.01s & 0.27 & 1.56s & 0.38 & 1.98s & 0.52 \\ \hline
+320 & 0.01s & 0.24 & 1.59s & 0.28 & 2.03s & 0.35 \\ \hline
+360 & 0.01s & 0.22 & 1.62s & 0.30 & 2.34s & 0.37 \\ \hline
+400 & 0.02s & 0.18 & 1.66s & 0.23 & 2.11s & 0.26 \\ \hline
 \caption{\textit{Madame Bovary} dł. 1000, klasyczny szyfr Vigenère'a, alfabet (1), mniejsze o połowę ograniczenie na liczbę kroków: $5n_k s$ zamiast $10 n_k s$ jak do tej pory}
-\end{longtable}\end{small}\end{center} 
+\end{longtable}\end{small}\end{center}
 Analiza takich kwestii jak dobrze umotywowany wybór odpowiednich stałych, techniki uczenia itd. jest w stanie, jeszcze zwiększyć skuteczność tego podejścia. Poza tym pozostaje wiele otwartych kwestii: m.in. można spróbować rozwiązać problem z ograniczoną, ale nieustaloną długością klucza bardziej w duchu MCMC. Warto byłoby zrobić dokładną analizę, jak skuteczność algorytmu ma się do zależności między zbiorem uczącym i danymi wejściowymi (na wzór \cite{Connor}) – w naszym przypadku wydaje się, że na fragmentach \textit{Ice hockey} osiągane są często gorsze wyniki – słowniki uczyliśmy na tekstach literackich, a to jedyny 'nieliteracki' tekst. Można ponadto prawdopodobnie zwiększyć odporność algorytmu na usuwanie przerw między słowami przez nieco zmodyfikowane uczenie słowników (np. liczyć z pewną mniejszą wagą \textit{oszukane n-gramy} w zbiorze uczącym). Na uwagę zasługuje też zagadnienie zbieżności łańcucha dla dużych długości klucza. Także, można sprawdzić działanie podejścia dla innych podobnych szyfrów np. \cite{enhanced}.
 \\\\
 Poza zaprezentowanymi rozwiązaniami próbowałem również problemu dekodowania, który miał postać złożenia permutacji i szyfru Vigenère'a, co można rozumieć jako szyfr Vigenère'a, ale gdy znamy tylko zbiór znaków alfabetu bez znajomości ich uporządkowania. Niestety nie udało mi się osiągnąć znaczących sukcesów. Rozwiązanie szyfru podstawieniowego zostało zaprezentowane w \cite{Connor} \cite{Diaconis} \cite{Chen&Rosenthal}. M.in. w pracy Diaconisa została opisana sytuacja, gdzie metody MCMC (wędrówka po permutacjach) zostały użyte do złamania szyfru podstawieniowego – którym w listach posługiwali się więźniowie – mającego postać jak na obrazku poniżej.\\
@@ -2638,28 +2637,28 @@ Wróćmy do grafu – ważonego – i zobaczmy jego przykład jak poniżej:\\
 
 \begin{figure}[h]
 \centering
-\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt
 \begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
 %uncomment if require: \path (0,534); %set diagram left start at 0, and has height of 534
-%Flowchart: Connector [id:dp39489242406379743] 
+%Flowchart: Connector [id:dp39489242406379743]
 \draw   (479,166.5) .. controls (479,154.97) and (488.63,145.63) .. (500.5,145.63) .. controls (512.37,145.63) and (522,154.97) .. (522,166.5) .. controls (522,178.03) and (512.37,187.38) .. (500.5,187.38) .. controls (488.63,187.38) and (479,178.03) .. (479,166.5) -- cycle ;
-%Flowchart: Connector [id:dp6285514868405493] 
+%Flowchart: Connector [id:dp6285514868405493]
 \draw   (241,95.5) .. controls (241,83.97) and (250.63,74.63) .. (262.5,74.63) .. controls (274.37,74.63) and (284,83.97) .. (284,95.5) .. controls (284,107.03) and (274.37,116.38) .. (262.5,116.38) .. controls (250.63,116.38) and (241,107.03) .. (241,95.5) -- cycle ;
-%Flowchart: Connector [id:dp5872942312966463] 
+%Flowchart: Connector [id:dp5872942312966463]
 \draw   (393,385.5) .. controls (393,373.97) and (402.63,364.63) .. (414.5,364.63) .. controls (426.37,364.63) and (436,373.97) .. (436,385.5) .. controls (436,397.03) and (426.37,406.38) .. (414.5,406.38) .. controls (402.63,406.38) and (393,397.03) .. (393,385.5) -- cycle ;
-%Flowchart: Connector [id:dp44540060370743495] 
+%Flowchart: Connector [id:dp44540060370743495]
 \draw   (149,302.5) .. controls (149,290.97) and (158.63,281.63) .. (170.5,281.63) .. controls (182.37,281.63) and (192,290.97) .. (192,302.5) .. controls (192,314.03) and (182.37,323.38) .. (170.5,323.38) .. controls (158.63,323.38) and (149,314.03) .. (149,302.5) -- cycle ;
-%Straight Lines [id:da9934555309292514] 
+%Straight Lines [id:da9934555309292514]
 \draw    (262.5,116.38) -- (170.5,281.63) ;
-%Straight Lines [id:da631810373801815] 
+%Straight Lines [id:da631810373801815]
 \draw    (479,166.5) -- (284,95.5) ;
-%Straight Lines [id:da6556019952944867] 
+%Straight Lines [id:da6556019952944867]
 \draw    (505.5,187) -- (414.5,364.63) ;
-%Straight Lines [id:da7925665059125937] 
+%Straight Lines [id:da7925665059125937]
 \draw    (393,385.5) -- (192,302.5) ;
-%Straight Lines [id:da07207873423061018] 
+%Straight Lines [id:da07207873423061018]
 \draw    (479,166.5) -- (183.5,286) ;
-%Curve Lines [id:da3400699458616012] 
+%Curve Lines [id:da3400699458616012]
 \draw    (282.5,85) .. controls (866.5,-48) and (374.5,394.63) .. (414.5,364.63) ;
 
 % Text Node
@@ -2691,30 +2690,30 @@ Liczby nad krawędziami nazywamy ich wagami i możemy o nich myśleć jako o odl
 
 \begin{figure}[h]
 \centering
-\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt
 
 \begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
 %uncomment if require: \path (0,534); %set diagram left start at 0, and has height of 534
 
-%Flowchart: Connector [id:dp39489242406379743] 
+%Flowchart: Connector [id:dp39489242406379743]
 \draw   (479,166.5) .. controls (479,154.97) and (488.63,145.63) .. (500.5,145.63) .. controls (512.37,145.63) and (522,154.97) .. (522,166.5) .. controls (522,178.03) and (512.37,187.38) .. (500.5,187.38) .. controls (488.63,187.38) and (479,178.03) .. (479,166.5) -- cycle ;
-%Flowchart: Connector [id:dp6285514868405493] 
+%Flowchart: Connector [id:dp6285514868405493]
 \draw   (241,95.5) .. controls (241,83.97) and (250.63,74.63) .. (262.5,74.63) .. controls (274.37,74.63) and (284,83.97) .. (284,95.5) .. controls (284,107.03) and (274.37,116.38) .. (262.5,116.38) .. controls (250.63,116.38) and (241,107.03) .. (241,95.5) -- cycle ;
-%Flowchart: Connector [id:dp5872942312966463] 
+%Flowchart: Connector [id:dp5872942312966463]
 \draw   (393,385.5) .. controls (393,373.97) and (402.63,364.63) .. (414.5,364.63) .. controls (426.37,364.63) and (436,373.97) .. (436,385.5) .. controls (436,397.03) and (426.37,406.38) .. (414.5,406.38) .. controls (402.63,406.38) and (393,397.03) .. (393,385.5) -- cycle ;
-%Flowchart: Connector [id:dp44540060370743495] 
+%Flowchart: Connector [id:dp44540060370743495]
 \draw   (149,302.5) .. controls (149,290.97) and (158.63,281.63) .. (170.5,281.63) .. controls (182.37,281.63) and (192,290.97) .. (192,302.5) .. controls (192,314.03) and (182.37,323.38) .. (170.5,323.38) .. controls (158.63,323.38) and (149,314.03) .. (149,302.5) -- cycle ;
-%Straight Lines [id:da9934555309292514] 
+%Straight Lines [id:da9934555309292514]
 \draw    (262.5,116.38) -- (170.5,281.63) ;
-%Straight Lines [id:da631810373801815] 
+%Straight Lines [id:da631810373801815]
 \draw    (479,166.5) -- (284,95.5) ;
-%Straight Lines [id:da6556019952944867] 
+%Straight Lines [id:da6556019952944867]
 \draw    (505.5,187) -- (414.5,364.63) ;
-%Straight Lines [id:da7925665059125937] 
+%Straight Lines [id:da7925665059125937]
 \draw    (393,385.5) -- (192,302.5) ;
-%Straight Lines [id:da07207873423061018] 
+%Straight Lines [id:da07207873423061018]
 \draw    (479,166.5) -- (183.5,286) ;
-%Curve Lines [id:da3400699458616012] 
+%Curve Lines [id:da3400699458616012]
 \draw    (282.5,85) .. controls (866.5,-48) and (374.5,394.63) .. (414.5,364.63) ;
 
 % Text Node
@@ -2750,7 +2749,7 @@ W obecnych rozważaniach przyjmujemy, że nie ma krawędzi między wierzchołkie
 $$ \sigma_{min} = \argmin_{\sigma \in S_n} \sum\limits_{i=1}^n w_{\sigma(i)\sigma(i+1)}$$
 Teraz, problem ten jest \textit{trudny}. Konkretnie $NP$-trudny, to znaczy, że każdy problem z klasy $NP$ (problemów, dla których rozwiązanie jest weryfikowalne w wielomianowym czasie) daje się do niego sprowadzić również wielomianową transformacją. Z tego powodu, nawet gdyby, co mało prawdopodobne, okazało się, że $P=NP$ (czyli że wszystkie problemy z wielomianową weryfikacją mają też wielomianowe rozwiązanie), nie daje to nam pewności, że problem komiwojażera da się rozwiązać w wielomianowym czasie. Jeśliby się natomiast dało, wtedy byłoby $P=NP$, co jest warte milion dolarów. Tak więc, nie są znane deterministyczne algorytmy o wielomianowej złożoności czasowej rozwiązujące postawiony problem – w przeciwieństwie do problemu dekodowania szyfru Vigenère'a w postawionej przeze mnie wersji, gdzie takie rozwiązania istniały, jednak były \textit{tylko} nieoptymalne czasowo. Użyjemy więc znowu metod Monte Carlo Markov Chains. Tym razem jednak, jak już wcześniej wspomnieliśmy, poza klasycznym rozwiązaniem z użyciem JŁM sprawdzimy też jedno z klasycznych rozwiązań prezentujących podejście zbieżnościowe – by 'zwiększyć' zbieżność – i osiągnąć zatrzymanie języka w jakimś do pewnego stopnia optymalnym stanie – musimy zrezygnować z jednorodności. Podejście to nosi nazwę symulowanego wyżarzania.
 
-\subsection{Niejednorodne łańcuchy Markowa. Symulowane wyżarzanie} 
+\subsection{Niejednorodne łańcuchy Markowa. Symulowane wyżarzanie}
 Pomysł, który jest zastosowany do osiągnięcia zbieżności, ma swoje źródła w fizyce statystycznej. Możemy myśleć o naszych permutacjach (czyli potencjalnych rozwiązaniach) jako o pewnych stanach energetycznych, które są do obsadzenia przez chaotycznie poruszającą się cząstkę (cząstki). Cząstka zajmuje dany stan z prawdopodobieństwem związanym z poziomem energetycznym tego stanu – im wyższa energia stanu, tym mniejsze prawdopodobieństwo, konkretnie: stosunek prawdopodobieństw obsadzenia dwóch stanów energetycznych $\sigma_i$ $\sigma_j$ o energiach $E_i$ oraz $E_j$ odpowiednio wynosi:
 $$\frac{e_i}{e_j} = e_{ij} = \exp\left(\frac{E_j - E_i}{kT}\right)$$
 stąd ogólnie prawdopodobieństwo obsadzenia danego stanu energetycznego $i$ przy temperaturze $T$ wynosi:
@@ -2792,9 +2791,9 @@ Spójrzmy na poniższy rysunek:\\
 Na osi Y mamy wartości energii. Lokalnymi minimami są (rysunek jest niedoskonały, więc w rzeczywistości minimami są punkty zbliżone do nich, ale utożsamiamy minima z tymi punktami, podobnie jak wartości ich utożsamiamy z najbliższymi liczbami całkowitymi) A, D, J (formalnie $x=-6, 0, 3$). J jest również minimum globalnym. O głębokości minimum lokalnego myślimy jako o najmniejszej różnicy poziomów (energii) – gdzie poruszamy się w sposób ciągły po wykresie – którą należy pokonać (czyli najmniejszej ilości energii, którą należy dodatkowo zyskać), aby móc trafić do mniejszego minimum lokalnego. Tak więc energia minimum A to $\sim 2$. Najmniej energii potrzeba, by dojść do D, wystarczy przejść przez B o energii 3, a więc zyskać jednostkę energii (następnie już schodzimy na niższe poziomy energetyczne, więc nie jest potrzebna dodatkowa energia). Tak więc głębokość A wynosi 1. Głębokość D natomiast wynosi 3, by dojść do J – minimum o mniejszej energii trzeba przejść przez F o energii 4. J natomiast jest minimum globalnym, przyjmujemy więc głębokość równą $\infty$. Dobrą analogią jest tu głębokość przełęczy, jak zresztą widać na rysunku.\\\\
  Podobnie sprawa się ma z minimami lokalnymi w łańcuchu Markowa. Głębokość minimum lokalnego (czyli takiego stanu, dla którego wszyscy \textit{kandydaci} na następny stan zgodnie z macierzą generującą mają większą energię), to minimalna energia, którą trzeba zyskać, na drodze do mniejszego minimum, gdzie wybieramy spośród dróg, które mają niezerowe prawdopodobieństwa wg macierzy przejścia tego łańcucha. Przechodzenie tylko do sąsiadów (czyli stanów z niezerowym prawdopodobieństwem przejścia do nich) jest odpowiednikiem poruszania się w sposób ciągły z przykładu powyżej.\\\\
 Nasza $d^*$ to maksymalna spośród głębokości wszystkich minimów lokalnych (niebędących globalnymi). W praktyce, tak jak już zostało wspomniane $d^*$ może być na tyle duże, że nie osiągamy z powodu jego użycia zbieżności w żadnym rozsądnym czasie (np. dla $c=d^*=100$ aż do momentu $e^{100}$ łańcuch jest 'bardziej ruchliwy' niż zwykły JŁM z $t_n \equiv 1$, bowiem temperatura startowa jest bardzo wysoka, a jej spadek stosunkowo powolny). Z pracy Hajka wynika jednak też, że przyjmując dane $c$ wykluczamy jako potencjalne punkty zbieżności wszystkie minima lokalne o głębokości $<c$ (ogólnie im mniejsza głębokość, tym mniejsze prawdopodobieństwo skończenia w danym minimum, bowiem tym łatwiej jest się z niego wtedy 'odkopać', tym mniej energii dodatkowo musimy wtedy 'pozyskać'), stąd wiemy, że raczej nie trafimy przynajmniej na najpłytsze z minimów – a takie minima są – jak widać na przykładzie A z rysunku – najmniej korzystne.\\\\
-$d^*$ w przypadku problemu komiwojażera można łatwo oszacować z góry przez: $$n\cdot(\max\limits_{ij} w_{ij} - \min\limits_{ij} w_{ij}),$$ 
-największa suma odległości jest bowiem nie większa od: $$n\cdot\max\limits_{ij} w_{ij},$$ 
-a najmniejsza nie mniejsza niż 
+$d^*$ w przypadku problemu komiwojażera można łatwo oszacować z góry przez: $$n\cdot(\max\limits_{ij} w_{ij} - \min\limits_{ij} w_{ij}),$$
+największa suma odległości jest bowiem nie większa od: $$n\cdot\max\limits_{ij} w_{ij},$$
+a najmniejsza nie mniejsza niż
 $$n\cdot\min\limits_{ij} w_{ij}.$$
 Jednak zwykle jest to oszacowanie bardzo na wyrost, ogólnie $d^*$ może być zwyczajnie bardzo duże - jeśliby je przyjąć, nie osiągniemy zbieżności w rozsądnym czasie. Ostatecznie dla testów przyjmujemy $c = 3$, co jest kompromisem pomiędzy odpowiednio długim wychładzaniem a szybką zbieżnością równoważną z możliwością przeprowadzenia testów na względnie dużej liczbie instancji problemu (na standardowym komputerze) i mimo wszystko powinno nas doprowadzić do suboptymalnych rozwiązań na zadowalającym poziomie.
 \subsection{Macierze generujące. Omówienie kroków algorytmu}
@@ -2846,25 +2845,25 @@ Testy przy ustalonej instancji, konfiguracji $t_n$ i macierzy przejścia przepro
 \subsubsection{dsj1000}
 W tej instancji mamy 1000 wierzchołków i rozwiązanie optymalne zadające cykl długości 18660188.0. Zobaczmy, jak poradziły sobie opisane algorytmy.
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
-\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
-\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
-\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
-1 & $=1$ & 9992464 & 83143199.26 & 4.45 & 10000000 & - & 66.9s \\ \hline 
-1 & $=\frac{3}{\log(n+2)}$ & 1909253 & 96085056.78 & 5.14 & 1918223 & 96085056.78 & 14.1s \\  \hline 
-2 & $=1$ & 9996183 & 81799224.84 & 4.38 & 10000000 & - & 67.2s \\ \hline 
-2 & $=\frac{3}{\log(n+2)}$ & 2140958 & 88704358.44 & 4.75 & 2149928 & 88704358.44 & 15.8s \\  \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|}
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} &
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} &
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline
+1 & $=1$ & 9992464 & 83143199.26 & 4.45 & 10000000 & - & 66.9s \\ \hline
+1 & $=\frac{3}{\log(n+2)}$ & 1909253 & 96085056.78 & 5.14 & 1918223 & 96085056.78 & 14.1s \\  \hline
+2 & $=1$ & 9996183 & 81799224.84 & 4.38 & 10000000 & - & 67.2s \\ \hline
+2 & $=\frac{3}{\log(n+2)}$ & 2140958 & 88704358.44 & 4.75 & 2149928 & 88704358.44 & 15.8s \\  \hline
 \caption{\textbf{K1}, dsj1000}
 \end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
-\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
-\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
-\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
-1 & $=1$ & 5640347 & 21233340.16 & 1.13 & 10000000 & - & 72.0s \\ \hline 
-1 & $=\frac{3}{\log(n+2)}$ & 5840704 & 20931010.98 & 1.12 & 10000000 & - & 77.8s \\  \hline 
-2 & $=1$ & 4621762 & 20966014.89 & 1.12 & 10000000 & - & 68.2s \\ \hline 
-2 & $=\frac{3}{\log(n+2)}$ & 4494771 & 20838187.42 & 1.11 & 10000000 & - & 82.2s \\  \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|}
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} &
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} &
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline
+1 & $=1$ & 5640347 & 21233340.16 & 1.13 & 10000000 & - & 72.0s \\ \hline
+1 & $=\frac{3}{\log(n+2)}$ & 5840704 & 20931010.98 & 1.12 & 10000000 & - & 77.8s \\  \hline
+2 & $=1$ & 4621762 & 20966014.89 & 1.12 & 10000000 & - & 68.2s \\ \hline
+2 & $=\frac{3}{\log(n+2)}$ & 4494771 & 20838187.42 & 1.11 & 10000000 & - & 82.2s \\  \hline
 \caption{\textbf{K2}, dsj1000}
 \end{longtable}\end{small}\end{center}
 Najlepszy wynik z 10000 jednostajnych losowań natomiast to: 527495696.62, a losowanie trwało 54.15s. Wynik uzyskany w ten sposób jest ok. \textbf{60} razy gorszy od optymalnego.
@@ -2872,24 +2871,24 @@ Najlepszy wynik z 10000 jednostajnych losowań natomiast to: 527495696.62, a los
 \subsubsection{att532}
 W instancji są, jak widać, 532 wierzchołki, optymalne rozwiązanie wg danych z TSPLIB to: 27686.0.
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
-\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
-\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
-\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
-1 & $=1$ & 2757277 & 74449.00 & 2.68 & 2830240 & - & 21.9s \\ \hline 
-1 & $=\frac{3}{\log(n+2)}$ & 544654 & 92308.00 & 3.33 & 548990 & 92308.00 & 4.74s \\  \hline 
-2 & $=1$ & 2826828 & 76772.00 & 2.77 & 2830240 & - & 21.7s \\ \hline 
-2 & $=\frac{3}{\log(n+2)}$ & 369958 & 85992.00 & 3.10 & 374294 & 85992.00 & 3.08s \\  \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|}
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} &
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} &
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline
+1 & $=1$ & 2757277 & 74449.00 & 2.68 & 2830240 & - & 21.9s \\ \hline
+1 & $=\frac{3}{\log(n+2)}$ & 544654 & 92308.00 & 3.33 & 548990 & 92308.00 & 4.74s \\  \hline
+2 & $=1$ & 2826828 & 76772.00 & 2.77 & 2830240 & - & 21.7s \\ \hline
+2 & $=\frac{3}{\log(n+2)}$ & 369958 & 85992.00 & 3.10 & 374294 & 85992.00 & 3.08s \\  \hline
 \caption{\textbf{K1}, att532}
 \end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
-\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
-\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
-\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
-1 & $=1$ & 1504333 & 31667.00 & 1.14 & 2830240 & - & 19.0s \\ \hline 
-1 & $=\frac{3}{\log(n+2)}$ & 1289131 & 30830.00 & 1.11 & 2830240 & - & 21.2s \\  \hline 
-2 & $=1$ & 2473277 & 31255.00 & 1.12 & 2830240 & - & 18.9s \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|}
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} &
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} &
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline
+1 & $=1$ & 1504333 & 31667.00 & 1.14 & 2830240 & - & 19.0s \\ \hline
+1 & $=\frac{3}{\log(n+2)}$ & 1289131 & 30830.00 & 1.11 & 2830240 & - & 21.2s \\  \hline
+2 & $=1$ & 2473277 & 31255.00 & 1.12 & 2830240 & - & 18.9s \\ \hline
 2 & $=\frac{3}{\log(n+2)}$ & 1048840 & 31809.00 & 1.14 & 2830240 & - & 21.2s \\  \hline
 \caption{\textbf{K2}, att532}
 \end{longtable}\end{small}\end{center}
@@ -2899,25 +2898,25 @@ Z naszych 10000 losowań zgodnych z rozkładem jednostajnym najlepszym wynikiem,
 \subsubsection{kroA150}
 W instancji jest 150 wierzchołków, optymalne rozwiązanie to 26524.0.
 \\
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
-\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
-\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
-\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
-1 & $=1$ & 189050 & 51646.54 & 1.94 & 225000 & - & 1.50s \\ \hline 
-1 & $=\frac{3}{\log(n+2)}$ & 27091 & 63529.15 & 2.39 & 28067 & 63529.15 & 0.19s \\  \hline 
-2 & $=1$ & 97227 & 54829.62 & 2.06 & 225000 & - & 1.35s \\ \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|}
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} &
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} &
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline
+1 & $=1$ & 189050 & 51646.54 & 1.94 & 225000 & - & 1.50s \\ \hline
+1 & $=\frac{3}{\log(n+2)}$ & 27091 & 63529.15 & 2.39 & 28067 & 63529.15 & 0.19s \\  \hline
+2 & $=1$ & 97227 & 54829.62 & 2.06 & 225000 & - & 1.35s \\ \hline
 2 & $=\frac{3}{\log(n+2)}$ & 43274 & 61089.11 & 2.30 & 44250 & 61089.11 & 0.30s \\  \hline
 \caption{\textbf{K1}, kroA150}
 \end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
-\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
-\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
-\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
-1 & $=1$ & 103718 & 29423.10 & 1.10 & 225000 & - & 1.38s \\ \hline 
-1 & $=\frac{3}{\log(n+2)}$ & 75045 & 29385.76 & 1.10 & 225000 & - & 1.43s \\  \hline 
-2 & $=1$ & 62128 & 29904.73 & 1.12 & 225000 & - & 1.53s \\ \hline 
-2 & $=\frac{3}{\log(n+2)}$ & 60307 & 28546.87 & 1.07 & 225000 & - & 1.47s \\  \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|}
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} &
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} &
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline
+1 & $=1$ & 103718 & 29423.10 & 1.10 & 225000 & - & 1.38s \\ \hline
+1 & $=\frac{3}{\log(n+2)}$ & 75045 & 29385.76 & 1.10 & 225000 & - & 1.43s \\  \hline
+2 & $=1$ & 62128 & 29904.73 & 1.12 & 225000 & - & 1.53s \\ \hline
+2 & $=\frac{3}{\log(n+2)}$ & 60307 & 28546.87 & 1.07 & 225000 & - & 1.47s \\  \hline
 \caption{\textbf{K2}, kroA150}
 \end{longtable}\end{small}\end{center}
 
@@ -2926,25 +2925,25 @@ Metoda jednostajnego losowania dała trasę o długości 221376.09, co jest oko�
 \subsubsection{berlin52}
 W instancji mamy 52 wierzchołki z optymalnym rozwiązaniem 7542.0.
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
-\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
-\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
-\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
-1 & $=1$ & 19578 & 9188.86 & 1.21 & 27040 & - & 0.14s \\ \hline 
-1 & $=\frac{3}{\log(n+2)}$ & 3186 & 12714.79 & 1.68 & 3453 & 12714.79 & 0.01s \\  \hline 
-2 & $=1$ & 12248 & 10282.28 & 1.36 & 27040 & - & 0.14s \\ \hline 
-2 & $=\frac{3}{\log(n+2)}$ & 2652 & 11732.84 & 1.55 & 2919 & 11732.84 & 0.01s \\  \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|}
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} &
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} &
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline
+1 & $=1$ & 19578 & 9188.86 & 1.21 & 27040 & - & 0.14s \\ \hline
+1 & $=\frac{3}{\log(n+2)}$ & 3186 & 12714.79 & 1.68 & 3453 & 12714.79 & 0.01s \\  \hline
+2 & $=1$ & 12248 & 10282.28 & 1.36 & 27040 & - & 0.14s \\ \hline
+2 & $=\frac{3}{\log(n+2)}$ & 2652 & 11732.84 & 1.55 & 2919 & 11732.84 & 0.01s \\  \hline
 \caption{\textbf{K1}, berlin52}
 \end{longtable}\end{small}\end{center}
 
-\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|} 
-\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} & 
-\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} & 
-\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline 
-1 & $=1$ & 6790 & 8593.15 & 1.13 & 27040 & - & 0.13s \\ \hline 
-1 & $=\frac{3}{\log(n+2)}$ & 9062 & 8399.97 & 1.11 & 27040 & - & 0.15s \\  \hline 
-2 & $=1$ & 6879 & 7960.15 & 1.05 & 27040 & - & 0.14s \\ \hline 
-2 & $=\frac{3}{\log(n+2)}$ & 9440 & 8151.08 & 1.08 & 27040 & - & 0.15s \\  \hline 
+\begin{center}\begin{small}\begin{longtable}{|c|c|c|c|c|c|c|c|}
+\hline \makecell{NR} &  \makecell{$t_n$} & \makecell{ROZW.\\UZYSKANE\\ W KROKU} &
+\makecell{ROZW.} &  \makecell{ROZW./\\OPTYMALNE} & \makecell{L.\\KROKÓW} &
+\makecell{ZBIEŻNOŚĆ\\DO} & \makecell{CZAS}\\ \hline
+1 & $=1$ & 6790 & 8593.15 & 1.13 & 27040 & - & 0.13s \\ \hline
+1 & $=\frac{3}{\log(n+2)}$ & 9062 & 8399.97 & 1.11 & 27040 & - & 0.15s \\  \hline
+2 & $=1$ & 6879 & 7960.15 & 1.05 & 27040 & - & 0.14s \\ \hline
+2 & $=\frac{3}{\log(n+2)}$ & 9440 & 8151.08 & 1.08 & 27040 & - & 0.15s \\  \hline
 \caption{\textbf{K2}, berlin52}
 \end{longtable}\end{small}\end{center}
 
@@ -3015,8 +3014,8 @@ która pozwala wyliczyć na ilu procentowo polach w tekście dwa klucze są zgod
 Te wspólne funkcje zostają następnie użyte przez implementacje algorytmów deszyfrujących, które znajdują się w folderze \textit{algorithm}. Dla każdego algorytmu jest część \textit{\_calculator.py} odpowiadająca za \textit{szybkie} obliczenie zmiany funkcji wagi, tak by można było zdecydować o następnym stanie w wędrówce MCMC:
 \begin{lstlisting}
 def get_frequency_change_fixed_key_length(old_key, new_key,
-                                          n_gram_length, 
-                                          current_decryption, 
+                                          n_gram_length,
+                                          current_decryption,
                                           alphabet):
 \end{lstlisting}
 \textit{new\_key} jest przedstawiany jako krotka $(i,j)$, gdzie $i$ jest pozycją, na której zaszła zmiana w porównaniu ze starym kluczem, a $j$ jest przesunięciem w porównaniu do starego klucza (czyli gdy $1$ zmienia się na $2$, to $j=1$). W przypadku klucza rozszerzonego przedstawienie to jest po prostu w postaci $(i,j)$, gdzie $j$ jest nowym kluczem pojedynczym na $i$-tej pozycji (tam trzeba również podać listę liczb względnie pierwszych z długością alfabetu). W pakietach \textit{\_neighbours} są zawarte funkcjonalności generowania kandydata. Generalnie polega to na tym, że numerujemy wszystkich sąsiadów stanu od $0$ do $N-1$, gdzie $N$ jest liczbą sąsiadów i losujemy jednostajnie liczbę od $0$ do $N-1$ – najnowszym kandydatem jest ten związany z wylosowaną liczbą. Równie dobrze można by też losować najpierw pozycję, a potem zmianę na tej pozycji (teoretycznie losowanie tylko raz pozwala nam zachować więcej losowości na później, jednak w praktyce generator z modułu \textit{random} ma tak długi cykl, że nie ma to znaczenia).\\\\
@@ -3033,24 +3032,24 @@ alphabet):
 def get_max_bigram_state(encryption, bigram_log_distribution, key_length, alphabet):
 ...
 def break_fixed_length_code_with_mcmc
-(encryption, 
-alphabet, 
-starting_state, 
-n_list, 
-coefs, 
-log_distributions, 
+(encryption,
+alphabet,
+starting_state,
+n_list,
+coefs,
+log_distributions,
 steps,
-true_decrypting_code=[], 
+true_decrypting_code=[],
 consistency_thresholds=[])
 ...
 def break_bounded_length_code_with_mcmc_monogram_criteria
-(encryption,                                                                  alphabet, 
-n_list, 
-coefs,   
-log_distributions, 
-steps_constant, 
-lower_bound, upper_bound, 
-monogram_log_distribution, 
+(encryption,                                                                  alphabet,
+n_list,
+coefs,
+log_distributions,
+steps_constant,
+lower_bound, upper_bound,
+monogram_log_distribution,
 scrabble):
 ...
 \end{lstlisting}
@@ -3107,7 +3106,7 @@ Przedstawione własności łańcuchów Markowa - przede wszystkim twierdzenie er
 \\
 W części dotyczącej szyfrowania udało mi się stworzyć i zaimplementować algorytm deterministyczny oparty na programowaniu dynamicznym rozwiązujący postawioną tu wersję problemu dekodowania w wielomianowym czasie. Następnie pokazałem, jak - nie tracąc na jakości - przyspieszyć uzyskanie rozwiązania przy pomocy nowej metody używającej w odpowiedni sposób MCMC. Działanie algorytmów zaprezentowałem na różnych szyfrach i alfabetach. Pokazałem też potencjalne przyszłe kierunki, w jakich można by rozwinąć zaprezentowane podejście. \\
 W końcowej części przedstawiłem pewne intuicje dotyczące problemu komiwojażera, a następnie zaprezentowałem próbę rozwiązania wybranych instancji tego problemu z TSPLIB za pomocą metod MCMC (m.in. symulowanego wyżarzania), uzyskując wyniki ok. 1.1 razy gorsze od optymalnych.\\\\
-Ostatecznie, myślę, że moja praca w jakimś stopniu pokazała, że w wielu sytuacjach warto się zastanowić nad użyciem metod MCMC, gdyż często da się uzyskać w ten sposób dobre wyniki. 
+Ostatecznie, myślę, że moja praca w jakimś stopniu pokazała, że w wielu sytuacjach warto się zastanowić nad użyciem metod MCMC, gdyż często da się uzyskać w ten sposób dobre wyniki.
 
 
 \newpage
@@ -3165,18 +3164,18 @@ W. Friedman, \emph{The index of coincidence and its applications in cryptanalysi
 
 \bibitem{2opt1}
  G. A. Croes, \emph{A method for solving traveling salesman problems.} Operations Res. 6 1951, pp., 791-812.
- 
+
  \bibitem{2opt2}
  M. M. Flood, \emph{The traveling-salesman problem. Operations} Res. 4 1956, pp., 61-75.
- 
+
 \bibitem{alphaqwerty}
-K.I. Rahmani et al. \emph{Alpha-qwerty cipher: an extended Vigenère cipher}, 
-Advanced Computing: An International Journal,  May 2012, 
+K.I. Rahmani et al. \emph{Alpha-qwerty cipher: an extended Vigenère cipher},
+Advanced Computing: An International Journal,  May 2012,
 
 \bibitem{enhanced}
 A.A. Soofi, I. Riaz, U. Rasheed,
 \emph{An Enhanced Vigenère Cipher For Data Security},
-International Journal of Scientific \& Technology Research Volume 5, Issue 03, March 2016 
+International Journal of Scientific \& Technology Research Volume 5, Issue 03, March 2016
 
 \bibitem{tsprev}
 David S. Johnson1, Lyle A. McGeoch2,
@@ -3187,9 +3186,9 @@ November 20, 1995
 \bibitem{mixing}
 D, A. Levin, Y, Peres, E. L. Wilmer,
 \emph{Markov Chains and Mixing Times},
-University of Oregon Microsoft Research, 
-University of California, Berkeley, 
-Oberlin College, 
+University of Oregon Microsoft Research,
+University of California, Berkeley,
+Oberlin College,
 June 3, 2007
 
 \bibitem{coupling}
@@ -3204,13 +3203,13 @@ A.J. Viterbi,  \emph{Error bounds for convolutional codes and an asymptotically 
 
 \bibitem{bellman}
  R. Bellman, \emph{Dynamic programming treatment of the travelling salesman problem}, Journal of Assoc. Computing Mach. 9. 1962.
- 
+
  \bibitem{heldkarp}
  M.Held, R. M. Karp, \emph{A dynamic programming approach to sequencing problems},  Journal for the Society for Industrial and Applied Mathematics 1:10. 1962
- 
+
  \bibitem{christofides}
   N. Christofides, \emph{Worst-case analysis of a new heuristic for the travelling salesman problem}, Report 388, Graduate School of Industrial Administration, CMU, 1976.
-  
+
     \bibitem{quantum}
 E. Crosson, A. W. Harrow, {Simulated Quantum Annealing Can Be Exponentially Faster Than Classical Simulated Annealing},
 2016 IEEE 57th Annual Symposium on Foundations of Computer Science (FOCS)
@@ -3219,7 +3218,7 @@ E. Crosson, A. W. Harrow, {Simulated Quantum Annealing Can Be Exponentially Fast
 \bibitem{genetic}
 N. M. Razali, J. Geraghty \emph{Genetic Algorithm Performance with Different
 Selection Strategies in Solving TSP},
-Proceedings of the World Congress on Engineering 2011 Vol II 
+Proceedings of the World Congress on Engineering 2011 Vol II
 
 \bibitem{mrowki}
 M.Dorigo, L. M. Gambardella \emph{Ant colonies for the travelling salesman problem}, Biosystems
@@ -3260,9 +3259,8 @@ D. Applegate  et al.,  \emph{Certification of an optimal TSP tour through 85,900
 
 \bibitem{repo}
 Cyryl Karpiński,
-\textit{Repozytorium z kodem źródłowym}, 
+\textit{Repozytorium z kodem źródłowym},
 \href{https://github.com/cyrylk/MCMC/}{https://github.com/cyrylk/MCMC/}
 
 \end{thebibliography}
 \end{document}
-
